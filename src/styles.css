@@ -920,7 +920,7 @@ a.linha:active { transform: scale(0.99); }
 .lote-item .campo:last-child { margin-bottom: 0; }
 .lote-topo { display: flex; align-items: center; justify-content: space-between; min-height: 36px; margin-bottom: var(--e-2); }
 .lote-topo strong { font-size: 0.95rem; color: var(--tinta); }
-.lote-remover { position: static; transform: none; }
+.lote-remover { position: relative; top: auto; right: auto; transform: none; flex: none; }
 .lote-colunas { grid-template-columns: 1fr 1fr; gap: 0 var(--e-3); }
 .lote-adicionar { width: 100%; justify-content: center; min-height: 48px; margin: 0 0 var(--e-5); border-radius: var(--r-lg, 16px); background: transparent; border-color: var(--borda); color: var(--tinta); }
 

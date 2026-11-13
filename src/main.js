@@ -833,9 +833,18 @@ function telaLote() {
     L.linhas.push({ materia: ult.materia, serie: ult.serie, tema: '', turma: '' });
     telaLote(); main.querySelector(`#l-tema-${L.linhas.length - 1}`)?.focus();
   };
-  main.querySelector('[data-ir-modo=uma]').onclick = () => { ler(); location.hash = '#/nova'; };
+  main.querySelector('[data-ir-modo=uma]').onclick = () => {
+    ler();
+    // Leva a turma do 1º cartão para o assistente de uma prova
+    const l = L.linhas[0];
+    rascunho = rascunho || novoRascunho();
+    if (rascunho.passo === 1 && l.materia !== OUTRA) Object.assign(rascunho, { materia: l.materia, serie: l.serie, turma: l.turma, tema: rascunho.tema || l.tema });
+    location.hash = '#/nova';
+  };
   main.querySelector('#b-lote-cancelar').onclick = () => { lote = null; location.hash = '#/'; };
-  main.querySelector('#b-lote-criar').onclick = async () => {
+  const bCriar = main.querySelector('#b-lote-criar');
+  bCriar.onclick = async () => {
+    if (bCriar.disabled) return;
     ler();
     const itens = [...form.querySelectorAll('.lote-item')];
     const semNome = itens.filter((li) => { const l = L.linhas[Number(li.dataset.k)]; return l.materia === OUTRA && !l.materiaOutra; });
@@ -844,9 +853,10 @@ function telaLote() {
     vazias.forEach((li) => (li.querySelector('.erro-tema').hidden = false));
     const primeiro = semNome[0]?.querySelector('[data-campo=materiaOutra]') || vazias[0]?.querySelector('[data-campo=tema]');
     if (primeiro) { primeiro.focus(); return; }
+    if (!L.tipos.length) { const er = form.querySelector('#lote-tipos-erro'); er.hidden = false; er.scrollIntoView({ block: 'center' }); return; }
     L.linhas.forEach((l) => { if (l.materia === OUTRA) { l.materia = guardarMateria(l.materiaOutra); l.materiaOutra = ''; } });
-    if (!L.tipos.length) { form.querySelector('#lote-tipos-erro').hidden = false; return; }
-    await criarLote(L);
+    bCriar.disabled = true; // evita criar o lote duas vezes com toque duplo
+    try { await criarLote(L); } finally { bCriar.disabled = false; }
   };
 }
 
@@ -859,26 +869,33 @@ async function criarLote(L) {
   const tela = telaCriando(nomes);
   tela.titulo(`Criando ${plural(pedidos.length, 'prova', 'provas')}`, 'Uma de cada vez. Pode deixar esta tela aberta.', pedidos.some(precisaIA));
   const criadas = [], falhas = [];
+  let cancelado = false;
   for (let k = 0; k < pedidos.length; k++) {
     tela.etapa(k);
     try {
       const r = await montarProva(pedidos[k], tela.signal);
       if (r.prova) criadas.push(r.prova); else falhas.push({ nome: nomes[k], motivo: r.recados[0] || 'Não encontrei questões desse conteúdo.' });
     } catch (e) {
-      if (e.name === 'AbortError') break;
+      if (e.name === 'AbortError') { cancelado = true; break; }
       console.error(e); falhas.push({ nome: nomes[k], motivo: 'Erro inesperado ao montar esta prova.' });
     }
   }
   tela.etapa(pedidos.length);
   tela.fechar();
-  if (!criadas.length) { aviso(falhas.length ? 'Nenhuma prova foi criada. Confira os conteúdos.' : 'Criação cancelada.'); return; }
+  const listaFalhas = () => `<ul class="menu-lista">${falhas.map((f) => `<li><button type="button">${ic('alerta')}<span>${esc(f.nome)}<small>${esc(f.motivo)}</small></span></button></li>`).join('')}</ul>`;
+  if (!criadas.length) {
+    if (cancelado || !falhas.length) { aviso('Criação cancelada. Seus cartões foram mantidos.'); return; }
+    abrirGaveta('Nenhuma prova foi criada', `${listaFalhas()}<button class="botao principal cheio" data-ok style="margin-top:12px">Entendi</button>`, (g) => { g.querySelector('[data-ok]').onclick = fecharGaveta; });
+    return;
+  }
   lote = null;
   location.hash = '#/provas';
   setTimeout(() => {
+    if (cancelado) { aviso(`Criação cancelada. ${plural(criadas.length, 'prova já estava pronta e foi salva', 'provas já estavam prontas e foram salvas')}.`); return; }
     celebrar(`${plural(criadas.length, 'prova pronta', 'provas prontas')}!`);
     const curtas = criadas.filter((p) => p.questoes.length < L.quantidade).length;
     if (curtas && !falhas.length) aviso(`${plural(curtas, 'prova ficou', 'provas ficaram')} com menos de ${L.quantidade} questões. Abra para completar.`);
-    if (falhas.length) abrirGaveta('Algumas provas não saíram', `<ul class="menu-lista">${falhas.map((f) => `<li><button type="button">${ic('alerta')}<span>${esc(f.nome)}<small>${esc(f.motivo)}</small></span></button></li>`).join('')}</ul>
+    if (falhas.length) abrirGaveta('Algumas provas não saíram', `${listaFalhas()}
       <p class="dica" style="margin-top:12px">As outras ${plural(criadas.length, 'prova foi criada', 'provas foram criadas')} normalmente.</p>
       <button class="botao principal cheio" data-ok>Entendi</button>`, (c) => { c.querySelector('[data-ok]').onclick = fecharGaveta; });
   }, 450);
