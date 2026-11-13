@@ -16,6 +16,7 @@ import { validarQuestao, validarProva } from './validador.js';
 import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA } from './ia.js';
 import { carregarImagens, obterImagem, guardarImagem, rasterizar, svgSeguro, imagensDasQuestoes, importarImagens } from './imagens.js';
 import { baixarWord, cfgAdaptada } from './word.js';
+import { lerCabecalhoWord, camposCabecalho } from './importar-cabecalho.js';
 
 registerSW({ immediate: true });
 
@@ -220,8 +221,10 @@ function atualizarConexao() {
     aviso(on ? 'Internet de volta. A criação automática voltou a funcionar.' : 'Sem internet. Tudo continua funcionando com o seu banco de questões.');
     estavaOnline = on;
   }
-  el.textContent = on ? 'Online' : 'Sem internet';
-  el.title = on ? 'Com internet' : 'Sem internet: o app continua funcionando com o banco de questões';
+  // Só aparece quando falta internet; "Online" não diz nada de útil
+  el.hidden = on;
+  el.textContent = on ? '' : 'Sem internet';
+  el.title = on ? '' : 'Sem internet: o app continua funcionando com o banco de questões';
   el.classList.toggle('offline', !on);
 }
 addEventListener('online', atualizarConexao);
@@ -241,10 +244,11 @@ document.getElementById('nav').innerHTML = NAV.map((n) => `<a href="#/${n.rota}"
 
 /** Telas "empilhadas" (criar e editar) entram deslizando da direita, como no iPhone;
  *  trocar de aba só esmaece. */
-const EMPILHADAS = ['nova', 'prova'];
+const EMPILHADAS = ['nova', 'lote', 'prova'];
 let rotaAnterior = null;
 function direcaoEntre(de, para) {
   if (de === null || de === para) return null;
+  if ([de, para].sort().join() === 'lote,nova') return 'segmento';
   if (EMPILHADAS.includes(para) && !EMPILHADAS.includes(de)) return 'frente';
   if (EMPILHADAS.includes(de) && !EMPILHADAS.includes(para)) return 'tras';
   return 'aba';
@@ -265,7 +269,7 @@ function rotear() {
     main.classList.toggle('largo', rota === 'prova');
     main.onclick = null;
     if (!direcao || !usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
-    const telas = { '': telaInicio, nova: telaNova, prova: () => telaProva(id), provas: telaProvas, banco: telaBanco, ajustes: () => telaAjustes(rotaBruta) };
+    const telas = { '': telaInicio, nova: telaNova, lote: telaLote, prova: () => telaProva(id), provas: telaProvas, banco: telaBanco, ajustes: () => telaAjustes(rotaBruta) };
     (telas[rota] || telaInicio)();
     cascata();
     window.scrollTo(0, 0);
@@ -396,6 +400,25 @@ const EXEMPLO_TIPO = {
 const TOTAL_PASSOS = 4;
 let rascunho = null;
 
+/* Matérias: as da lista + as que a professora escreveu em "Outra" (ficam salvas) */
+function materiasExtras() {
+  try { return JSON.parse(localStorage.getItem('pf.materiasExtras')) || []; } catch { return []; }
+}
+function todasMaterias() {
+  const usadas = [...getProvas().map((p) => p.materia), ...getBanco().map((q) => q.materia)];
+  return [...new Set([...MATERIAS, ...materiasExtras(), ...usadas].filter(Boolean))];
+}
+function guardarMateria(nome) {
+  const m = String(nome || '').trim().replace(/\s+/g, ' ');
+  if (!m) return '';
+  const igual = todasMaterias().find((x) => x.toLowerCase() === m.toLowerCase());
+  if (igual) return igual;
+  const fmt = m.charAt(0).toUpperCase() + m.slice(1);
+  try { localStorage.setItem('pf.materiasExtras', JSON.stringify([...materiasExtras(), fmt])); } catch {}
+  return fmt;
+}
+const OUTRA = '__outra';
+
 function novoRascunho() {
   let ultimo = {};
   try { ultimo = JSON.parse(localStorage.getItem('pf.ultimoPedido')) || {}; } catch {}
@@ -430,7 +453,10 @@ function desenharPasso() {
     corpo = `<h1>Para qual turma?</h1>
       <p class="sub">Escolha a matéria e o ano.</p>
       <div class="cartao-form">
-        <fieldset style="border:0;padding:0;margin:0 0 20px"><legend class="rotulo">Matéria</legend>${fichas('materia', MATERIAS.map((m) => [m, m]), r.materia)}</fieldset>
+        <fieldset style="border:0;padding:0;margin:0 0 20px"><legend class="rotulo">Matéria</legend>${fichas('materia', [...todasMaterias().map((m) => [m, m]), [OUTRA, '+ Outra']], r.materia)}
+          <div class="campo campo-outra" ${r.materia === OUTRA ? '' : 'hidden'}><label for="materia-outra" class="visualmente-oculto">Nome da matéria</label>
+            <input type="text" id="materia-outra" name="materiaOutra" value="${esc(r.materiaOutra || '')}" placeholder="Escreva a matéria. Ex.: Filosofia" autocomplete="off" />
+            <div class="erro-campo" id="outra-erro" hidden>${ic('alerta', 'p')} Escreva o nome da matéria.</div></div></fieldset>
         <fieldset style="border:0;padding:0;margin:0 0 20px"><legend class="rotulo">Ano / série</legend>${fichas('serie', SERIES.map((s) => [s, s.replace(' (Ensino Médio)', ' EM')]), r.serie)}</fieldset>
         <div class="campo"><label for="turma">Nome da turma <span class="opcional">(opcional)</span></label>
           <input type="text" id="turma" name="turma" value="${esc(r.turma)}" placeholder="Ex.: 5º ano A" autocomplete="off" /></div>
@@ -499,6 +525,10 @@ function desenharPasso() {
 
   main.innerHTML = `
     <div class="modo-criar" aria-hidden="true"><span class="modo-icone">${ic('lapis')}</span>Criar prova</div>
+    ${r.passo === 1 ? `<div class="segmentos segmentos-criar" role="tablist" aria-label="Quantas provas">
+      <button type="button" role="tab" aria-selected="true">Uma prova</button>
+      <button type="button" role="tab" aria-selected="false" data-ir-modo="lote">Várias provas</button>
+    </div>` : ''}
     <div class="progresso">
       <div class="progresso-trilho" role="progressbar" aria-valuemin="1" aria-valuemax="${TOTAL_PASSOS}" aria-valuenow="${r.passo}" aria-label="Passo ${r.passo} de ${TOTAL_PASSOS}">${[1, 2, 3, 4].map((n) => `<span class="${n <= r.passo ? 'feito' : ''}"></span>`).join('')}</div>
       <span class="progresso-rotulo">${r.passo} de ${TOTAL_PASSOS}</span>
@@ -526,6 +556,12 @@ function desenharPasso() {
     r.passo--; transicao(desenharPasso, 'tras');
   };
   main.querySelector('#b-seguir').onclick = seguir;
+  main.querySelector('[data-ir-modo=lote]')?.addEventListener('click', () => {
+    lerPasso(form);
+    lote = lote || novoLote();
+    if (rascunho.materia !== OUTRA) Object.assign(lote.linhas[0], { materia: rascunho.materia, serie: rascunho.serie, turma: rascunho.turma });
+    location.hash = '#/lote';
+  });
   if (!usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
   window.scrollTo(0, 0);
   focarTitulo();
@@ -534,7 +570,14 @@ function desenharPasso() {
 function lerPasso(form) {
   const r = rascunho;
   const fd = new FormData(form);
-  if (r.passo === 1) { r.materia = fd.get('materia'); r.serie = fd.get('serie'); r.turma = fd.get('turma').trim(); }
+  if (r.passo === 1) {
+    r.materia = fd.get('materia'); r.serie = fd.get('serie'); r.turma = fd.get('turma').trim(); r.materiaOutra = (fd.get('materiaOutra') || '').trim();
+    const caixa = form.querySelector('.campo-outra');
+    const abrir = r.materia === OUTRA && caixa.hidden;
+    caixa.hidden = r.materia !== OUTRA;
+    if (abrir) form.querySelector('#materia-outra').focus();
+    if (r.materiaOutra) form.querySelector('#outra-erro').hidden = true;
+  }
   if (r.passo === 2) { r.tema = fd.get('tema').trim(); r.observacoes = (fd.get('observacoes') || '').trim(); if (r.tema) form.querySelector('#tema-erro').hidden = true; }
   if (r.passo === 3) { r.dificuldade = fd.get('dificuldade'); r.tipos = fd.getAll('tipos'); r.figuras = fd.get('figuras') === 'on'; if (r.tipos.length) form.querySelector('#tipos-erro').hidden = true; }
   if (r.passo === 4) { r.adaptada = fd.get('adaptada') === 'on'; r.modo = fd.get('modo') || 'banco'; }
@@ -544,6 +587,10 @@ async function seguir() {
   const r = rascunho;
   const form = main.querySelector('#form-passo');
   lerPasso(form);
+  if (r.passo === 1 && r.materia === OUTRA) {
+    if (!r.materiaOutra) { form.querySelector('#outra-erro').hidden = false; form.querySelector('#materia-outra').focus(); return; }
+    r.materia = guardarMateria(r.materiaOutra); r.materiaOutra = '';
+  }
   if (r.passo === 2 && !r.tema) { form.querySelector('#tema-erro').hidden = false; form.tema.focus(); return; }
   if (r.passo === 3 && !r.tipos.length) { form.querySelector('#tipos-erro').hidden = false; form.querySelector('[name=tipos]').focus(); return; }
   if (r.passo < TOTAL_PASSOS) { r.passo++; transicao(desenharPasso, 'frente'); return; }
@@ -577,6 +624,11 @@ function telaCriando(etapas) {
   const barra = el.querySelector('.criando-barra span');
   return {
     signal: ctrl.signal,
+    titulo(t, sub, comIA = true) {
+      el.querySelector('#criando-titulo').textContent = t;
+      if (sub) el.querySelector('.sub').textContent = sub;
+      el.querySelector('.ia-selo').hidden = !comIA;
+    },
     etapa(i, texto) {
       lis.forEach((li, j) => {
         li.classList.toggle('feita', j < i); li.classList.toggle('agora', j === i);
@@ -593,75 +645,243 @@ function telaCriando(etapas) {
   };
 }
 
-async function criarProva(pedido) {
+/** Monta e salva uma prova a partir do pedido (banco primeiro, IA completa o que faltar).
+ *  Não mexe na tela: avisa o andamento por `etapa('criar'|'conferir'|'figuras'|'montar')`.
+ *  Devolve { prova, recados }; prova = null quando não deu para montar nenhuma questão.
+ *  Cancelamento (AbortError) sobe para quem chamou. */
+async function montarProva(pedido, signal, etapa = () => {}) {
   const cfg = getConfig();
   const recados = [];
   const doBanco = pedido.modo === 'ia' ? [] : escolherDoBanco(getBanco(), pedido, pedido.quantidade);
   let questoes = doBanco.map((q) => prepararParaProva(q, pedido));
   const faltam = pedido.quantidade - questoes.length;
-  const usarIA = faltam > 0 && pedido.modo !== 'banco' && iaDisponivel(cfg);
-
-  if (usarIA) {
-    const etapas = [
-      pedido.modo === 'ia' ? 'Preparando o pedido' : `Encontrei ${plural(questoes.length, 'questão', 'questões')} no seu banco`,
-      `Criando ${plural(faltam, 'questão nova', 'questões novas')}`,
-    ];
-    if (cfg.ia.revisora) etapas.push('Conferindo as respostas');
-    if (pedido.figuras) etapas.push('Criando e conferindo as figuras');
-    etapas.push('Montando a prova e a versão adaptada');
-    const tela = telaCriando(etapas);
-    tela.etapa(1);
+  if (faltam > 0 && pedido.modo !== 'banco' && iaDisponivel(cfg)) {
+    etapa('criar');
     try {
-      const novas = await gerarQuestoes(cfg, pedido, faltam, questoes.map((q) => q.enunciado.slice(0, 120)), tela.signal);
+      const novas = await gerarQuestoes(cfg, pedido, faltam, questoes.map((q) => q.enunciado.slice(0, 120)), signal);
       let preparadas = novas.map((q) => embaralharAlternativas(prepararParaProva(q, pedido)));
       if (cfg.ia.revisora) {
-        tela.etapa(2);
+        etapa('conferir');
         try {
-          const revisoes = await revisarQuestoes(cfg, preparadas, tela.signal);
+          const revisoes = await revisarQuestoes(cfg, preparadas, signal);
           preparadas = preparadas.map((q, i) => ({ ...q, alertas: [...q.alertas, ...(revisoes[i] || [])] }));
         } catch (e) {
           if (e.name === 'AbortError') throw e;
           recados.push('A conferência automática não pôde ser feita agora. Confira as questões novas com atenção.');
         }
       }
-      if (preparadas.some((q) => q.figura)) {
-        tela.etapa(etapas.indexOf('Criando e conferindo as figuras'));
-        await prepararFiguras(cfg, preparadas, tela.signal);
-      }
+      if (preparadas.some((q) => q.figura)) { etapa('figuras'); await prepararFiguras(cfg, preparadas, signal); }
       preparadas.forEach((q) => delete q.figura);
-      tela.etapa(etapas.length - 1);
+      etapa('montar');
       adicionarAoBanco(preparadas.filter((q) => !q.alertas.some((a) => a.nivel === 'erro')), 'ia');
       questoes = [...questoes, ...preparadas];
     } catch (e) {
-      tela.fechar();
-      if (e.name === 'AbortError') { aviso('Criação cancelada. Suas escolhas foram mantidas.'); return false; }
+      if (e.name === 'AbortError') throw e;
       console.error(e);
       recados.push(e instanceof ErroIA ? e.message : 'Não foi possível criar questões novas agora.');
     }
-    tela.fechar();
   }
-
-  if (!questoes.length) {
-    abrirGaveta('Não encontrei questões', `<p>${esc(recados[0] || 'Seu banco ainda não tem questões desse conteúdo para essa série.')}</p>
-      <p>Você pode:</p><ul><li>escrever o conteúdo de outro jeito;</li><li>escolher outra série;</li><li>${iaDisponivel(cfg) ? 'escolher “Meu banco + questões novas” no último passo.' : 'adicionar questões no Banco.'}</li></ul>
-      <button class="botao principal cheio" data-fechar-ok>Entendi</button>`, (c) => { c.querySelector('[data-fechar-ok]').onclick = fecharGaveta; });
-    return false;
-  }
+  if (!questoes.length) return { prova: null, recados };
   if (questoes.length < pedido.quantidade) recados.push(`A prova ficou com ${questoes.length} de ${pedido.quantidade} questões. Use “+ Questão” no rodapé para completar.`);
-
   const prova = {
     id: uid(),
     titulo: `Avaliação de ${pedido.materia} — ${pedido.tema.split(/[:.\n]/)[0].slice(0, 60)}`,
     materia: pedido.materia, serie: pedido.serie, turma: pedido.turma, tema: pedido.tema,
     dificuldade: pedido.dificuldade, data: new Date().toLocaleDateString('pt-BR'),
-    instrucoes: getConfig().escola.instrucoes || '',
+    instrucoes: cfg.escola.instrucoes || '',
     temAdaptada: pedido.adaptada, pedido, questoes, criadaEm: Date.now(),
   };
   salvarProva(prova);
-  sessionStorage.setItem('pf.recados', JSON.stringify(recados));
+  return { prova, recados };
+}
+
+/** Vai precisar da IA para este pedido? (decide se mostra a tela "Preparando") */
+function precisaIA(pedido) {
+  const cfg = getConfig();
+  if (pedido.modo === 'banco' || !iaDisponivel(cfg)) return false;
+  return pedido.modo === 'ia' || escolherDoBanco(getBanco(), pedido, pedido.quantidade).length < pedido.quantidade;
+}
+
+async function criarProva(pedido) {
+  const cfg = getConfig();
+  let tela = null;
+  const etapas = [pedido.modo === 'ia' ? 'Preparando o pedido' : 'Procurando no seu banco', 'Criando as questões novas'];
+  if (cfg.ia.revisora) etapas.push('Conferindo as respostas');
+  if (pedido.figuras) etapas.push('Criando e conferindo as figuras');
+  etapas.push('Montando a prova e a versão adaptada');
+  const passo = { criar: 1, conferir: etapas.indexOf('Conferindo as respostas'), figuras: etapas.indexOf('Criando e conferindo as figuras'), montar: etapas.length - 1 };
+  if (precisaIA(pedido)) { tela = telaCriando(etapas); tela.etapa(0); }
+  let r;
+  try {
+    r = await montarProva(pedido, tela?.signal, (k) => tela?.etapa(passo[k]));
+  } catch (e) {
+    tela?.fechar();
+    if (e.name === 'AbortError') { aviso('Criação cancelada. Suas escolhas foram mantidas.'); return false; }
+    throw e;
+  }
+  tela?.fechar();
+  if (!r.prova) {
+    abrirGaveta('Não encontrei questões', `<p>${esc(r.recados[0] || 'Seu banco ainda não tem questões desse conteúdo para essa série.')}</p>
+      <p>Você pode:</p><ul><li>escrever o conteúdo de outro jeito;</li><li>escolher outra série;</li><li>${iaDisponivel(cfg) ? 'escolher “Meu banco + questões novas” no último passo.' : 'adicionar questões no Banco.'}</li></ul>
+      <button class="botao principal cheio" data-fechar-ok>Entendi</button>`, (c) => { c.querySelector('[data-fechar-ok]').onclick = fecharGaveta; });
+    return false;
+  }
+  sessionStorage.setItem('pf.recados', JSON.stringify(r.recados));
   sessionStorage.setItem('pf.celebrar', '1');
-  location.hash = `#/prova/${prova.id}`;
+  location.hash = `#/prova/${r.prova.id}`;
   return true;
+}
+
+/* =================== CRIAR VÁRIAS PROVAS (LOTE) ===================
+   Cada linha vira uma prova (matéria, ano, conteúdo, turma). O formato vale
+   para todas. A criação roda uma prova por vez, com o andamento de cada uma. */
+let lote = null;
+function novoLote() {
+  let ultimo = {};
+  try { ultimo = JSON.parse(localStorage.getItem('pf.ultimoPedido')) || {}; } catch {}
+  const base = novoRascunho();
+  const linha = () => ({ materia: ultimo.materia || 'Matemática', serie: ultimo.serie || '5º ano', tema: '', turma: '' });
+  return {
+    linhas: [linha(), linha()],
+    dificuldade: base.dificuldade, quantidade: base.quantidade, tipos: base.tipos,
+    adaptada: base.adaptada, figuras: base.figuras, modo: base.modo,
+  };
+}
+
+function telaLote() {
+  titulo('Criar várias provas');
+  if (!lote) lote = novoLote();
+  const L = lote;
+  const temIA = iaDisponivel(getConfig());
+  const opcoesSel = (lista, atual) => lista.map((v) => `<option ${v === atual ? 'selected' : ''}>${esc(v)}</option>`).join('');
+  main.innerHTML = `
+    <div class="modo-criar" aria-hidden="true"><span class="modo-icone">${ic('lapis')}</span>Criar provas</div>
+    <div class="segmentos segmentos-criar" role="tablist" aria-label="Quantas provas">
+      <button type="button" role="tab" aria-selected="false" data-ir-modo="uma">Uma prova</button>
+      <button type="button" role="tab" aria-selected="true">Várias provas</button>
+    </div>
+    <h1>Quais provas?</h1>
+    <p class="sub">Uma prova por cartão.</p>
+    <form id="form-lote" novalidate>
+      <ol class="lote-lista">${L.linhas.map((l, k) => `<li class="lote-item" data-k="${k}">
+        <div class="lote-topo"><strong>Prova ${k + 1}</strong>
+          ${L.linhas.length > 1 ? `<button type="button" class="alt-remover lote-remover" data-remover="${k}" aria-label="Remover prova ${k + 1}">${ic('fechar')}</button>` : ''}</div>
+        <div class="duas-colunas lote-colunas">
+          <div class="campo"><label for="l-mat-${k}">Matéria</label><select id="l-mat-${k}" data-campo="materia">${opcoesSel(todasMaterias(), l.materia)}<option value="${OUTRA}" ${l.materia === OUTRA ? 'selected' : ''}>+ Outra…</option></select></div>
+          <div class="campo"><label for="l-ser-${k}">Ano / série</label><select id="l-ser-${k}" data-campo="serie">${opcoesSel(SERIES, l.serie)}</select></div>
+        </div>
+        ${l.materia === OUTRA ? `<div class="campo"><label for="l-outra-${k}">Nome da matéria</label>
+          <input type="text" id="l-outra-${k}" data-campo="materiaOutra" value="${esc(l.materiaOutra || '')}" placeholder="Ex.: Filosofia" autocomplete="off" />
+          <div class="erro-campo erro-outra" hidden>${ic('alerta', 'p')} Escreva o nome da matéria.</div></div>` : ''}
+        <div class="campo"><label for="l-tema-${k}">Conteúdo</label>
+          <input type="text" id="l-tema-${k}" data-campo="tema" value="${esc(l.tema)}" placeholder="Ex.: frações: comparar e somar" autocomplete="off" />
+          <div class="erro-campo erro-tema" hidden>${ic('alerta', 'p')} Escreva o conteúdo desta prova.</div></div>
+        <div class="campo"><label for="l-turma-${k}">Turma <span class="opcional">(opcional)</span></label>
+          <input type="text" id="l-turma-${k}" data-campo="turma" value="${esc(l.turma)}" placeholder="Ex.: 5º ano A" autocomplete="off" /></div>
+      </li>`).join('')}</ol>
+      <button type="button" class="alt-adicionar lote-adicionar" id="b-lote-mais">${ic('mais', 'p')} Adicionar prova</button>
+
+      <div class="cabeca-secao">Formato para todas</div>
+      <div class="cartao-form">
+        <fieldset style="border:0;padding:0;margin:0 0 20px"><legend class="rotulo">Dificuldade</legend>${fichas('dificuldade', Object.entries(DIFICULDADES), L.dificuldade)}</fieldset>
+        <div class="campo"><span class="rotulo" id="lq-rot">Questões em cada prova</span>
+          <div class="contador" role="group" aria-labelledby="lq-rot">
+            <button type="button" class="botao" data-passo="-1" aria-label="Uma questão a menos">−</button>
+            <output id="lq" aria-live="polite">${L.quantidade}</output>
+            <button type="button" class="botao" data-passo="1" aria-label="Uma questão a mais">+</button>
+          </div></div>
+        <fieldset style="border:0;padding:0;margin:0"><legend class="rotulo">Tipos de questão</legend>${fichas('tipos', Object.entries(TIPOS).map(([v, r]) => [v, r.split(' (')[0]]), L.tipos, 'checkbox')}</fieldset>
+        <div class="erro-campo" id="lote-tipos-erro" hidden>${ic('alerta', 'p')} Marque pelo menos um tipo.</div>
+      </div>
+      <label class="alternar" style="margin-bottom:16px"><input type="checkbox" name="adaptada" ${L.adaptada ? 'checked' : ''}/>
+        <span><strong>Criar também as versões adaptadas</strong></span></label>
+      <div class="cartao-form">
+        <fieldset style="border:0;padding:0;margin:0"><legend class="rotulo">De onde vêm as questões</legend>${fichas('modo', [['misto', 'Banco + novas'], ['banco', 'Só do banco'], ['ia', 'Só novas']].filter(([v]) => temIA || v === 'banco'), L.modo)}</fieldset>
+      </div>
+    </form>
+    <div class="barra-acoes">
+      <button type="button" class="botao" id="b-lote-cancelar">Cancelar</button>
+      <button type="button" class="botao principal grande" id="b-lote-criar">Criar ${plural(L.linhas.length, 'prova', 'provas')}</button>
+    </div>`;
+
+  const form = main.querySelector('#form-lote');
+  const ler = () => {
+    form.querySelectorAll('.lote-item').forEach((li) => {
+      const l = L.linhas[Number(li.dataset.k)];
+      li.querySelectorAll('[data-campo]').forEach((c) => { l[c.dataset.campo] = c.value.trim(); });
+      if (l.tema) li.querySelector('.erro-tema').hidden = true;
+      if (l.materiaOutra && li.querySelector('.erro-outra')) li.querySelector('.erro-outra').hidden = true;
+    });
+    const fd = new FormData(form);
+    L.dificuldade = fd.get('dificuldade'); L.tipos = fd.getAll('tipos'); L.adaptada = fd.get('adaptada') === 'on'; L.modo = fd.get('modo') || 'banco';
+  };
+  form.addEventListener('input', ler);
+  form.addEventListener('change', (e) => {
+    ler();
+    // Escolheu "Outra…" ou saiu dela: redesenha para mostrar/esconder o campo do nome
+    if (e.target.dataset.campo === 'materia' && (e.target.value === OUTRA) !== Boolean(e.target.closest('.lote-item').querySelector('[data-campo=materiaOutra]'))) {
+      const k = e.target.closest('.lote-item').dataset.k; telaLote(); main.querySelector(`#l-outra-${k}`)?.focus();
+    }
+  });
+  form.querySelectorAll('[data-passo]').forEach((b) => (b.onclick = () => { L.quantidade = Math.min(20, Math.max(1, L.quantidade + Number(b.dataset.passo))); form.querySelector('#lq').textContent = L.quantidade; }));
+  form.querySelectorAll('[data-remover]').forEach((b) => (b.onclick = () => {
+    ler(); const k = Number(b.dataset.remover); const [tirada] = L.linhas.splice(k, 1); telaLote();
+    aviso(`Prova ${k + 1} removida.`, { rotulo: 'Desfazer', fn: () => { if (lote !== L) return; L.linhas.splice(k, 0, tirada); if (location.hash === '#/lote') telaLote(); } });
+  }));
+  main.querySelector('#b-lote-mais').onclick = () => {
+    ler(); const ult = L.linhas[L.linhas.length - 1];
+    L.linhas.push({ materia: ult.materia, serie: ult.serie, tema: '', turma: '' });
+    telaLote(); main.querySelector(`#l-tema-${L.linhas.length - 1}`)?.focus();
+  };
+  main.querySelector('[data-ir-modo=uma]').onclick = () => { ler(); location.hash = '#/nova'; };
+  main.querySelector('#b-lote-cancelar').onclick = () => { lote = null; location.hash = '#/'; };
+  main.querySelector('#b-lote-criar').onclick = async () => {
+    ler();
+    const itens = [...form.querySelectorAll('.lote-item')];
+    const semNome = itens.filter((li) => { const l = L.linhas[Number(li.dataset.k)]; return l.materia === OUTRA && !l.materiaOutra; });
+    semNome.forEach((li) => (li.querySelector('.erro-outra').hidden = false));
+    const vazias = itens.filter((li) => !L.linhas[Number(li.dataset.k)].tema);
+    vazias.forEach((li) => (li.querySelector('.erro-tema').hidden = false));
+    const primeiro = semNome[0]?.querySelector('[data-campo=materiaOutra]') || vazias[0]?.querySelector('[data-campo=tema]');
+    if (primeiro) { primeiro.focus(); return; }
+    L.linhas.forEach((l) => { if (l.materia === OUTRA) { l.materia = guardarMateria(l.materiaOutra); l.materiaOutra = ''; } });
+    if (!L.tipos.length) { form.querySelector('#lote-tipos-erro').hidden = false; return; }
+    await criarLote(L);
+  };
+}
+
+async function criarLote(L) {
+  const pedidos = L.linhas.map((l) => ({
+    materia: l.materia, serie: l.serie, turma: l.turma, tema: l.tema, observacoes: '',
+    dificuldade: L.dificuldade, quantidade: L.quantidade, tipos: L.tipos, adaptada: L.adaptada, figuras: L.figuras, modo: L.modo,
+  }));
+  const nomes = pedidos.map((p) => `${p.materia} · ${p.tema.split(/[:.\n]/)[0].slice(0, 40)}`);
+  const tela = telaCriando(nomes);
+  tela.titulo(`Criando ${plural(pedidos.length, 'prova', 'provas')}`, 'Uma de cada vez. Pode deixar esta tela aberta.', pedidos.some(precisaIA));
+  const criadas = [], falhas = [];
+  for (let k = 0; k < pedidos.length; k++) {
+    tela.etapa(k);
+    try {
+      const r = await montarProva(pedidos[k], tela.signal);
+      if (r.prova) criadas.push(r.prova); else falhas.push({ nome: nomes[k], motivo: r.recados[0] || 'Não encontrei questões desse conteúdo.' });
+    } catch (e) {
+      if (e.name === 'AbortError') break;
+      console.error(e); falhas.push({ nome: nomes[k], motivo: 'Erro inesperado ao montar esta prova.' });
+    }
+  }
+  tela.etapa(pedidos.length);
+  tela.fechar();
+  if (!criadas.length) { aviso(falhas.length ? 'Nenhuma prova foi criada. Confira os conteúdos.' : 'Criação cancelada.'); return; }
+  lote = null;
+  location.hash = '#/provas';
+  setTimeout(() => {
+    celebrar(`${plural(criadas.length, 'prova pronta', 'provas prontas')}!`);
+    const curtas = criadas.filter((p) => p.questoes.length < L.quantidade).length;
+    if (curtas && !falhas.length) aviso(`${plural(curtas, 'prova ficou', 'provas ficaram')} com menos de ${L.quantidade} questões. Abra para completar.`);
+    if (falhas.length) abrirGaveta('Algumas provas não saíram', `<ul class="menu-lista">${falhas.map((f) => `<li><button type="button">${ic('alerta')}<span>${esc(f.nome)}<small>${esc(f.motivo)}</small></span></button></li>`).join('')}</ul>
+      <p class="dica" style="margin-top:12px">As outras ${plural(criadas.length, 'prova foi criada', 'provas foram criadas')} normalmente.</p>
+      <button class="botao principal cheio" data-ok>Entendi</button>`, (c) => { c.querySelector('[data-ok]').onclick = fecharGaveta; });
+  }, 450);
 }
 
 /* =================== FIGURAS DAS QUESTÕES =================== */
@@ -1217,10 +1437,11 @@ function cabecalhoHTML(p, escola, editavel = true) {
     </div>
     <div class="cab-info">
       <div class="cab-grade">
-        ${celula('Disciplina', esc(p.materia || ''))}
-        ${celula('Professor(a)', esc(escola.professora || '') || '&nbsp;')}
-        ${celula('Turma', esc(p.turma || p.serie || ''), 'turma')}
-        ${celula('Data', esc(p.data || '') || '&nbsp;', 'data')}
+        ${camposCabecalho(escola).map((c) => c === 'Disciplina' ? celula(c, esc(p.materia || ''))
+          : c === 'Professor(a)' ? celula(c, esc(escola.professora || '') || '&nbsp;')
+          : c === 'Turma' ? celula(c, esc(p.turma || p.serie || ''), 'turma')
+          : c === 'Data' ? celula(c, esc(p.data || '') || '&nbsp;', 'data')
+          : celula(esc(c), '&nbsp;')).join('')}
       </div>
       <div class="cab-nota"><span class="cab-rotulo">Nota</span></div>
     </div>
@@ -1452,7 +1673,7 @@ function telaBanco() {
   main.querySelector('#filtros-ativos').onclick = (e) => { const k = e.target.closest('[data-limpa]')?.dataset.limpa; if (k) { filtroBanco[k] = ''; desenharLista(); } };
   main.querySelector('#b-mais').onclick = () => { filtroBanco.limite += 25; desenharLista(); };
   main.querySelector('#b-filtros').onclick = () => abrirGaveta('Filtrar questões', `<form id="f-filtros"><div class="cartao-form">
-      <div class="campo"><label for="ff-materia">Matéria</label><select id="ff-materia" name="materia"><option value="">Todas</option>${MATERIAS.map((m) => `<option ${m === filtroBanco.materia ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="campo"><label for="ff-materia">Matéria</label><select id="ff-materia" name="materia"><option value="">Todas</option>${todasMaterias().map((m) => `<option ${m === filtroBanco.materia ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class="campo"><label for="ff-serie">Ano / série</label><select id="ff-serie" name="serie"><option value="">Todas</option>${SERIES.map((s) => `<option ${s === filtroBanco.serie ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
       <div class="campo"><label for="ff-origem">Origem</label><select id="ff-origem" name="origem"><option value="">Todas</option>${ORIGENS.map(([v, r]) => `<option value="${v}" ${v === filtroBanco.origem ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
       </div><div class="acoes"><button type="button" class="botao" id="ff-limpar">Limpar</button><button class="botao principal" style="flex:1">Mostrar questões</button></div></form>`, (c) => {
@@ -1511,7 +1732,7 @@ function formBuscaInternet(depois) {
   abrirGaveta('Buscar na internet com IA', `<form id="form-busca" novalidate>
     <p class="dica" style="margin:0 0 16px">A IA procura questões que já existem e traz o link de onde vieram. Você escolhe quais guardar.</p>
     <div class="duas-colunas">
-      <div class="campo"><label for="b-materia">Matéria</label><select id="b-materia" name="materia">${MATERIAS.map((m) => `<option ${m === (filtroBanco.materia || ultimo.materia || 'Matemática') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="campo"><label for="b-materia">Matéria</label><select id="b-materia" name="materia">${todasMaterias().map((m) => `<option ${m === (filtroBanco.materia || ultimo.materia || 'Matemática') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class="campo"><label for="b-serie">Ano / série</label><select id="b-serie" name="serie">${SERIES.map((s) => `<option ${s === (filtroBanco.serie || ultimo.serie || '5º ano') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
     </div>
     <div class="campo"><label for="b-tema">Conteúdo</label>
@@ -1619,7 +1840,7 @@ function formQuestao(depois, existente = null) {
   const nAlts = Math.max(4, (x.alternativas || []).length);
   abrirGaveta(existente ? 'Editar questão' : 'Escrever questão', `<form id="form-q" novalidate>
     <div class="duas-colunas">
-      <div class="campo"><label for="q-materia">Matéria</label><select id="q-materia" name="materia">${MATERIAS.map((m) => `<option ${m === (x.materia || filtroBanco.materia || 'Matemática') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="campo"><label for="q-materia">Matéria</label><select id="q-materia" name="materia">${todasMaterias().map((m) => `<option ${m === (x.materia || filtroBanco.materia || 'Matemática') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
       <div class="campo"><label for="q-serie">Ano / série</label><select id="q-serie" name="serie">${SERIES.map((s) => `<option ${s === (x.serie || filtroBanco.serie || '5º ano') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
     </div>
     <div class="campo"><label for="q-tema">Conteúdo</label><input type="text" id="q-tema" name="tema" placeholder="Frações" value="${esc(x.tema || '')}" /></div>
@@ -1724,8 +1945,14 @@ function telaAjustes(ancora) {
               <button type="button" class="botao pequeno perigo" id="b-tirar-logo" ${e.logo ? '' : 'hidden'}>Remover</button>
             </div></div>
         </div>
-        <div class="cabeca-secao">Como fica o topo da prova</div>
+        <div class="cabeca-secao cabeca-com-acao">Topo da prova
+          <button type="button" class="botao fantasma pequeno" id="b-campos-padrao" ${e.campos?.length ? '' : 'hidden'}>Voltar ao padrão</button></div>
         <div class="previa-cabecalho" id="previa"></div>
+        <div class="importar-cab">
+          <label class="botao cheio" for="e-word">${ic('doc', 'p')} Importar cabeçalho de um Word</label>
+          <input type="file" id="e-word" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr" />
+          <p class="dica" id="importar-resultado" role="status">Tem uma prova antiga da escola? O app copia o cabeçalho dela.</p>
+        </div>
         <button class="botao principal grande cheio" style="margin-top:16px">Salvar dados da escola</button>
       </form>
     </section>
@@ -1761,23 +1988,54 @@ function telaAjustes(ancora) {
 
   const form = main.querySelector('#form-escola');
   let logo = e.logo;
+  let campos = e.campos || [];
   const previa = () => {
     const fd = new FormData(form);
     const instr = (fd.get('instrucoes') || '').trim();
     main.querySelector('#previa').innerHTML = cabecalhoHTML({ materia: 'Matemática', serie: '5º ano', data: new Date().toLocaleDateString('pt-BR') },
-      { nome: fd.get('nome'), cidade: fd.get('cidade'), professora: fd.get('professora'), logo }, false)
+      { nome: fd.get('nome'), cidade: fd.get('cidade'), professora: fd.get('professora'), logo, campos }, false)
       + (instr ? `<div class="instrucoes" style="margin-top:10px"><strong>Instruções:</strong><div>${md(instr)}</div></div>` : '');
     main.querySelector('#b-tirar-logo').hidden = !logo;
+    main.querySelector('#b-campos-padrao').hidden = !campos.length;
   };
   previa();
   form.oninput = previa;
   main.querySelector('#e-logo').onchange = async (ev) => { const arq = ev.target.files[0]; if (arq) { logo = await reduzirImagem(arq, 240); previa(); } };
   main.querySelector('#b-tirar-logo').onclick = () => { logo = ''; previa(); };
+  main.querySelector('#b-campos-padrao').onclick = () => {
+    const antes = campos; campos = []; previa();
+    aviso('Campos do cabeçalho voltaram ao padrão.', { rotulo: 'Desfazer', fn: () => { campos = antes; previa(); } });
+  };
+  main.querySelector('#e-word').onchange = async (ev) => {
+    const arq = ev.target.files[0]; ev.target.value = '';
+    if (!arq) return;
+    const res = main.querySelector('#importar-resultado');
+    res.textContent = 'Lendo o arquivo…';
+    try {
+      const r = await lerCabecalhoWord(arq);
+      if (!r.achou) { res.textContent = 'Não achei um cabeçalho nesse arquivo. Preencha os campos abaixo.'; return; }
+      const antes = { nome: form.nome.value, cidade: form.cidade.value, professora: form.professora.value, instrucoes: form.instrucoes.value, logo, campos };
+      if (r.nome) form.nome.value = r.nome;
+      if (r.cidade) form.cidade.value = r.cidade;
+      if (r.professora) form.professora.value = r.professora;
+      if (r.instrucoes) form.instrucoes.value = r.instrucoes;
+      if (r.logo) logo = await reduzirImagem(r.logo, 240);
+      if (r.campos.length) campos = r.campos;
+      previa();
+      const itens = [r.logo && 'logotipo', r.nome && 'nome da escola', r.campos.length && plural(r.campos.length, 'campo', 'campos'), r.instrucoes && 'instruções'].filter(Boolean);
+      res.innerHTML = `<strong>${ic('certo', 'p')} Encontrei: ${esc(itens.join(', '))}.</strong> Confira a prévia e salve.`;
+      main.querySelector('#previa').scrollIntoView({ behavior: menosMovimento() ? 'auto' : 'smooth', block: 'center' });
+      aviso('Cabeçalho importado.', { rotulo: 'Desfazer', fn: () => {
+        form.nome.value = antes.nome; form.cidade.value = antes.cidade; form.professora.value = antes.professora; form.instrucoes.value = antes.instrucoes;
+        logo = antes.logo; campos = antes.campos; previa(); res.textContent = 'Importação desfeita.';
+      } });
+    } catch (err) { console.error(err); res.textContent = err.message || 'Não consegui ler esse arquivo.'; }
+  };
   form.onsubmit = (ev) => {
     ev.preventDefault();
     const fd = new FormData(form);
     try {
-      salvarConfig({ ...getConfig(), escola: { nome: fd.get('nome').trim(), cidade: fd.get('cidade').trim(), professora: fd.get('professora').trim(), instrucoes: fd.get('instrucoes').replace(/\r/g, '').trim(), logo } });
+      salvarConfig({ ...getConfig(), escola: { nome: fd.get('nome').trim(), cidade: fd.get('cidade').trim(), professora: fd.get('professora').trim(), instrucoes: fd.get('instrucoes').replace(/\r/g, '').trim(), logo, campos } });
       aviso('Dados da escola salvos.');
     } catch (err) { aviso(err.message); }
   };

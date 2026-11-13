@@ -8,6 +8,7 @@ import {
 } from 'docx';
 import { textoGabarito, TIPOS } from './montador.js';
 import { obterImagem } from './imagens.js';
+import { camposCabecalho } from './importar-cabecalho.js';
 
 /** Configuração da versão adaptada (a professora liga e desliga cada parte). */
 export function cfgAdaptada(prova) {
@@ -60,15 +61,16 @@ function cabecalho(prova, escola, tam) {
     columnSpan: span, borders: bordas, margins: margens,
     children: [new Paragraph({ children: [rotulo(titulo)] }), new Paragraph({ children: [new TextRun({ text: valor || ' ', size: tam })], spacing: alto ? { before: 160 } : undefined })],
   });
+  // Campos da grade: os padrões ou os que vieram do cabeçalho importado
+  const valor = { Disciplina: prova.materia, 'Professor(a)': escola.professora || '', Turma: prova.turma || prova.serie, Data: prova.data || '' };
+  const campos = camposCabecalho(escola);
+  const total = campos.length + 1;
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [
-      new TableRow({ children: [new TableCell({ columnSpan: 5, children: linhas, borders: bordas, margins: { top: 100, bottom: 100, left: 150, right: 150 } })] }),
-      new TableRow({ children: [cel('Aluno(a)', '', 4, true), cel('Nº', '', 1, true)] }),
-      new TableRow({ children: [
-        cel('Disciplina', prova.materia), cel('Professor(a)', escola.professora || ''),
-        cel('Turma', prova.turma || prova.serie), cel('Data', prova.data || ''), cel('Nota', ''),
-      ] }),
+      new TableRow({ children: [new TableCell({ columnSpan: total, children: linhas, borders: bordas, margins: { top: 100, bottom: 100, left: 150, right: 150 } })] }),
+      new TableRow({ children: [cel('Aluno(a)', '', total - 1, true), cel('Nº', '', 1, true)] }),
+      new TableRow({ children: [...campos.map((c) => cel(c, valor[c] || '')), cel('Nota', '')] }),
     ],
   });
 }
