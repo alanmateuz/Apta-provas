@@ -869,7 +869,7 @@ a.linha:active { transform: scale(0.99); }
 .linha-data .dica-editar { margin: 0; }
 .data-prova { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 8px 6px 14px; border-radius: var(--r-md); background: var(--superficie); box-shadow: var(--sombra-cartao), var(--contorno); font-weight: 600; color: var(--texto); cursor: pointer; }
 .data-prova .ic { color: var(--tinta); }
-.data-prova span { flex: 1; }
+.data-prova .data-rotulo { flex: 1; white-space: nowrap; }
 .data-prova input[type='date'] { width: auto; min-height: 40px; padding: 6px 8px; border: 0; border-radius: 8px; outline: none; background: transparent; box-shadow: none; font: inherit; font-weight: 600; color: var(--tinta); text-align: right; -webkit-appearance: none; appearance: none; }
 .data-prova input[type='date']:focus-visible { box-shadow: 0 0 0 2px var(--amarelo-forte); }
 
@@ -888,3 +888,10 @@ a.linha:active { transform: scale(0.99); }
   .so-imprimir { display: inline; }
   .q-alts li { padding-right: 0; }
 }
+/* Data da prova: um ícone só (calendário à esquerda), valor à direita e seta ›, como as linhas de Ajustes */
+.data-prova .chevron { display: grid; place-items: center; color: var(--chevron); padding-right: 4px; }
+.data-prova .chevron .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+.data-prova input[type='date']::-webkit-calendar-picker-indicator { display: none; }
+.data-prova input[type='date']::-webkit-inner-spin-button { display: none; }
+.data-prova input[type='date'] { padding-right: 0; cursor: pointer; }
+.data-prova .chevron, .data-prova .chevron .ic { color: var(--chevron); flex: none; }

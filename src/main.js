@@ -97,6 +97,7 @@ const ICONES = {
   embaralhar: '<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4"/><path d="M19 5l2 2-2 2M19 15l2 2-2 2"/>',
   inclusao: '<circle cx="12" cy="4.5" r="2"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M8.5 21l3.5-6 3.5 6"/>',
   relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  calendario: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
 };
 /** Um ícone por matéria: a professora reconhece a prova de relance. */
 const ICONES_MATERIA = {
@@ -849,8 +850,9 @@ function telaProva(id) {
     </div>
     <div id="faixa-versao" class="nao-imprimir"></div>
     <div class="linha-data nao-imprimir">
-      <label class="data-prova">${ic('relogio', 'p')}<span>Data da prova</span>
-        <input type="date" id="data-prova" value="${dataParaInput(prova.data)}" /></label>
+      <label class="data-prova">${ic('calendario', 'p')}<span class="data-rotulo">Data da prova</span>
+        <input type="date" id="data-prova" value="${dataParaInput(prova.data)}" />
+        <span class="chevron" aria-hidden="true">${ic('seta')}</span></label>
     </div>
     <div id="recados" class="nao-imprimir"></div>
     <div id="painel-revisao" class="nao-imprimir"></div>
@@ -880,7 +882,12 @@ function telaProva(id) {
   });
   folha.addEventListener('click', aoClicarFolha);
   folha.addEventListener('change', aoMudarFolha);
-  // Data da prova: nem sempre é o dia em que a prova foi criada
+  // Data da prova: nem sempre é o dia em que a prova foi criada.
+  // A linha inteira abre o calendário do aparelho (um ícone só, o da esquerda).
+  main.querySelector('.data-prova').addEventListener('click', (e) => {
+    const inp = main.querySelector('#data-prova');
+    if (e.target !== inp) { e.preventDefault(); try { inp.showPicker(); } catch { inp.focus(); } }
+  });
   main.querySelector('#data-prova').addEventListener('change', (e) => {
     const [a, m, d] = e.target.value.split('-');
     estado.prova.data = e.target.value ? `${d}/${m}/${a}` : '';
