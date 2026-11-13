@@ -21,6 +21,29 @@ registerSW({ immediate: true });
 
 const main = document.getElementById('conteudo');
 
+/* =================== Movimento =================== */
+const menosMovimento = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const usaTransicao = () => Boolean(document.startViewTransition) && !menosMovimento() && !document.hidden;
+/** Troca o conteúdo com View Transitions: empurra para o lado ao entrar/sair de uma tela
+ *  e só esmaece ao trocar de aba. Sem suporte ou com "reduzir movimento", troca direto.
+ *  Garantia: se o navegador não chamar a troca em 400 ms (aba em segundo plano, por
+ *  exemplo), a tela é desenhada mesmo assim, sem animação. */
+function transicao(desenhar, direcao = 'aba') {
+  if (!usaTransicao()) { desenhar(); return; }
+  const raiz = document.documentElement;
+  let feito = false;
+  const rodar = () => { if (feito) return; feito = true; desenhar(); };
+  raiz.dataset.dir = direcao;
+  const t = document.startViewTransition(rodar);
+  const limpar = () => { if (raiz.dataset.dir === direcao) delete raiz.dataset.dir; };
+  t.finished.then(limpar, limpar);
+  setTimeout(() => { if (!feito) { try { t.skipTransition(); } catch {} rodar(); limpar(); } }, 400);
+}
+/** Vibração curta (Android); ignorada onde não existe. */
+const vibrar = (padrao = 10) => { try { navigator.vibrate?.(padrao); } catch {} };
+/** Reinicia a animação de entrada em cascata das listas. */
+function cascata() { main.classList.remove('cascata'); void main.offsetWidth; main.classList.add('cascata'); }
+
 /* =================== Ícones (traço simples, 24px) =================== */
 const ICONES = {
   casa: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -79,11 +102,19 @@ function aviso(msg, acao) {
     const b = document.createElement('button');
     b.className = 'botao pequeno';
     b.textContent = acao.rotulo;
-    b.onclick = () => { acao.fn(); el.remove(); };
+    b.onclick = () => { acao.fn(); sairAviso(el); };
     el.append(b);
   }
   caixa.append(el);
-  setTimeout(() => el.remove(), acao ? 9000 : 4500);
+  setTimeout(() => sairAviso(el), acao ? 9000 : 4500);
+}
+/** Faz o aviso deslizar para fora antes de sumir. */
+function sairAviso(el) {
+  if (!el.isConnected || el.classList.contains('saindo')) return;
+  if (menosMovimento()) { el.remove(); return; }
+  el.classList.add('saindo');
+  el.addEventListener('animationend', () => el.remove(), { once: true });
+  setTimeout(() => el.remove(), 400);
 }
 
 function baixarArquivo(nome, conteudo, tipo = 'application/json') {
@@ -96,7 +127,9 @@ function baixarArquivo(nome, conteudo, tipo = 'application/json') {
 /* =================== Gaveta (bottom sheet) ===================
    No celular sobe de baixo (zona do polegar); no computador vira diálogo. */
 const gavetaEl = document.getElementById('gaveta');
+let fechandoGaveta = null;
 function abrirGaveta(titulo, corpo, aoMontar) {
+  if (fechandoGaveta) { clearTimeout(fechandoGaveta); fechandoGaveta = null; gavetaEl.classList.remove('fechando'); }
   gavetaEl.innerHTML = `<div class="gaveta-cabeca"><h2 id="gaveta-titulo">${esc(titulo)}</h2>
     <button class="botao fantasma icone" data-fechar aria-label="Fechar">${ic('fechar')}</button></div>
     <div class="gaveta-corpo">${corpo}</div>`;
@@ -104,7 +137,13 @@ function abrirGaveta(titulo, corpo, aoMontar) {
   aoMontar?.(gavetaEl.querySelector('.gaveta-corpo'));
   if (!gavetaEl.open) gavetaEl.showModal();
 }
-function fecharGaveta() { if (gavetaEl.open) gavetaEl.close(); }
+/** Fecha a gaveta descendo (no celular) antes de sumir. */
+function fecharGaveta() {
+  if (!gavetaEl.open || fechandoGaveta) return;
+  if (menosMovimento()) { gavetaEl.close(); return; }
+  gavetaEl.classList.add('fechando');
+  fechandoGaveta = setTimeout(() => { fechandoGaveta = null; gavetaEl.classList.remove('fechando'); gavetaEl.close(); }, 200);
+}
 gavetaEl.addEventListener('click', (e) => { if (e.target === gavetaEl) fecharGaveta(); }); // toque fora fecha
 
 /** Monta uma lista de ações para a gaveta. */
@@ -126,9 +165,14 @@ function linha({ href, icone, cor = '', titulo: t, meta = '', valor = '', seta =
 }
 
 /* =================== Conexão =================== */
+let estavaOnline = navigator.onLine;
 function atualizarConexao() {
   const el = document.getElementById('conexao');
   const on = navigator.onLine;
+  if (on !== estavaOnline) {
+    aviso(on ? 'Internet de volta. A criação automática voltou a funcionar.' : 'Sem internet. Tudo continua funcionando com o seu banco de questões.');
+    estavaOnline = on;
+  }
   el.textContent = on ? 'Online' : 'Sem internet';
   el.title = on ? 'Com internet' : 'Sem internet: o app continua funcionando com o banco de questões';
   el.classList.toggle('offline', !on);
@@ -148,21 +192,38 @@ const NAV = [
 document.getElementById('nav').innerHTML = NAV.map((n) => `<a href="#/${n.rota}" class="${n.classe || ''}" data-rota="${n.rota}">
   <span class="pilula">${ic(n.icone)}</span><span>${n.rotulo}</span></a>`).join('');
 
+/** Telas "empilhadas" (criar e editar) entram deslizando da direita, como no iPhone;
+ *  trocar de aba só esmaece. */
+const EMPILHADAS = ['nova', 'prova'];
+let rotaAnterior = null;
+function direcaoEntre(de, para) {
+  if (de === null || de === para) return null;
+  if (EMPILHADAS.includes(para) && !EMPILHADAS.includes(de)) return 'frente';
+  if (EMPILHADAS.includes(de) && !EMPILHADAS.includes(para)) return 'tras';
+  return 'aba';
+}
+
 function rotear() {
   const [rotaBruta = '', id] = location.hash.replace(/^#\/?/, '').split('/');
   const rota = ['escola', 'ia'].includes(rotaBruta) ? 'ajustes' : rotaBruta;
   const ativa = rota === 'prova' ? 'provas' : rota;
-  document.querySelectorAll('.nav a').forEach((a) => {
-    if (a.dataset.rota === ativa) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-  });
+  const direcao = direcaoEntre(rotaAnterior, rota);
+  rotaAnterior = rota;
   fecharGaveta();
-  document.body.classList.toggle('foco', rota === 'nova' || rota === 'prova');
-  main.classList.toggle('largo', rota === 'prova');
-  main.onclick = null;
-  main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar');
-  const telas = { '': telaInicio, nova: telaNova, prova: () => telaProva(id), provas: telaProvas, banco: telaBanco, ajustes: () => telaAjustes(rotaBruta) };
-  (telas[rota] || telaInicio)();
-  window.scrollTo(0, 0);
+  const desenhar = () => {
+    document.querySelectorAll('.nav a').forEach((a) => {
+      if (a.dataset.rota === ativa) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    document.body.classList.toggle('foco', rota === 'nova' || rota === 'prova');
+    main.classList.toggle('largo', rota === 'prova');
+    main.onclick = null;
+    if (!direcao || !usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
+    const telas = { '': telaInicio, nova: telaNova, prova: () => telaProva(id), provas: telaProvas, banco: telaBanco, ajustes: () => telaAjustes(rotaBruta) };
+    (telas[rota] || telaInicio)();
+    cascata();
+    window.scrollTo(0, 0);
+  };
+  if (direcao) transicao(desenhar, direcao); else desenhar();
 }
 addEventListener('hashchange', rotear);
 
@@ -365,13 +426,13 @@ function desenharPasso() {
     r.quantidade = Math.min(20, Math.max(1, r.quantidade + Number(b.dataset.passo)));
     form.querySelector('#qtd').textContent = r.quantidade;
   }));
-  form.querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { r.passo = Number(b.dataset.ir); desenharPasso(); }));
+  form.querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { r.passo = Number(b.dataset.ir); transicao(desenharPasso, 'tras'); }));
   main.querySelector('#b-voltar').onclick = () => {
     if (r.passo === 1) { rascunho = null; location.hash = '#/'; return; }
-    r.passo--; desenharPasso();
+    r.passo--; transicao(desenharPasso, 'tras');
   };
   main.querySelector('#b-seguir').onclick = seguir;
-  main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar');
+  if (!usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
   window.scrollTo(0, 0);
   focarTitulo();
 }
@@ -391,7 +452,7 @@ async function seguir() {
   lerPasso(form);
   if (r.passo === 2 && !r.tema) { form.querySelector('#tema-erro').hidden = false; form.tema.focus(); return; }
   if (r.passo === 3 && !r.tipos.length) { form.querySelector('#tipos-erro').hidden = false; form.querySelector('[name=tipos]').focus(); return; }
-  if (r.passo < TOTAL_PASSOS) { r.passo++; desenharPasso(); return; }
+  if (r.passo < TOTAL_PASSOS) { r.passo++; transicao(desenharPasso, 'frente'); return; }
   const pedido = { ...r };
   delete pedido.passo;
   try { localStorage.setItem('pf.ultimoPedido', JSON.stringify(pedido)); } catch {}
@@ -408,14 +469,17 @@ function telaCriando(etapas) {
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-labelledby', 'criando-titulo');
   el.innerHTML = `<div class="criando-caixa">
-    <img src="/icon.svg" alt="" width="64" height="64" style="border-radius:16px" />
+    <img class="criando-icone" src="/icon.svg" alt="" width="64" height="64" />
     <h1 id="criando-titulo" style="margin-top:16px">Preparando sua prova</h1>
     <p class="sub">Leva cerca de 1 minuto. Pode deixar esta tela aberta.</p>
+    <div class="criando-barra" aria-hidden="true"><span></span></div>
     <ol class="etapas" aria-live="polite">${etapas.map((t) => `<li><span class="estado" aria-hidden="true"></span><span>${esc(t)}</span></li>`).join('')}</ol>
+    <div class="esqueleto-folha" aria-hidden="true"><i></i><i></i><i class="curta"></i><i></i><i class="curta"></i></div>
     <button class="botao cheio" id="b-cancelar">Cancelar</button></div>`;
   el.querySelector('#b-cancelar').onclick = () => ctrl.abort();
   document.body.append(el);
   const lis = el.querySelectorAll('.etapas li');
+  const barra = el.querySelector('.criando-barra span');
   return {
     signal: ctrl.signal,
     etapa(i, texto) {
@@ -424,8 +488,13 @@ function telaCriando(etapas) {
         li.querySelector('.estado').textContent = j < i ? '✓' : '';
       });
       if (texto && lis[i]) lis[i].lastElementChild.textContent = texto;
+      barra.style.width = `${Math.round(((i + 0.5) / lis.length) * 100)}%`;
     },
-    fechar: () => el.remove(),
+    fechar: () => {
+      if (menosMovimento()) { el.remove(); return; }
+      el.classList.add('saindo');
+      setTimeout(() => el.remove(), 220);
+    },
   };
 }
 
@@ -495,6 +564,7 @@ async function criarProva(pedido) {
   };
   salvarProva(prova);
   sessionStorage.setItem('pf.recados', JSON.stringify(recados));
+  sessionStorage.setItem('pf.celebrar', '1');
   location.hash = `#/prova/${prova.id}`;
   return true;
 }
@@ -697,7 +767,7 @@ function telaProva(id) {
   sessionStorage.removeItem('pf.recados');
   if (recados.length) main.querySelector('#recados').innerHTML = `<div class="aviso-bloco alerta" role="status">${recados.map((t) => `<p>${esc(t)}</p>`).join('')}</div>`.replace('class="aviso-bloco alerta" role="status">', `class="aviso-bloco alerta" role="status">${ic('alerta')}<div>`).replace(/<\/div>$/, '</div></div>');
 
-  main.querySelectorAll('.segmentos button').forEach((b) => (b.onclick = () => { estado.aba = b.dataset.aba; desenharFolha(); }));
+  main.querySelectorAll('.segmentos button').forEach((b) => (b.onclick = () => { if (estado.aba === b.dataset.aba) return; estado.aba = b.dataset.aba; transicao(desenharFolha, 'segmento'); }));
   main.querySelector('#b-imprimir').onclick = imprimir;
   main.querySelector('#b-word').onclick = baixarVersaoWord;
   main.querySelector('#b-add').onclick = menuAdicionar;
@@ -712,6 +782,22 @@ function telaProva(id) {
   folha.addEventListener('click', aoClicarFolha);
   folha.addEventListener('change', aoMudarFolha);
   desenharFolha();
+  if (sessionStorage.getItem('pf.celebrar')) { sessionStorage.removeItem('pf.celebrar'); setTimeout(() => celebrar('Prova pronta!'), 350); }
+}
+
+/** Comemoração curta quando a prova fica pronta: selo, confete e vibração.
+ *  Com "reduzir movimento", vira só um aviso. */
+function celebrar(texto) {
+  vibrar([12, 40, 18]);
+  if (menosMovimento()) { aviso(texto); return; }
+  const cores = ['#ffc93c', '#34c759', '#0a84ff', '#ff9f0a', '#ff375f', '#bf5af2'];
+  const el = document.createElement('div');
+  el.className = 'celebra nao-imprimir';
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<div class="celebra-centro"><span class="celebra-selo">${ic('certo')}</span><strong>${esc(texto)}</strong>
+    ${Array.from({ length: 16 }, (_, i) => `<i style="--a:${i * 22.5}deg;--c:${cores[i % cores.length]};--d:${80 + (i % 3) * 26}px"></i>`).join('')}</div>`;
+  document.body.append(el);
+  setTimeout(() => el.remove(), 1700);
 }
 
 async function baixarVersaoWord() {
