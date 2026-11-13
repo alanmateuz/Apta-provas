@@ -60,7 +60,7 @@ export function salvarConfig(c) {
    - 'internet'  → achada pela IA numa página da internet (tem link da fonte)
    - 'ia'        → criada pela IA e AINDA NÃO conferida
 */
-export const CONFIANCA = { minha: 4, revisada: 4, importada: 3, internet: 2, exemplo: 2, ia: 1 };
+export const CONFIANCA = { minha: 4, revisada: 4, importada: 3, material: 2, internet: 2, exemplo: 2, ia: 1 };
 
 export function getBanco() {
   let banco = ler(CHAVES.banco, null);

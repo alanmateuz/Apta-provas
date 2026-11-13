@@ -13,10 +13,11 @@ import {
   embaralharAlternativas, textoGabarito,
 } from './montador.js';
 import { validarQuestao, validarProva } from './validador.js';
-import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA } from './ia.js';
+import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA, questoesDoMaterial } from './ia.js';
 import { carregarImagens, obterImagem, guardarImagem, rasterizar, svgSeguro, imagensDasQuestoes, importarImagens } from './imagens.js';
 import { baixarWord, cfgAdaptada } from './word.js';
 import { lerCabecalhoWord, camposCabecalho } from './importar-cabecalho.js';
+import { carregarMateriais, listarMateriais, obterMaterial, salvarMaterial, apagarMaterial, lerPDF, trechosRelevantes, paginasComQuestoes, lotesDePaginas, estaNoTexto } from './materiais.js';
 
 registerSW({ immediate: true });
 
@@ -418,6 +419,8 @@ function guardarMateria(nome) {
   return fmt;
 }
 const OUTRA = '__outra';
+/** Materiais em PDF, os da matéria escolhida primeiro. */
+const materiaisDaMateria = (materia) => [...listarMateriais()].sort((a, b) => (b.materia === materia) - (a.materia === materia));
 
 function novoRascunho() {
   let ultimo = {};
@@ -478,7 +481,10 @@ function desenharPasso() {
         <div class="campo"><label for="obs">Algum pedido especial? <span class="opcional">(opcional)</span></label>
           <span class="dica">Por exemplo: usar situações do dia a dia ou incluir uma questão com tabela.</span>
           <textarea id="obs" name="observacoes" style="min-height:84px" placeholder="Ex.: usar situações de mercado e dinheiro">${esc(r.observacoes)}</textarea></div>
-      </div>`;
+      </div>
+      ${temIA && listarMateriais().length ? `<div class="cabeca-secao" id="mat-rot">Livro ou apostila de base <span class="opcional">(opcional)</span></div>
+      <div class="fichas lista" role="radiogroup" aria-labelledby="mat-rot">${[['', 'Nenhum', 'A IA usa o que sabe do conteúdo.'], ...materiaisDaMateria(r.materia).map((m) => [m.id, esc(m.nome), `${m.materia} · ${plural(m.paginas, 'página', 'páginas')}`])]
+        .map(([v, rot, sub]) => opcaoLista('radio', 'materialId', v, (r.materialId || '') === v, rot, sub)).join('')}</div>` : ''}`;
   }
   if (r.passo === 3) {
     corpo = `<h1>Como vai ser?</h1>
@@ -511,6 +517,7 @@ function desenharPasso() {
       <ul class="grupo resumo">
         ${itemResumo('Turma', `${esc(r.materia)} · ${esc(r.turma || r.serie)}`, 1)}
         ${itemResumo('Conteúdo', esc(r.tema), 2)}
+        ${r.materialId && obterMaterial(r.materialId) ? itemResumo('Base', esc(obterMaterial(r.materialId).nome), 2) : ''}
         ${itemResumo('Formato', `${plural(r.quantidade, 'questão', 'questões')} · ${DIFICULDADES[r.dificuldade]} · ${r.tipos.map((t) => TIPOS[t].split(' (')[0]).join(', ')}${r.figuras && temIA ? ' · com figuras' : ''}`, 3)}
       </ul>
       <div class="cabeca-secao">Versão adaptada</div>
@@ -578,7 +585,7 @@ function lerPasso(form) {
     if (abrir) form.querySelector('#materia-outra').focus();
     if (r.materiaOutra) form.querySelector('#outra-erro').hidden = true;
   }
-  if (r.passo === 2) { r.tema = fd.get('tema').trim(); r.observacoes = (fd.get('observacoes') || '').trim(); if (r.tema) form.querySelector('#tema-erro').hidden = true; }
+  if (r.passo === 2) { r.tema = fd.get('tema').trim(); r.observacoes = (fd.get('observacoes') || '').trim(); r.materialId = fd.get('materialId') || ''; if (r.tema) form.querySelector('#tema-erro').hidden = true; }
   if (r.passo === 3) { r.dificuldade = fd.get('dificuldade'); r.tipos = fd.getAll('tipos'); r.figuras = fd.get('figuras') === 'on'; if (r.tipos.length) form.querySelector('#tipos-erro').hidden = true; }
   if (r.passo === 4) { r.adaptada = fd.get('adaptada') === 'on'; r.modo = fd.get('modo') || 'banco'; }
 }
@@ -652,13 +659,21 @@ function telaCriando(etapas) {
 async function montarProva(pedido, signal, etapa = () => {}) {
   const cfg = getConfig();
   const recados = [];
-  const doBanco = pedido.modo === 'ia' ? [] : escolherDoBanco(getBanco(), pedido, pedido.quantidade);
+  // Com um livro/apostila de base, as questões saem do material (não do banco)
+  const material = pedido.materialId && pedido.modo !== 'banco' && iaDisponivel(cfg) ? obterMaterial(pedido.materialId) : null;
+  const doBanco = pedido.modo === 'ia' || material ? [] : escolherDoBanco(getBanco(), pedido, pedido.quantidade);
   let questoes = doBanco.map((q) => prepararParaProva(q, pedido));
   const faltam = pedido.quantidade - questoes.length;
+  let pedidoIA = pedido;
+  if (material) {
+    const trechos = trechosRelevantes(material, `${pedido.tema} ${pedido.observacoes || ''}`);
+    if (trechos.length) pedidoIA = { ...pedido, contexto: { nome: material.nome, trechos } };
+    else recados.push(`Não achei “${pedido.tema}” no material “${material.nome}”. As questões foram criadas sem ele.`);
+  }
   if (faltam > 0 && pedido.modo !== 'banco' && iaDisponivel(cfg)) {
     etapa('criar');
     try {
-      const novas = await gerarQuestoes(cfg, pedido, faltam, questoes.map((q) => q.enunciado.slice(0, 120)), signal);
+      const novas = await gerarQuestoes(cfg, pedidoIA, faltam, questoes.map((q) => q.enunciado.slice(0, 120)), signal);
       let preparadas = novas.map((q) => embaralharAlternativas(prepararParaProva(q, pedido)));
       if (cfg.ia.revisora) {
         etapa('conferir');
@@ -699,7 +714,7 @@ async function montarProva(pedido, signal, etapa = () => {}) {
 function precisaIA(pedido) {
   const cfg = getConfig();
   if (pedido.modo === 'banco' || !iaDisponivel(cfg)) return false;
-  return pedido.modo === 'ia' || escolherDoBanco(getBanco(), pedido, pedido.quantidade).length < pedido.quantidade;
+  return pedido.modo === 'ia' || Boolean(pedido.materialId) || escolherDoBanco(getBanco(), pedido, pedido.quantidade).length < pedido.quantidade;
 }
 
 async function criarProva(pedido) {
@@ -795,6 +810,8 @@ function telaLote() {
       </div>
       <label class="alternar" style="margin-bottom:16px"><input type="checkbox" name="adaptada" ${L.adaptada ? 'checked' : ''}/>
         <span><strong>Criar também as versões adaptadas</strong></span></label>
+      ${temIA && listarMateriais().length ? `<div class="cartao-form"><div class="campo" style="margin:0"><label for="l-material">Livro ou apostila de base <span class="opcional">(opcional)</span></label>
+        <select id="l-material" name="materialId"><option value="">Nenhum</option>${listarMateriais().map((m) => `<option value="${m.id}" ${m.id === L.materialId ? 'selected' : ''}>${esc(m.nome)}</option>`).join('')}</select></div></div>` : ''}
       <div class="cartao-form">
         <fieldset style="border:0;padding:0;margin:0"><legend class="rotulo">De onde vêm as questões</legend>${fichas('modo', [['misto', 'Banco + novas'], ['banco', 'Só do banco'], ['ia', 'Só novas']].filter(([v]) => temIA || v === 'banco'), L.modo)}</fieldset>
       </div>
@@ -813,7 +830,7 @@ function telaLote() {
       if (l.materiaOutra && li.querySelector('.erro-outra')) li.querySelector('.erro-outra').hidden = true;
     });
     const fd = new FormData(form);
-    L.dificuldade = fd.get('dificuldade'); L.tipos = fd.getAll('tipos'); L.adaptada = fd.get('adaptada') === 'on'; L.modo = fd.get('modo') || 'banco';
+    L.dificuldade = fd.get('dificuldade'); L.tipos = fd.getAll('tipos'); L.adaptada = fd.get('adaptada') === 'on'; L.modo = fd.get('modo') || 'banco'; L.materialId = fd.get('materialId') || '';
   };
   form.addEventListener('input', ler);
   form.addEventListener('change', (e) => {
@@ -863,7 +880,7 @@ function telaLote() {
 async function criarLote(L) {
   const pedidos = L.linhas.map((l) => ({
     materia: l.materia, serie: l.serie, turma: l.turma, tema: l.tema, observacoes: '',
-    dificuldade: L.dificuldade, quantidade: L.quantidade, tipos: L.tipos, adaptada: L.adaptada, figuras: L.figuras, modo: L.modo,
+    dificuldade: L.dificuldade, quantidade: L.quantidade, tipos: L.tipos, adaptada: L.adaptada, figuras: L.figuras, modo: L.modo, materialId: L.materialId || '',
   }));
   const nomes = pedidos.map((p) => `${p.materia} · ${p.tema.split(/[:.\n]/)[0].slice(0, 40)}`);
   const tela = telaCriando(nomes);
@@ -1471,6 +1488,7 @@ function seloOrigem(q) {
   if (q.origem === 'ia') return '<span class="selo ia">Nova · confira</span>';
   if (q.origem === 'exemplo') return '<span class="selo exemplo">Exemplo · confira</span>';
   if (q.origem === 'importada') return '<span class="selo exemplo">Importada</span>';
+  if (q.origem === 'material') return `<span class="selo material" title="Página do livro de onde a questão veio">${ic('doc', 'p')} ${esc(q.fonte?.nome || 'Do livro')}</span>`;
   if (q.origem === 'internet') {
     const url = /^https?:\/\//.test(q.fonte?.url || '') ? q.fonte.url : '';
     return url ? `<a class="selo" href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="${esc(q.fonte.nome || '')}">Fonte: ${esc(q.fonte.nome || 'ver página')} ↗</a>`
@@ -1623,7 +1641,7 @@ function telaProvas() {
 
 /* =================== BANCO DE QUESTÕES =================== */
 let filtroBanco = { materia: '', serie: '', busca: '', origem: '', limite: 25 };
-const ORIGENS = [['confiavel', 'Conferidas'], ['internet', 'Da internet'], ['importada', 'Importadas'], ['exemplo', 'Exemplos do app'], ['ia', 'Novas, para conferir']];
+const ORIGENS = [['confiavel', 'Conferidas'], ['material', 'Dos livros (PDF)'], ['internet', 'Da internet'], ['importada', 'Importadas'], ['exemplo', 'Exemplos do app'], ['ia', 'Novas, para conferir']];
 
 function telaBanco() {
   titulo('Banco de questões');
@@ -1643,6 +1661,12 @@ function telaBanco() {
       <span class="icone-app">${ic('brilho')}</span>
       <span class="texto-linha"><strong>Buscar questões na internet com IA</strong>
         <small>${temIA ? 'A IA procura em provas públicas como Saeb e OBMEP e traz o link da fonte.' : 'Precisa ligar a criação automática em Ajustes.'}</small></span>
+      <span class="chevron">${ic('seta')}</span>
+    </button>
+    <button class="cartao-busca" id="b-materiais">
+      <span class="icone-app icone-material">${ic('doc')}</span>
+      <span class="texto-linha"><strong>Livros e apostilas (PDF)</strong>
+        <small>${listarMateriais().length ? plural(listarMateriais().length, 'material guardado', 'materiais guardados') : 'Envie um PDF para a IA consultar e tirar questões'}</small></span>
       <span class="chevron">${ic('seta')}</span>
     </button>
     <div style="display:flex;gap:8px;align-items:center">
@@ -1740,7 +1764,142 @@ function telaBanco() {
   };
   main.querySelector('#b-nova-q').onclick = () => formQuestao(desenharLista);
   main.querySelector('#b-buscar-web').onclick = () => formBuscaInternet(() => telaBanco());
+  main.querySelector('#b-materiais').onclick = () => gavetaMateriais();
 }
+
+/* ---------- Livros e apostilas em PDF ---------- */
+function gavetaMateriais() {
+  const temIA = iaDisponivel(getConfig());
+  const mats = listarMateriais();
+  abrirGaveta('Livros e apostilas', `
+    ${mats.length ? `<ul class="lista-materiais">${mats.map((m) => `<li>
+      <span class="materia-icone">${icMateria(m.materia)}</span>
+      <span class="texto-linha"><strong>${esc(m.nome)}</strong><small>${esc(m.materia)} · ${esc(m.serie)} · ${plural(m.paginas, 'página', 'páginas')}</small>
+        ${temIA ? `<button type="button" class="botao pequeno" data-buscar-mat="${m.id}">${ic('busca', 'p')} Buscar questões</button>` : ''}</span>
+      <button type="button" class="alt-remover mat-remover" data-apagar-mat="${m.id}" aria-label="Apagar ${esc(m.nome)}">${ic('fechar')}</button></li>`).join('')}</ul>`
+      : `<p class="dica" style="margin:0 0 12px">A IA consulta o livro para criar questões no mesmo estilo e encontra os exercícios que já estão nele.</p>`}
+    <label class="botao ${mats.length ? '' : 'principal'} cheio" for="mat-arquivo">${ic('enviar', 'p')} Adicionar PDF</label>
+    <input type="file" id="mat-arquivo" accept="application/pdf,.pdf" class="sr" />
+    ${temIA ? '' : '<p class="dica" style="margin:12px 0 0">Para a IA usar os livros, ligue a criação automática em Ajustes.</p>'}`, (g) => {
+    g.querySelector('#mat-arquivo').onchange = (e) => { const arq = e.target.files[0]; if (arq) { fecharGaveta(); adicionarMaterial(arq); } };
+    g.addEventListener('click', async (e) => {
+      const buscar = e.target.closest('[data-buscar-mat]')?.dataset.buscarMat;
+      const apagar = e.target.closest('[data-apagar-mat]')?.dataset.apagarMat;
+      if (buscar) { fecharGaveta(); formBuscaMaterial(obterMaterial(buscar)); }
+      if (apagar) {
+        const m = await apagarMaterial(apagar);
+        fecharGaveta();
+        if (location.hash === '#/banco') telaBanco();
+        aviso(`“${m.nome}” apagado.`, { rotulo: 'Desfazer', fn: async () => { await salvarMaterial(m); if (location.hash === '#/banco') telaBanco(); } });
+      }
+    });
+  });
+}
+
+async function adicionarMaterial(arquivo) {
+  if (arquivo.size > 80 * 1024 * 1024) { aviso('Esse PDF é grande demais (mais de 80 MB). Envie só os capítulos que vai usar.'); return; }
+  const tela = telaCriando(['Lendo as páginas', 'Guardando no aparelho']);
+  tela.titulo('Lendo o PDF', 'O texto fica guardado só neste aparelho.', false);
+  tela.etapa(0);
+  let textos;
+  try {
+    textos = await lerPDF(arquivo, (i, n) => tela.etapa(0, `Lendo as páginas (${i} de ${n})`));
+  } catch (e) { tela.fechar(); console.error(e); aviso(e.message || 'Não consegui ler esse PDF.'); return; }
+  tela.fechar();
+  if (tela.signal.aborted) return;
+  let ultimo = {};
+  try { ultimo = JSON.parse(localStorage.getItem('pf.ultimoPedido')) || {}; } catch {}
+  const nomeArq = arquivo.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').trim();
+  abrirGaveta('Guardar material', `<form novalidate>
+    <p class="dica" style="margin:0 0 16px">Li ${plural(textos.length, 'página', 'páginas')}.</p>
+    <div class="campo"><label for="m-nome">Nome</label><input type="text" id="m-nome" name="nome" value="${esc(nomeArq.slice(0, 80))}" placeholder="Ex.: Livro de Ciências 5º ano" /></div>
+    <div class="duas-colunas">
+      <div class="campo"><label for="m-materia">Matéria</label><select id="m-materia" name="materia">${todasMaterias().map((m) => `<option ${m === (filtroBanco.materia || ultimo.materia || 'Matemática') ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+      <div class="campo"><label for="m-serie">Ano / série</label><select id="m-serie" name="serie">${SERIES.map((s) => `<option ${s === (filtroBanco.serie || ultimo.serie || '5º ano') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+    </div>
+    <button class="botao principal grande cheio">${ic('certo', 'p')} Guardar</button></form>`, (g) => {
+    const f = g.querySelector('form');
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(f);
+      try {
+        await salvarMaterial({ id: uid(), nome: fd.get('nome').trim() || nomeArq || 'Material', materia: fd.get('materia'), serie: fd.get('serie'), textos, criadoEm: Date.now() });
+      } catch (err) { console.error(err); aviso('Não deu para guardar: o aparelho está sem espaço.'); return; }
+      fecharGaveta();
+      if (location.hash === '#/banco') telaBanco();
+      aviso('Material guardado. Ele aparece no Criar prova, no passo do conteúdo.');
+      setTimeout(gavetaMateriais, 350);
+    };
+  });
+}
+
+function formBuscaMaterial(m) {
+  const total = m.textos.length;
+  abrirGaveta('Buscar questões no livro', `<form novalidate>
+    <p class="dica" style="margin:0 0 16px">${esc(m.nome)} · ${plural(total, 'página', 'páginas')}</p>
+    <div class="duas-colunas lote-colunas">
+      <div class="campo"><label for="bm-de">Da página</label><input type="number" inputmode="numeric" id="bm-de" name="de" min="1" max="${total}" value="1" /></div>
+      <div class="campo"><label for="bm-ate">Até a página</label><input type="number" inputmode="numeric" id="bm-ate" name="ate" min="1" max="${total}" value="${total}" /></div>
+    </div>
+    <div class="erro-campo" id="bm-erro" hidden></div>
+    <button class="botao principal grande cheio">${ic('brilho', 'p')} Buscar com IA</button></form>`, (g) => {
+    const f = g.querySelector('form');
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const de = Math.max(1, Number(f.de.value) || 1);
+      const ate = Math.min(total, Number(f.ate.value) || total);
+      const erro = g.querySelector('#bm-erro');
+      if (de > ate) { erro.innerHTML = `${ic('alerta', 'p')} A primeira página precisa vir antes da última.`; erro.hidden = false; return; }
+      const paginas = paginasComQuestoes(m, de, ate);
+      if (!paginas.length) { erro.innerHTML = `${ic('alerta', 'p')} Não achei exercícios nessas páginas. Tente outro intervalo.`; erro.hidden = false; return; }
+      fecharGaveta();
+      await buscarNoMaterial(m, paginas);
+    };
+  });
+}
+
+async function buscarNoMaterial(m, paginas) {
+  const cfg = getConfig();
+  const MAX_LOTES = 6;
+  const todos = lotesDePaginas(m, paginas);
+  const lotes = todos.slice(0, MAX_LOTES);
+  const ultimaPag = lotes.at(-1).at(-1).pagina;
+  const tela = telaCriando([...lotes.map((l) => `Lendo as páginas ${l[0].pagina} a ${l.at(-1).pagina}`), 'Conferindo as questões']);
+  tela.titulo('Procurando questões no livro', 'A IA lê só as páginas com exercícios.', true);
+  let achadas = [];
+  try {
+    for (let k = 0; k < lotes.length; k++) {
+      tela.etapa(k);
+      achadas.push(...await questoesDoMaterial(cfg, m, lotes[k], tela.signal));
+    }
+    tela.etapa(lotes.length);
+    achadas = achadas.map((q) => ({
+      ...q,
+      alertas: [
+        ...(estaNoTexto(m, q.fonte.pagina, q.enunciado) ? [] : [{ nivel: 'erro', msg: `Não achei esta questão no texto da página ${q.fonte.pagina}. Pode ter sido inventada: confira no livro.` }]),
+        ...(q.precisaFigura ? [{ nivel: 'erro', msg: 'Depende de uma figura do livro. Adicione a imagem antes de usar.' }] : []),
+        ...(q.gabaritoNoMaterial ? [] : [{ nivel: 'aviso', msg: 'O livro não traz o gabarito: a IA resolveu. Confira a resposta.' }]),
+        ...validarQuestao(q),
+      ],
+    }));
+    if (cfg.ia.revisora && achadas.length) {
+      try {
+        const revisoes = await revisarQuestoes(cfg, achadas, tela.signal);
+        achadas = achadas.map((q, i) => ({ ...q, alertas: [...q.alertas, ...(revisoes[i] || [])] }));
+      } catch (e) { if (e.name === 'AbortError') throw e; }
+    }
+  } catch (e) {
+    tela.fechar();
+    if (e.name !== 'AbortError') { console.error(e); aviso(e instanceof ErroIA ? e.message : 'A busca não funcionou agora. Tente de novo em alguns minutos.'); }
+    return;
+  }
+  tela.fechar();
+  if (!achadas.length) { aviso('A IA não encontrou exercícios prontos nessas páginas.'); return; }
+  if (todos.length > lotes.length) aviso(`Li até a página ${ultimaPag}. Para ver as outras, busque de novo a partir da página ${ultimaPag + 1}.`);
+  achadas.forEach((q) => { delete q.precisaFigura; delete q.gabaritoNoMaterial; });
+  mostrarResultadosBusca(achadas, () => { if (location.hash === '#/banco') telaBanco(); }, 'material');
+}
+
 
 /* ---------- Buscar questões na internet ---------- */
 function formBuscaInternet(depois) {
@@ -1813,12 +1972,12 @@ async function executarBusca(pedido, depois) {
   mostrarResultadosBusca(achadas, depois);
 }
 
-function mostrarResultadosBusca(achadas, depois) {
+function mostrarResultadosBusca(achadas, depois, origem = 'internet') {
   const comErro = achadas.filter((q) => q.alertas.some((a) => a.nivel === 'erro')).length;
   const resumo = comErro === 0 ? 'Todas passaram na conferência automática.'
     : `${plural(comErro, 'questão tem', 'questões têm')} possível problema e ${comErro === 1 ? 'ficou desmarcada' : 'ficaram desmarcadas'}.`;
   abrirGaveta(`Achei ${plural(achadas.length, 'questão', 'questões')}`, `
-    <p class="dica" style="margin:0 0 12px">${resumo} Toque no nome da fonte para ver a página original.</p>
+    <p class="dica" style="margin:0 0 12px">${resumo}${origem === 'internet' ? ' Toque no nome da fonte para ver a página original.' : ''}</p>
     <form id="form-escolha"><ul class="lista-cartoes">${achadas.map((q, i) => {
       const erro = q.alertas.some((a) => a.nivel === 'erro');
       return `<li class="questao-banco">
@@ -1843,9 +2002,9 @@ function mostrarResultadosBusca(achadas, depois) {
       e.preventDefault();
       const sel = [...f.querySelectorAll('[name=sel]:checked')].map((x) => achadas[Number(x.value)]);
       if (!sel.length) return;
-      const novas = adicionarAoBanco(sel, 'internet');
+      const novas = adicionarAoBanco(sel, origem);
       fecharGaveta();
-      aviso(novas ? `${plural(novas, 'questão guardada', 'questões guardadas')} no banco, com o link da fonte.` : 'Essas questões já estavam no seu banco.');
+      aviso(novas ? `${plural(novas, 'questão guardada', 'questões guardadas')} no banco, ${origem === 'internet' ? 'com o link da fonte' : 'com a página do livro'}.` : 'Essas questões já estavam no seu banco.');
       depois?.();
     };
   });
@@ -2090,4 +2249,4 @@ function reduzirImagem(arquivo, max) {
   });
 }
 
-carregarImagens().finally(rotear);
+Promise.allSettled([carregarImagens(), carregarMateriais()]).finally(rotear);

@@ -153,7 +153,7 @@ Conteúdo: ${p.tema}
 Dificuldade: ${DIFICULDADES[p.dificuldade]}
 Tipos permitidos (distribua entre eles): ${tipos}
 Figuras: ${p.figuras ? 'pode usar figuras quando ajudarem' : 'NÃO use figuras ("tipo": "nenhuma" em todas)'}
-${p.observacoes ? `Pedido da professora: ${p.observacoes}\n` : ''}${evitar.length ? `\nNÃO repita estas questões que já estão na prova:\n${evitar.map((e) => `- ${e}`).join('\n')}\n` : ''}
+${p.observacoes ? `Pedido da professora: ${p.observacoes}\n` : ''}${p.contexto?.trechos?.length ? `\nMATERIAL DE BASE ("${p.contexto.nome}"): use estes trechos como fonte principal. As questões devem cobrar o que está no material, com o mesmo vocabulário e exemplos parecidos. Na "justificativa", cite a página (ex.: "Material, p. 12"). Não copie questões prontas do material; crie novas a partir do conteúdo.\n${p.contexto.trechos.map((t) => `--- página ${t.pagina} ---\n${t.texto}`).join('\n')}\n--- fim do material ---\n` : ''}${evitar.length ? `\nNÃO repita estas questões que já estão na prova:\n${evitar.map((e) => `- ${e}`).join('\n')}\n` : ''}
 Responda apenas com o JSON pedido.`;
 }
 
@@ -600,4 +600,78 @@ export async function baixarImagemInternet(url, signal) {
   const r = await fetch(url, { signal, mode: 'cors' }); // no computador de desenvolvimento pode ser bloqueado
   if (!r.ok || !/^image\//.test(r.headers.get('content-type') || '')) throw new Error('Não foi possível baixar a imagem original.');
   return await r.blob();
+}
+
+/* =========================================================
+   MATERIAL EM PDF — achar as questões que JÁ EXISTEM no livro
+   Anti-invenção: cada questão traz a página; o app confere se o
+   começo do enunciado está mesmo no texto daquela página.
+   ========================================================= */
+const ESQ_MATERIAL = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['questoes'],
+  properties: {
+    questoes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['tipo', 'enunciado', 'alternativas', 'correta', 'resposta', 'justificativa', 'pagina', 'tema', 'gabarito_no_material', 'precisa_figura'],
+        properties: {
+          tipo: { type: 'string', enum: ['multipla', 'vf', 'completar', 'aberta'] },
+          enunciado: { type: 'string' },
+          alternativas: { type: 'array', items: { type: 'string' } },
+          correta: { type: 'integer' },
+          resposta: { type: 'string' },
+          justificativa: { type: 'string' },
+          pagina: { type: 'integer' },
+          tema: { type: 'string' },
+          gabarito_no_material: { type: 'boolean' },
+          precisa_figura: { type: 'boolean' },
+        },
+      },
+    },
+  },
+};
+
+const SISTEMA_MATERIAL = `Você ajuda professores da educação básica brasileira a reaproveitar exercícios de livros didáticos e apostilas. Você recebe o TEXTO de algumas páginas de um material (extraído de um PDF, pode ter quebras de linha estranhas).
+
+TAREFA: encontrar as questões/exercícios que JÁ ESTÃO nessas páginas e transcrevê-las com fidelidade.
+REGRAS:
+1. Só transcreva questões que estão no texto. Nunca invente nem complete uma questão. Explicações e textos corridos não são questões.
+2. Copie o enunciado e as alternativas como estão (pode juntar linhas quebradas e corrigir hifenização). Tire a numeração do início ("1.", "a)").
+3. "pagina" é o número da página (está no marcador "--- página N ---") onde a questão começa.
+4. Se o material traz o gabarito, use-o e marque "gabarito_no_material": true. Se não traz, resolva a questão, explique em "justificativa" e marque false.
+5. "correta" é o índice (começando em 0) da alternativa certa; -1 se não for múltipla escolha. Em V/F, "resposta" no formato "V, F, V". Dissertativa: "alternativas" vazia e "resposta" com o esperado.
+6. Questões que dependem de uma figura, mapa, gráfico ou imagem que não está no texto: marque "precisa_figura": true.
+7. Itens com várias letras (a, b, c) que são perguntas diferentes, e não alternativas, viram questões separadas, cada uma com o contexto necessário no enunciado.
+8. "tema" é o conteúdo da questão em poucas palavras (ex.: "frações equivalentes").
+9. Se não houver questões nessas páginas, devolva a lista vazia.`;
+
+export async function questoesDoMaterial(config, { nome, materia, serie }, trechos, signal) {
+  const dados = await chamar(config, {
+    sistema: SISTEMA_MATERIAL,
+    usuario: `Material: ${nome}
+Matéria: ${materia} — ${serie}
+
+${trechos.map((t) => `--- página ${t.pagina} ---
+${t.texto}`).join('\n')}
+--- fim ---
+Responda apenas com o JSON pedido.`,
+    esquema: ESQ_MATERIAL,
+    nome: 'material',
+    signal,
+  });
+  return (dados.questoes || []).map((q) => {
+    const { adaptada, figura, ...base } = sanear({ ...q, adaptada: {}, figura: null });
+    return {
+      ...base,
+      materia, serie, tema: String(q.tema || '').trim() || materia, dificuldade: 'medio',
+      origem: 'material',
+      fonte: { nome: `${nome}, p. ${q.pagina}`, pagina: Number(q.pagina) || 0, material: nome },
+      gabaritoNoMaterial: Boolean(q.gabarito_no_material),
+      precisaFigura: Boolean(q.precisa_figura),
+    };
+  });
 }
