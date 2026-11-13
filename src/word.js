@@ -51,14 +51,25 @@ function cabecalho(prova, escola, tam) {
   topo.push(new TextRun({ text: escola.nome || 'Nome da escola', bold: true, size: tam + 6 }));
   linhas.push(new Paragraph({ children: topo, alignment: AlignmentType.CENTER }));
   if (escola.cidade) linhas.push(new Paragraph({ children: [new TextRun({ text: escola.cidade, size: tam - 2 })], alignment: AlignmentType.CENTER }));
-  const campo = (t) => new Paragraph({ children: [new TextRun({ text: t, size: tam })], spacing: { before: 80 } });
-  linhas.push(campo('Aluno(a): ______________________________________________   Nº: ______'));
-  linhas.push(campo(`Professor(a): ${escola.professora || '________________________'}     Disciplina: ${prova.materia}`));
-  linhas.push(campo(`Turma: ${prova.turma || prova.serie}     Data: ${prova.data || '____/____/______'}     Nota: ________`));
 
+  // Mesmo desenho da tela: escola | linha larga do aluno + Nº | grade de dados + Nota
+  const bordas = { top: BORDA, bottom: BORDA, left: BORDA, right: BORDA };
+  const margens = { top: 80, bottom: 80, left: 140, right: 140 };
+  const rotulo = (t) => new TextRun({ text: t.toUpperCase(), bold: true, size: tam - 8, color: '444444' });
+  const cel = (titulo, valor, span = 1, alto = false) => new TableCell({
+    columnSpan: span, borders: bordas, margins: margens,
+    children: [new Paragraph({ children: [rotulo(titulo)] }), new Paragraph({ children: [new TextRun({ text: valor || ' ', size: tam })], spacing: alto ? { before: 160 } : undefined })],
+  });
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [new TableRow({ children: [new TableCell({ children: linhas, borders: { top: BORDA, bottom: BORDA, left: BORDA, right: BORDA }, margins: { top: 100, bottom: 100, left: 150, right: 150 } })] })],
+    rows: [
+      new TableRow({ children: [new TableCell({ columnSpan: 5, children: linhas, borders: bordas, margins: { top: 100, bottom: 100, left: 150, right: 150 } })] }),
+      new TableRow({ children: [cel('Aluno(a)', '', 4, true), cel('Nº', '', 1, true)] }),
+      new TableRow({ children: [
+        cel('Disciplina', prova.materia), cel('Professor(a)', escola.professora || ''),
+        cel('Turma', prova.turma || prova.serie), cel('Data', prova.data || ''), cel('Nota', ''),
+      ] }),
+    ],
   });
 }
 

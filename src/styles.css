@@ -454,12 +454,26 @@ a.selo:hover { text-decoration: underline; }
 @media (min-width: 900px) { .folha { padding: 18mm; min-height: 297mm; font-size: 12pt; border-radius: 4px; box-shadow: 0 2px 16px rgba(0,0,0,.08); } }
 .folha.adaptada { font-size: 17px; line-height: 1.8; }
 @media (min-width: 900px) { .folha.adaptada { font-size: 15pt; } }
-.cabecalho { border: 2px solid #000; padding: 8px 10px; margin-bottom: 14px; }
-.cabecalho-topo { display: flex; align-items: center; gap: 12px; }
+.cabecalho { border: 1.5px solid #000; border-radius: 6px; margin-bottom: 14px; overflow: hidden; }
+.cabecalho-topo { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-bottom: 1.5px solid #000; }
 .cabecalho-topo img { max-height: 56px; max-width: 100px; object-fit: contain; }
-.cabecalho .escola { font-weight: 700; font-size: 1.1em; text-align: center; flex: 1; }
-.cabecalho .linhas { display: grid; grid-template-columns: 1fr; gap: 3px 16px; margin-top: 8px; font-size: 0.92em; }
-@media (min-width: 600px) { .cabecalho .linhas { grid-template-columns: 1fr 1fr; } .cabecalho .linhas .inteira { grid-column: 1 / -1; } }
+.cabecalho .escola { font-weight: 700; font-size: 1.15em; text-align: center; flex: 1; line-height: 1.25; }
+.cabecalho .escola small { display: block; font-weight: 400; font-size: 0.75em; margin-top: 2px; }
+/* Linha larga para o nome (espaço de escrita de verdade) */
+.cab-aluno { display: flex; gap: 14px; align-items: flex-end; padding: 14px 12px 10px; border-bottom: 1px solid #000; }
+.cab-escrever { display: flex; align-items: flex-end; gap: 8px; flex: 1; min-width: 0; }
+.cab-escrever.cab-numero { flex: 0 0 22%; }
+.cab-linha { flex: 1; height: 1.6em; border-bottom: 1px solid #000; }
+.cab-rotulo { font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #444; white-space: nowrap; }
+/* Dados da prova em grade + caixa da nota */
+.cab-info { display: flex; }
+.cab-grade { flex: 1; display: grid; grid-template-columns: 1fr 1fr; }
+.cab-celula { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 6px 12px 7px; border-right: 1px solid #000; }
+.cab-celula:nth-child(-n+2) { border-bottom: 1px solid #000; }
+.cab-valor { font-size: 0.95em; overflow-wrap: anywhere; min-height: 1.3em; }
+.cab-nota { flex: 0 0 22%; display: flex; flex-direction: column; padding: 6px 10px; }
+@media (min-width: 600px) { .cab-grade { grid-template-columns: 1fr 1.4fr 1fr 1fr; } .cab-celula:nth-child(-n+2) { border-bottom: 0; } .cab-nota { flex-basis: 16%; } .cab-escrever.cab-numero { flex-basis: 16%; } }
+@media print { .cab-grade { grid-template-columns: 1fr 1.4fr 1fr 1fr; } .cab-celula:nth-child(-n+2) { border-bottom: 0; } .cab-nota { flex-basis: 16%; } .cab-escrever.cab-numero { flex-basis: 16%; } }
 .titulo-prova { text-align: center; font-weight: 700; font-size: 1.08em; margin: 8px 0; }
 .instrucoes { font-size: 0.95em; margin-bottom: 14px; padding: 6px 10px; border: 1px solid #999; border-radius: 4px; }
 .instrucoes > strong { display: block; }

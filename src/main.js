@@ -1202,17 +1202,27 @@ async function novaQuestaoIA(posicao) {
 
 function cabecalhoHTML(p, escola, editavel = true) {
   const ce = editavel ? 'contenteditable="true"' : '';
+  // Cabeçalho em blocos: escola em cima; linha larga para o nome do aluno;
+  // dados da prova numa grade com rótulos pequenos; caixa de nota à direita.
+  const celula = (rotulo, valor, campo) => `<div class="cab-celula"><span class="cab-rotulo">${rotulo}</span>
+    <span class="cab-valor" ${campo ? `${ce} data-cab="${campo}" aria-label="${rotulo}"` : ''}>${valor}</span></div>`;
   return `<div class="cabecalho">
     <div class="cabecalho-topo">
       ${escola.logo ? `<img src="${escola.logo}" alt="Logotipo da escola" />` : ''}
-      <div class="escola">${esc(escola.nome || 'Nome da escola')}${escola.cidade ? `<div style="font-weight:400;font-size:.8em">${esc(escola.cidade)}</div>` : ''}</div>
+      <div class="escola">${esc(escola.nome || 'Nome da escola')}${escola.cidade ? `<small>${esc(escola.cidade)}</small>` : ''}</div>
     </div>
-    <div class="linhas">
-      <div class="inteira">Aluno(a): ______________________________ Nº: ____</div>
-      <div>Professor(a): ${esc(escola.professora || '__________________')}</div>
-      <div>Disciplina: ${esc(p.materia)}</div>
-      <div>Turma: <span ${ce} data-cab="turma" aria-label="Turma">${esc(p.turma || p.serie)}</span></div>
-      <div>Data: <span ${ce} data-cab="data" aria-label="Data">${esc(p.data || '___/___/_____')}</span> &nbsp; Nota: _____</div>
+    <div class="cab-aluno">
+      <div class="cab-escrever"><span class="cab-rotulo">Aluno(a)</span><span class="cab-linha"></span></div>
+      <div class="cab-escrever cab-numero"><span class="cab-rotulo">Nº</span><span class="cab-linha"></span></div>
+    </div>
+    <div class="cab-info">
+      <div class="cab-grade">
+        ${celula('Disciplina', esc(p.materia || ''))}
+        ${celula('Professor(a)', esc(escola.professora || '') || '&nbsp;')}
+        ${celula('Turma', esc(p.turma || p.serie || ''), 'turma')}
+        ${celula('Data', esc(p.data || '') || '&nbsp;', 'data')}
+      </div>
+      <div class="cab-nota"><span class="cab-rotulo">Nota</span></div>
     </div>
   </div>`;
 }
