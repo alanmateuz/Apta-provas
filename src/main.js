@@ -851,10 +851,10 @@ function telaProva(id) {
     <div class="linha-data nao-imprimir">
       <label class="data-prova">${ic('relogio', 'p')}<span>Data da prova</span>
         <input type="date" id="data-prova" value="${dataParaInput(prova.data)}" /></label>
-      <p class="dica-editar">${ic('editar', 'p')} Toque no texto da folha para editar.</p>
     </div>
     <div id="recados" class="nao-imprimir"></div>
     <div id="painel-revisao" class="nao-imprimir"></div>
+    <p class="dica-editar nao-imprimir">${ic('editar', 'p')} Toque no texto da folha para editar.</p>
     <div role="tabpanel"><div id="folha" class="folha"></div></div>
     <div class="barra-acoes nao-imprimir">
       <button class="botao encolhe" id="b-add">${ic('mais', 'p')} Questão</button>
