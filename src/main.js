@@ -2,6 +2,7 @@
 // Prova Izi — telas do app (mobile primeiro)
 // Rotas: #/  #/nova  #/prova/ID  #/provas  #/banco  #/ajustes
 // =========================================================
+import '@fontsource-variable/nunito';
 import './styles.css';
 import { registerSW } from 'virtual:pwa-register';
 import {
@@ -17,7 +18,8 @@ import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaIn
 import { carregarImagens, obterImagem, guardarImagem, rasterizar, svgSeguro, imagensDasQuestoes, importarImagens } from './imagens.js';
 import { baixarWord, cfgAdaptada } from './word.js';
 import { lerCabecalhoWord, camposCabecalho } from './importar-cabecalho.js';
-import { carregarMateriais, listarMateriais, obterMaterial, salvarMaterial, apagarMaterial, lerPDF, trechosRelevantes, paginasComQuestoes, lotesDePaginas, estaNoTexto } from './materiais.js';
+import { temModelo, modeloEmCache, preencherModelos } from './modelo-tela.js';
+import { carregarMateriais, listarMateriais, guardarArquivo, obterMaterial, salvarMaterial, apagarMaterial, lerPDF, trechosRelevantes, paginasComQuestoes, lotesDePaginas, estaNoTexto } from './materiais.js';
 
 registerSW({ immediate: true });
 
@@ -51,7 +53,13 @@ function temaAtual() { try { return localStorage.getItem('pf.tema') || 'claro'; 
 function aplicarTema(t = temaAtual()) {
   const escuro = t === 'escuro' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('escuro', escuro);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#000000' : '#f2f2f7');
+  corDaBarra();
+}
+/** Cor da barra do sistema: amarela no Início (faixa da marca), neutra nas outras telas. */
+function corDaBarra() {
+  const escuro = document.documentElement.classList.contains('escuro');
+  const inicio = document.body?.classList.contains('em-inicio');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', inicio ? '#ffc93c' : escuro ? '#000000' : '#f2f2f7');
 }
 aplicarTema();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => aplicarTema());
@@ -267,6 +275,8 @@ function rotear() {
       if (a.dataset.rota === ativa) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     document.body.classList.toggle('foco', rota === 'nova' || rota === 'prova');
+    document.body.classList.toggle('em-inicio', !telasConhecidas.includes(rota) || rota === '');
+    corDaBarra();
     main.classList.toggle('largo', rota === 'prova');
     main.onclick = null;
     if (!direcao || !usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
@@ -278,6 +288,7 @@ function rotear() {
   if (direcao) transicao(desenhar, direcao); else desenhar();
 }
 addEventListener('hashchange', rotear);
+const telasConhecidas = ['', 'nova', 'lote', 'prova', 'provas', 'banco', 'ajustes'];
 
 function titulo(t) { document.title = `${t} · Prova Izi`; }
 /** Leva o foco para o título da tela (bom para leitor de tela). */
@@ -320,7 +331,7 @@ function telaInicio() {
 
   main.innerHTML = `
     <section class="saudacao" aria-label="Saudação">
-      <h1>${saudacao}${nome ? `, <span class="cor-nome">${nome.replace(/^, /, '')}</span>` : ''}</h1>
+      <h1>${saudacao}${nome ? `, <span class="cor-nome">${nome.replace(/^, /, '')}!</span>` : '!'}</h1>
       ${cfg.escola.nome ? `<span class="saudacao-escola">${esc(cfg.escola.nome)}</span>` : ''}
     </section>
 
@@ -1458,6 +1469,11 @@ function cabecalhoHTML(p, escola, editavel = true) {
   const ce = editavel ? 'contenteditable="true"' : '';
   // Cabeçalho em blocos: escola em cima; linha larga para o nome do aluno;
   // dados da prova numa grade com rótulos pequenos; caixa de nota à direita.
+  // Modelo da escola em Word: mostra o cabeçalho original, do jeito que está no arquivo
+  if (temModelo(escola)) {
+    queueMicrotask(() => preencherModelos(document));
+    return `<div class="cabecalho-modelo" data-modelo="${escola.modelo.id}" ${modeloEmCache(escola.modelo.id) ? 'data-pronto="1"' : ''}>${modeloEmCache(escola.modelo.id) || '<div class="esqueleto-folha" aria-hidden="true"><i></i><i class="curta"></i></div>'}</div>`;
+  }
   const celula = (rotulo, valor, campo) => `<div class="cab-celula"><span class="cab-rotulo">${rotulo}</span>
     <span class="cab-valor" ${campo ? `${ce} data-cab="${campo}" aria-label="${rotulo}"` : ''}>${valor}</span></div>`;
   return `<div class="cabecalho">
@@ -2124,6 +2140,7 @@ function telaAjustes(ancora) {
         <div class="cabeca-secao cabeca-com-acao">Topo da prova
           <button type="button" class="botao fantasma pequeno" id="b-campos-padrao" ${e.campos?.length ? '' : 'hidden'}>Voltar ao padrão</button></div>
         <div class="previa-cabecalho" id="previa"></div>
+        <p class="dica modelo-nome" id="modelo-nome" hidden></p>
         <div class="importar-cab">
           <label class="botao cheio" for="e-word">${ic('doc', 'p')} Importar cabeçalho de um Word</label>
           <input type="file" id="e-word" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr" />
@@ -2165,22 +2182,25 @@ function telaAjustes(ancora) {
   const form = main.querySelector('#form-escola');
   let logo = e.logo;
   let campos = e.campos || [];
+  let modelo = e.modelo || null; // { id, nome } do Word da escola
   const previa = () => {
     const fd = new FormData(form);
     const instr = (fd.get('instrucoes') || '').trim();
     main.querySelector('#previa').innerHTML = cabecalhoHTML({ materia: 'Matemática', serie: '5º ano', data: new Date().toLocaleDateString('pt-BR') },
-      { nome: fd.get('nome'), cidade: fd.get('cidade'), professora: fd.get('professora'), logo, campos }, false)
+      { nome: fd.get('nome'), cidade: fd.get('cidade'), professora: fd.get('professora'), logo, campos, modelo }, false)
       + (instr ? `<div class="instrucoes" style="margin-top:10px"><strong>Instruções:</strong><div>${md(instr)}</div></div>` : '');
     main.querySelector('#b-tirar-logo').hidden = !logo;
-    main.querySelector('#b-campos-padrao').hidden = !campos.length;
+    main.querySelector('#b-campos-padrao').hidden = !campos.length && !modelo;
+    main.querySelector('#modelo-nome').hidden = !modelo;
+    main.querySelector('#modelo-nome').innerHTML = modelo ? `${ic('doc', 'p')} Cabeçalho do arquivo “${esc(modelo.nome)}”, do jeito que está no Word.` : '';
   };
   previa();
   form.oninput = previa;
   main.querySelector('#e-logo').onchange = async (ev) => { const arq = ev.target.files[0]; if (arq) { logo = await reduzirImagem(arq, 240); previa(); } };
   main.querySelector('#b-tirar-logo').onclick = () => { logo = ''; previa(); };
   main.querySelector('#b-campos-padrao').onclick = () => {
-    const antes = campos; campos = []; previa();
-    aviso('Campos do cabeçalho voltaram ao padrão.', { rotulo: 'Desfazer', fn: () => { campos = antes; previa(); } });
+    const antes = { campos, modelo }; campos = []; modelo = null; previa();
+    aviso('O cabeçalho voltou ao padrão do app. Salve para confirmar.', { rotulo: 'Desfazer', fn: () => { ({ campos, modelo } = antes); previa(); } });
   };
   main.querySelector('#e-word').onchange = async (ev) => {
     const arq = ev.target.files[0]; ev.target.value = '';
@@ -2189,21 +2209,28 @@ function telaAjustes(ancora) {
     res.textContent = 'Lendo o arquivo…';
     try {
       const r = await lerCabecalhoWord(arq);
-      if (!r.achou) { res.textContent = 'Não achei um cabeçalho nesse arquivo. Preencha os campos abaixo.'; return; }
-      const antes = { nome: form.nome.value, cidade: form.cidade.value, professora: form.professora.value, instrucoes: form.instrucoes.value, logo, campos };
+      if (!r.modelo && !r.achou) { res.textContent = 'Não achei um cabeçalho nesse arquivo. Ele precisa ter o cabeçalho antes da primeira questão.'; return; }
+      const antes = { nome: form.nome.value, cidade: form.cidade.value, professora: form.professora.value, instrucoes: form.instrucoes.value, logo, campos, modelo };
+      // O cabeçalho vai do jeito que está no Word (o arquivo inteiro do cabeçalho vira o modelo)
+      if (r.modelo) {
+        const id = uid();
+        await guardarArquivo({ id, nome: arq.name, bytes: r.modelo, criadoEm: Date.now() });
+        modelo = { id, nome: arq.name.replace(/\.docx$/i, '') };
+        campos = [];
+      }
       if (r.nome) form.nome.value = r.nome;
       if (r.cidade) form.cidade.value = r.cidade;
       if (r.professora) form.professora.value = r.professora;
       if (r.instrucoes) form.instrucoes.value = r.instrucoes;
       if (r.logo) logo = await reduzirImagem(r.logo, 240);
-      if (r.campos.length) campos = r.campos;
+      if (!r.modelo && r.campos.length) campos = r.campos;
       previa();
-      const itens = [r.logo && 'logotipo', r.nome && 'nome da escola', r.campos.length && plural(r.campos.length, 'campo', 'campos'), r.instrucoes && 'instruções'].filter(Boolean);
-      res.innerHTML = `<strong>${ic('certo', 'p')} Encontrei: ${esc(itens.join(', '))}.</strong> Confira a prévia e salve.`;
+      res.innerHTML = r.modelo ? `<strong>${ic('certo', 'p')} Cabeçalho importado como está no Word.</strong> Confira a prévia e salve.`
+        : `<strong>${ic('certo', 'p')} Importei os dados do cabeçalho.</strong> Confira a prévia e salve.`;
       main.querySelector('#previa').scrollIntoView({ behavior: menosMovimento() ? 'auto' : 'smooth', block: 'center' });
       aviso('Cabeçalho importado.', { rotulo: 'Desfazer', fn: () => {
         form.nome.value = antes.nome; form.cidade.value = antes.cidade; form.professora.value = antes.professora; form.instrucoes.value = antes.instrucoes;
-        logo = antes.logo; campos = antes.campos; previa(); res.textContent = 'Importação desfeita.';
+        logo = antes.logo; campos = antes.campos; modelo = antes.modelo; previa(); res.textContent = 'Importação desfeita.';
       } });
     } catch (err) { console.error(err); res.textContent = err.message || 'Não consegui ler esse arquivo.'; }
   };
@@ -2211,7 +2238,7 @@ function telaAjustes(ancora) {
     ev.preventDefault();
     const fd = new FormData(form);
     try {
-      salvarConfig({ ...getConfig(), escola: { nome: fd.get('nome').trim(), cidade: fd.get('cidade').trim(), professora: fd.get('professora').trim(), instrucoes: fd.get('instrucoes').replace(/\r/g, '').trim(), logo, campos } });
+      salvarConfig({ ...getConfig(), escola: { nome: fd.get('nome').trim(), cidade: fd.get('cidade').trim(), professora: fd.get('professora').trim(), instrucoes: fd.get('instrucoes').replace(/\r/g, '').trim(), logo, campos, modelo } });
       aviso('Dados da escola salvos.');
     } catch (err) { aviso(err.message); }
   };

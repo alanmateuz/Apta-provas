@@ -8,7 +8,8 @@ import {
 } from 'docx';
 import { textoGabarito, TIPOS } from './montador.js';
 import { obterImagem } from './imagens.js';
-import { camposCabecalho } from './importar-cabecalho.js';
+import { camposCabecalho, mesclarNoModelo } from './importar-cabecalho.js';
+import { obterArquivo } from './materiais.js';
 
 /** Configuração da versão adaptada (a professora liga e desliga cada parte). */
 export function cfgAdaptada(prova) {
@@ -125,7 +126,9 @@ function questao(q, i, versao, tam, ca = cfgAdaptada()) {
 export async function baixarWord(prova, escola, versao) {
   const ca = cfgAdaptada(prova);
   const tam = versao === 'adaptada' && ca.letraMaior ? 30 : 24; // meios-pontos: 30 = 15pt, 24 = 12pt
-  const filhos = [cabecalho(prova, escola, tam)];
+  // Com o modelo da escola, o cabeçalho original entra no lugar do nosso
+  const modelo = escola.modelo?.id ? obterArquivo(escola.modelo.id) : null;
+  const filhos = modelo ? [] : [cabecalho(prova, escola, tam)];
   const titulo = versao === 'gabarito' ? `GABARITO — ${prova.titulo}` : prova.titulo + (versao === 'adaptada' ? '' : '');
   filhos.push(new Paragraph({ children: [new TextRun({ text: titulo, bold: true, size: tam + 4 })], alignment: AlignmentType.CENTER, spacing: { before: 240, after: 120 } }));
 
@@ -152,7 +155,13 @@ export async function baixarWord(prova, escola, versao) {
     styles: { default: { document: { run: { font: 'Arial' } } } },
     sections: [{ properties: { page: { margin: { top: 900, bottom: 900, left: 1000, right: 1000 } } }, children: filhos }],
   });
-  const blob = await Packer.toBlob(doc);
+  let blob = await Packer.toBlob(doc);
+  if (modelo) {
+    try {
+      const junto = mesclarNoModelo(new Uint8Array(await blob.arrayBuffer()), modelo.bytes);
+      blob = new Blob([junto], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    } catch (e) { console.warn('Não deu para usar o modelo da escola; vai com o cabeçalho do app', e); }
+  }
   const nome = `${prova.titulo}${versao === 'adaptada' ? ' - adaptada' : versao === 'gabarito' ? ' - gabarito' : ''}.docx`.replace(/[\\/:*?"<>|]/g, '-');
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: url, download: nome });

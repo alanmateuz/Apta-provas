@@ -8,6 +8,8 @@ import { normalizar } from './store.js';
 
 const BANCO = 'prova-izi-materiais';
 const LOJA = 'materiais';
+const ARQUIVOS = 'arquivos'; // outros arquivos do usuário (ex.: modelo de cabeçalho em Word)
+const arquivos = new Map();
 let conexao;
 let lista = []; // resumo em memória: { id, nome, materia, serie, paginas, criadoEm }
 const cache = new Map(); // id → registro completo (com o texto)
@@ -15,17 +17,19 @@ const cache = new Map(); // id → registro completo (com o texto)
 function abrir() {
   if (!conexao) {
     conexao = new Promise((ok, falha) => {
-      const p = indexedDB.open(BANCO, 1);
-      p.onupgradeneeded = () => p.result.createObjectStore(LOJA, { keyPath: 'id' });
+      const p = indexedDB.open(BANCO, 2);
+      p.onupgradeneeded = () => {
+        for (const loja of [LOJA, ARQUIVOS]) if (!p.result.objectStoreNames.contains(loja)) p.result.createObjectStore(loja, { keyPath: 'id' });
+      };
       p.onsuccess = () => ok(p.result);
       p.onerror = () => falha(p.error);
     });
   }
   return conexao;
 }
-const tx = (modo, fn) => abrir().then((db) => new Promise((ok, falha) => {
-  const t = db.transaction(LOJA, modo);
-  const r = fn(t.objectStore(LOJA));
+const tx = (modo, fn, loja = LOJA) => abrir().then((db) => new Promise((ok, falha) => {
+  const t = db.transaction(loja, modo);
+  const r = fn(t.objectStore(loja));
   t.oncomplete = () => ok(r?.result);
   t.onerror = () => falha(t.error);
 }));
@@ -38,7 +42,19 @@ export async function carregarMateriais() {
     const todos = await tx('readonly', (s) => s.getAll());
     todos.forEach((m) => cache.set(m.id, m));
     lista = todos.map(resumo).sort((a, b) => b.criadoEm - a.criadoEm);
+    (await tx('readonly', (s) => s.getAll(), ARQUIVOS)).forEach((a) => arquivos.set(a.id, a));
   } catch (e) { console.warn('Materiais indisponíveis', e); }
+}
+
+/* ---------- Arquivos avulsos (modelo de cabeçalho) ---------- */
+export const obterArquivo = (id) => arquivos.get(id) || null;
+export async function guardarArquivo(registro) {
+  await tx('readwrite', (s) => s.put(registro), ARQUIVOS);
+  arquivos.set(registro.id, registro);
+}
+export async function apagarArquivo(id) {
+  await tx('readwrite', (s) => s.delete(id), ARQUIVOS);
+  arquivos.delete(id);
 }
 export const listarMateriais = () => lista;
 export const obterMaterial = (id) => cache.get(id) || null;
