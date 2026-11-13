@@ -37,6 +37,7 @@ function transicao(desenhar, direcao = 'aba') {
   const t = document.startViewTransition(rodar);
   const limpar = () => { if (raiz.dataset.dir === direcao) delete raiz.dataset.dir; };
   t.finished.then(limpar, limpar);
+  t.ready?.catch(() => {}); t.updateCallbackDone?.catch(() => {}); // pular a animação não é erro
   setTimeout(() => { if (!feito) { try { t.skipTransition(); } catch {} rodar(); limpar(); } }, 400);
 }
 /** Vibração curta (Android); ignorada onde não existe. */
@@ -370,9 +371,9 @@ function itemProva(p) {
   return `<li><a class="cartao-prova" href="#/prova/${p.id}">
     <span class="materia-icone" aria-hidden="true">${icMateria(p.materia)}</span>
     <span class="cartao-prova-texto">
-      <span class="cartao-prova-materia">${esc(p.materia || 'Prova')}</span>
       <strong>${titulo}</strong>
-      <span class="meta">${esc(p.turma || p.serie)} · ${plural(p.questoes.length, 'questão', 'questões')} · ${new Date(p.atualizadaEm || p.criadaEm).toLocaleDateString('pt-BR')}</span>
+      <span class="cartao-prova-materia">${esc(p.materia || 'Prova')} · ${esc(p.turma || p.serie)}</span>
+      <span class="meta">${plural(p.questoes.length, 'questão', 'questões')} · ${esc(p.data || new Date(p.atualizadaEm || p.criadaEm).toLocaleDateString('pt-BR'))}</span>
     </span>
     ${seloStatus(st)}</a></li>`;
 }
@@ -1091,9 +1092,12 @@ function aoMudarFolha(e) {
   const qEl = e.target.closest('.q[data-i]');
   if (!qEl || !e.target.matches('select[data-campo=correta]')) return;
   const q = estado.prova.questoes[Number(qEl.dataset.i)];
-  const alvo = estado.aba === 'adaptada' ? q.adaptada : q;
+  // No gabarito, a linha diz de qual versão é; fora dele, vale a aba aberta
+  const versao = qEl.dataset.versao || (estado.aba === 'adaptada' ? 'adaptada' : 'normal');
+  const alvo = versao === 'adaptada' ? q.adaptada : q;
   alvo.correta = Number(e.target.value);
-  if (estado.aba !== 'adaptada') q.resposta = q.alternativas[q.correta] || '';
+  if (versao !== 'adaptada') q.resposta = q.alternativas[q.correta] || '';
+  if (qEl.dataset.versao) { const t = qEl.querySelector('.so-imprimir'); if (t) t.textContent = textoGabarito(q, versao); }
   q.editadaPelaProfessora = true; // ela corrigiu: o alerta da IA revisora sai
   salvarDepois();
   atualizarAlertas(Number(qEl.dataset.i));
@@ -1105,11 +1109,47 @@ function aoClicarFolha(e) {
   const i = Number(b.closest('.q[data-i]').dataset.i);
   const q = estado.prova.questoes[i];
   if (b.dataset.acao === 'mais') return menuQuestao(i);
+  if (b.dataset.acao === 'add-alt') return adicionarAlternativa(i);
+  if (b.dataset.acao === 'rem-alt') return removerAlternativa(i, Number(b.dataset.j));
   if (b.dataset.acao === 'conferi') {
     q.revisada = !q.revisada;
     if (q.revisada) { adicionarAoBanco([q], 'revisada'); aviso('Conferida! Ela agora é uma questão confiável do seu banco.'); }
     salvarDepois(); desenharFolha();
   }
+}
+
+/** Acrescenta uma alternativa/afirmação nas duas versões (normal e adaptada). */
+function adicionarAlternativa(i) {
+  const q = estado.prova.questoes[i];
+  const nova = q.tipo === 'vf' ? 'Nova afirmação' : 'Nova alternativa';
+  q.alternativas.push(nova);
+  if (q.adaptada) q.adaptada.alternativas = [...(q.adaptada.alternativas || []), nova];
+  if (q.tipo === 'vf') q.resposta = [...(q.resposta || '').split(',').map((s) => s.trim()).filter(Boolean), 'V'].join(', ');
+  salvarDepois(); desenharFolha(); atualizarAlertas(i);
+  const alts = document.querySelectorAll(`.q[data-i="${i}"] [data-campo=alt]`);
+  alts[alts.length - 1]?.focus();
+}
+
+/** Remove uma alternativa só da versão que está na tela, corrigindo o gabarito. */
+function removerAlternativa(i, j) {
+  const q = estado.prova.questoes[i];
+  const alvo = estado.aba === 'adaptada' ? q.adaptada : q;
+  const minimo = q.tipo === 'multipla' ? 2 : 1;
+  if (!alvo || (alvo.alternativas || []).length <= minimo) { aviso(`A questão precisa de pelo menos ${minimo} ${q.tipo === 'vf' ? 'afirmação' : 'alternativas'}.`); return; }
+  const antes = JSON.stringify({ alts: alvo.alternativas, correta: alvo.correta, resposta: q.resposta });
+  const [removida] = alvo.alternativas.splice(j, 1);
+  let recado = q.tipo === 'vf' ? 'Afirmação removida.' : `Alternativa ${letra(j)} removida.`;
+  if (q.tipo === 'multipla') {
+    if (alvo.correta === j) { alvo.correta = 0; recado = 'Você removeu a alternativa certa. Escolha a nova em "Certa".'; }
+    else if (alvo.correta > j) alvo.correta -= 1;
+    if (alvo === q) q.resposta = q.alternativas[q.correta] || '';
+  } else if (alvo === q) {
+    const partes = (q.resposta || '').split(',').map((s) => s.trim());
+    partes.splice(j, 1); q.resposta = partes.filter(Boolean).join(', ');
+  }
+  salvarDepois(); desenharFolha(); atualizarAlertas(i);
+  aviso(recado, { rotulo: 'Desfazer', fn: () => { const a = JSON.parse(antes); alvo.alternativas = a.alts; alvo.correta = a.correta; if (alvo === q) q.resposta = a.resposta; salvarDepois(); desenharFolha(); atualizarAlertas(i); } });
+  void removida;
 }
 
 async function trocarQuestao(i) {
@@ -1198,10 +1238,13 @@ function questaoHTML(q, i, versao) {
   const ce = 'contenteditable="true"';
   let corpo = `<div><span class="q-num">${i + 1}.</span> <span ${ce} data-campo="enunciado" aria-label="Enunciado da questão ${i + 1}">${md(d.enunciado)}</span></div>`;
   corpo += figuraHTML(q);
+  // Cada alternativa tem o seu "remover"; no fim da lista, "+ Alternativa"
+  const remover = (j, nome) => `<button type="button" class="alt-remover nao-imprimir" data-acao="rem-alt" data-j="${j}" aria-label="Remover ${nome}">${ic('fechar')}</button>`;
+  const adicionar = (nome) => `<li class="nao-imprimir"><button type="button" class="alt-adicionar" data-acao="add-alt">${ic('mais', 'p')} ${nome}</button></li>`;
   if (q.tipo === 'multipla') {
-    corpo += `<ol class="q-alts">${(d.alternativas || []).map((a, j) => `<li>(&nbsp;&nbsp;) ${letra(j)}) <span ${ce} data-campo="alt" data-j="${j}" aria-label="Alternativa ${letra(j)}">${md(a)}</span></li>`).join('')}</ol>`;
+    corpo += `<ol class="q-alts">${(d.alternativas || []).map((a, j) => `<li>(&nbsp;&nbsp;) ${letra(j)}) <span ${ce} data-campo="alt" data-j="${j}" aria-label="Alternativa ${letra(j)}">${md(a)}</span>${remover(j, `alternativa ${letra(j)}`)}</li>`).join('')}${adicionar('Alternativa')}</ol>`;
   } else if (q.tipo === 'vf') {
-    corpo += `<ol class="q-alts">${(d.alternativas || []).map((a, j) => `<li>(&nbsp;&nbsp;&nbsp;) <span ${ce} data-campo="alt" data-j="${j}" aria-label="Afirmação ${j + 1}">${md(a)}</span></li>`).join('')}</ol>`;
+    corpo += `<ol class="q-alts">${(d.alternativas || []).map((a, j) => `<li>(&nbsp;&nbsp;&nbsp;) <span ${ce} data-campo="alt" data-j="${j}" aria-label="Afirmação ${j + 1}">${md(a)}</span>${remover(j, `afirmação ${j + 1}`)}</li>`).join('')}${adicionar('Afirmação')}</ol>`;
   } else if (q.tipo === 'aberta') {
     corpo += `<div class="q-linhas" aria-hidden="true">${'<div></div>'.repeat(versao === 'adaptada' ? 4 : 3)}</div>`;
   }
@@ -1224,9 +1267,16 @@ function questaoHTML(q, i, versao) {
 
 function gabaritoHTML(p) {
   const tabela = (versao) => `<table><thead><tr><th scope="col">Nº</th><th scope="col">Resposta</th></tr></thead><tbody>
-    ${p.questoes.map((q, i) => `<tr class="q" data-i="${i}"><td>${i + 1}</td>
-      <td>${q.tipo === 'multipla' ? esc(textoGabarito(q, versao)) : `<span contenteditable="true" data-campo="resposta" aria-label="Resposta da questão ${i + 1}">${esc(q.resposta || '')}</span>`}
-      ${q.justificativa ? `<div class="nao-imprimir" style="color:#555;font-size:.85em;margin-top:2px">Por quê: ${esc(q.justificativa)}</div>` : ''}</td></tr>`).join('')}</tbody></table>`;
+    ${p.questoes.map((q, i) => {
+      const d = versao === 'adaptada' ? { ...q, ...q.adaptada } : q;
+      // No gabarito também dá para trocar a resposta certa (na impressão sai só o texto)
+      const resposta = q.tipo === 'multipla'
+        ? `<span class="so-imprimir">${esc(textoGabarito(q, versao))}</span><select class="nao-imprimir gabarito-escolha" data-campo="correta" aria-label="Resposta certa da questão ${i + 1}${versao === 'adaptada' ? ' (adaptada)' : ''}">${(d.alternativas || []).map((a, j) => `<option value="${j}" ${j === d.correta ? 'selected' : ''}>${letra(j)}) ${esc(a.replace(/\*\*/g, '').slice(0, 60))}</option>`).join('')}</select>`
+        : `<span contenteditable="true" data-campo="resposta" aria-label="Resposta da questão ${i + 1}">${esc(q.resposta || '')}</span>`;
+      return `<tr class="q" data-i="${i}" data-versao="${versao}"><td>${i + 1}</td>
+      <td>${resposta}
+      ${q.justificativa ? `<div class="nao-imprimir" style="color:#555;font-size:.85em;margin-top:2px">Por quê: ${esc(q.justificativa)}</div>` : ''}</td></tr>`;
+    }).join('')}</tbody></table>`;
   return `<div class="gabarito"><div class="titulo-prova">GABARITO — ${esc(p.titulo)}</div>
     <h3>Prova</h3>${tabela('normal')}
     ${p.temAdaptada !== false ? `<h3>Prova adaptada</h3>${tabela('adaptada')}` : ''}</div>`;
@@ -1373,7 +1423,8 @@ function telaBanco() {
       </details>
       <div class="rodape-q">
         ${q.origem !== 'minha' && q.origem !== 'revisada' ? `<button class="botao pequeno" data-conferir="${q.id}">${ic('certo', 'p')} Marcar como conferida</button>` : ''}
-        <button class="botao pequeno perigo" data-apagar-q="${q.id}" style="margin-left:auto">${ic('lixo', 'p')} Apagar</button>
+        <button class="botao pequeno" data-editar-q="${q.id}" style="margin-left:auto">${ic('editar', 'p')} Editar</button>
+        <button class="botao pequeno perigo" data-apagar-q="${q.id}">${ic('lixo', 'p')} Apagar</button>
       </div></li>`).join('')
       : `<li class="vazio">${ic('busca')}<strong>Nenhuma questão aqui</strong>Tire algum filtro ou escreva uma questão nova.</li>`;
     main.querySelector('#b-mais').hidden = filtradas.length <= filtroBanco.limite;
@@ -1395,7 +1446,9 @@ function telaBanco() {
   main.querySelector('#lista-banco').onclick = (e) => {
     const conf = e.target.closest('[data-conferir]')?.dataset.conferir;
     const apg = e.target.closest('[data-apagar-q]')?.dataset.apagarQ;
+    const edt = e.target.closest('[data-editar-q]')?.dataset.editarQ;
     const b = getBanco();
+    if (edt) return formQuestao(desenharLista, b.find((q) => q.id === edt));
     if (conf) { b.find((q) => q.id === conf).origem = 'revisada'; salvarBanco(b); desenharLista(); aviso('Marcada como conferida.'); }
     if (apg) {
       const i = b.findIndex((q) => q.id === apg);
@@ -1543,30 +1596,33 @@ function mostrarResultadosBusca(achadas, depois) {
   });
 }
 
-function formQuestao(depois) {
-  abrirGaveta('Escrever questão', `<form id="form-q" novalidate>
+/** Escrever uma questão nova ou editar uma do banco (existente). */
+function formQuestao(depois, existente = null) {
+  const x = existente || {};
+  const nAlts = Math.max(4, (x.alternativas || []).length);
+  abrirGaveta(existente ? 'Editar questão' : 'Escrever questão', `<form id="form-q" novalidate>
     <div class="duas-colunas">
-      <div class="campo"><label for="q-materia">Matéria</label><select id="q-materia" name="materia">${MATERIAS.map((m) => `<option ${m === (filtroBanco.materia || 'Matemática') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
-      <div class="campo"><label for="q-serie">Ano / série</label><select id="q-serie" name="serie">${SERIES.map((s) => `<option ${s === (filtroBanco.serie || '5º ano') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <div class="campo"><label for="q-materia">Matéria</label><select id="q-materia" name="materia">${MATERIAS.map((m) => `<option ${m === (x.materia || filtroBanco.materia || 'Matemática') ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+      <div class="campo"><label for="q-serie">Ano / série</label><select id="q-serie" name="serie">${SERIES.map((s) => `<option ${s === (x.serie || filtroBanco.serie || '5º ano') ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
     </div>
-    <div class="campo"><label for="q-tema">Conteúdo</label><input type="text" id="q-tema" name="tema" placeholder="Frações" /></div>
-    <fieldset style="border:0;padding:0;margin:0 0 24px"><legend class="rotulo">Dificuldade</legend>${fichas('dificuldade', Object.entries(DIFICULDADES), 'medio')}</fieldset>
-    <div class="campo"><label for="q-tipo">Tipo</label><select id="q-tipo" name="tipo">${Object.entries(TIPOS).map(([v, r]) => `<option value="${v}">${r}</option>`).join('')}</select></div>
+    <div class="campo"><label for="q-tema">Conteúdo</label><input type="text" id="q-tema" name="tema" placeholder="Frações" value="${esc(x.tema || '')}" /></div>
+    <fieldset style="border:0;padding:0;margin:0 0 24px"><legend class="rotulo">Dificuldade</legend>${fichas('dificuldade', Object.entries(DIFICULDADES), x.dificuldade || 'medio')}</fieldset>
+    <div class="campo"><label for="q-tipo">Tipo</label><select id="q-tipo" name="tipo">${Object.entries(TIPOS).map(([v, r]) => `<option value="${v}" ${v === x.tipo ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
     <div class="campo"><label for="q-enunciado">Pergunta</label>
       <span class="dica">Para destacar uma palavra, escreva entre dois asteriscos: **palavra**</span>
-      <textarea id="q-enunciado" name="enunciado"></textarea></div>
-    <fieldset id="q-alts" style="border:0;padding:0;margin:0 0 24px"><legend class="rotulo">Alternativas</legend><span class="dica">Toque no círculo da alternativa certa.</span>
-      ${[0, 1, 2, 3].map((j) => `<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
-        <input type="radio" name="correta" value="${j}" ${j === 0 ? 'checked' : ''} aria-label="A alternativa ${letra(j)} é a certa" style="width:28px;height:28px;flex:none;accent-color:var(--sucesso)"/>
-        <input type="text" name="alt" aria-label="Alternativa ${letra(j)}" placeholder="Alternativa ${letra(j)}" /></div>`).join('')}</fieldset>
+      <textarea id="q-enunciado" name="enunciado">${esc(x.enunciado || '')}</textarea></div>
+    <fieldset id="q-alts" style="border:0;padding:0;margin:0 0 24px"><legend class="rotulo">Alternativas</legend><span class="dica">Toque no círculo da alternativa certa. Deixe em branco para tirar uma alternativa.</span>
+      ${Array.from({ length: nAlts }, (_, j) => `<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+        <input type="radio" name="correta" value="${j}" ${j === (existente ? x.correta : 0) ? 'checked' : ''} aria-label="A alternativa ${letra(j)} é a certa" style="width:28px;height:28px;flex:none;accent-color:var(--sucesso)"/>
+        <input type="text" name="alt" aria-label="Alternativa ${letra(j)}" placeholder="Alternativa ${letra(j)}" value="${esc((x.alternativas || [])[j] || '')}" /></div>`).join('')}</fieldset>
     <div class="campo"><span class="rotulo">Imagem <span class="opcional">(opcional)</span></span>
       <div class="acoes" style="margin:0"><label class="botao pequeno" for="q-img">${ic('imagem', 'p')} Escolher imagem</label>
       <input type="file" id="q-img" accept="image/*" class="sr" /><span class="dica" id="q-img-nome" style="margin:0"></span></div></div>
     <div class="campo" id="q-resp"><label for="q-resposta">Resposta esperada</label>
       <span class="dica">Para V/F escreva assim: V, F, V</span>
-      <input type="text" id="q-resposta" name="resposta" /></div>
+      <input type="text" id="q-resposta" name="resposta" value="${existente && x.tipo !== 'multipla' ? esc(x.resposta || '') : ''}" /></div>
     <div class="aviso-bloco erro" id="q-erros" role="alert" hidden></div>
-    <button class="botao principal grande cheio">${ic('certo', 'p')} Salvar no banco</button></form>`, (c) => {
+    <button class="botao principal grande cheio">${ic('certo', 'p')} ${existente ? 'Salvar alterações' : 'Salvar no banco'}</button></form>`, (c) => {
     const form = c.querySelector('form');
     const ajustar = () => {
       const t = form.tipo.value;
@@ -1588,8 +1644,9 @@ function formQuestao(depois) {
       const q = {
         materia: fd.get('materia'), serie: fd.get('serie'), dificuldade: fd.get('dificuldade'), tema: fd.get('tema').trim(),
         tipo, enunciado: fd.get('enunciado').trim(), alternativas, correta,
-        resposta: tipo === 'multipla' ? (alternativas[correta] || '') : fd.get('resposta').trim(), justificativa: '',
+        resposta: tipo === 'multipla' ? (alternativas[correta] || '') : fd.get('resposta').trim(), justificativa: existente?.justificativa || '',
       };
+      if (existente?.imagem) q.imagem = existente.imagem;
       const arqImg = c.querySelector('#q-img').files[0];
       if (arqImg) {
         try { const reg = await guardarImagem(await rasterizar(arqImg)); q.imagem = { id: reg.id, tipo: 'professora', descricao: '', credito: '' }; }
@@ -1599,6 +1656,14 @@ function formQuestao(depois) {
       if (!q.tema) erros.unshift('Escreva o conteúdo.');
       const caixa = c.querySelector('#q-erros');
       if (erros.length) { caixa.hidden = false; caixa.innerHTML = `<strong>Falta corrigir:</strong><ul>${erros.map((m) => `<li>${esc(m)}</li>`).join('')}</ul>`; caixa.scrollIntoView({ block: 'nearest' }); return; }
+      if (existente) {
+        // Editada pela professora: vira questão dela (confiável), mantendo id e imagem
+        const b = getBanco();
+        const k = b.findIndex((y) => y.id === existente.id);
+        if (k >= 0) { b[k] = { ...existente, ...q, origem: 'minha', alertas: [] }; salvarBanco(b); }
+        fecharGaveta(); aviso('Questão atualizada.'); depois?.();
+        return;
+      }
       adicionarAoBanco([q], 'minha');
       fecharGaveta(); aviso('Questão salva no banco.'); depois?.();
     };
