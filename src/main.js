@@ -41,6 +41,8 @@ function transicao(desenhar, direcao = 'aba') {
 }
 /** Vibração curta (Android); ignorada onde não existe. */
 const vibrar = (padrao = 10) => { try { navigator.vibrate?.(padrao); } catch {} };
+// Resposta tátil leve nas ações principais (onde o aparelho suporta)
+document.addEventListener('click', (e) => { if (e.target.closest?.('.botao.principal, .nav a, .heroi, .agora')) vibrar(8); });
 /** Reinicia a animação de entrada em cascata das listas. */
 function cascata() { main.classList.remove('cascata'); void main.offsetWidth; main.classList.add('cascata'); }
 
@@ -75,7 +77,22 @@ const ICONES = {
   tipo: '<path d="M4 6h16M4 12h10M4 18h7"/>',
   lapis: '<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>',
   embaralhar: '<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4"/><path d="M19 5l2 2-2 2M19 15l2 2-2 2"/>',
+  inclusao: '<circle cx="12" cy="4.5" r="2"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M8.5 21l3.5-6 3.5 6"/>',
+  relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
+/** Mascote da marca: a coruja (sabedoria, sala de aula). Aparece pouco, porque o público é adulto. */
+const CORUJA = '/icones/3-coruja.svg';
+
+/** Situação de uma prova: quantas questões ainda pedem o ok da professora. */
+function statusProva(p) {
+  const qs = p.questoes || [];
+  const erro = qs.filter((q) => q.alertas?.some((a) => a.nivel === 'erro')).length;
+  const conferir = qs.filter((q) => !q.revisada && ['ia', 'exemplo', 'internet'].includes(q.origem)).length;
+  return { erro, conferir, pendentes: Math.max(erro, conferir) };
+}
+const seloStatus = (st) => st.pendentes
+  ? `<span class="selo atencao">${ic('alerta')} ${st.pendentes} a conferir</span>`
+  : `<span class="selo pronta">${ic('certo')} Pronta</span>`;
 const ic = (nome, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONES[nome] || ''}</svg>`;
 
 /* =================== utilitários =================== */
@@ -251,16 +268,35 @@ function telaInicio() {
   const faltam = passos.filter((p) => !p.feito).length;
   const confiaveis = banco.filter((q) => q.origem === 'minha' || q.origem === 'revisada').length;
 
+  // One-pager: o que está acontecendo agora em cima, depois criar, números e atalhos
+  const ultima = provas[0];
+  const stUltima = ultima ? statusProva(ultima) : null;
+  const aConferir = provas.reduce((s, p) => s + statusProva(p).pendentes, 0);
+  const agora = ultima && stUltima.pendentes ? `
+    <a class="agora" href="#/prova/${ultima.id}">
+      <span class="agora-rotulo">${ic('relogio', 'p')} Continue de onde parou</span>
+      <strong class="agora-titulo">${esc(ultima.titulo)}</strong>
+      <span class="agora-meta">${esc(ultima.turma || ultima.serie)} · ${plural(ultima.questoes.length, 'questão', 'questões')}</span>
+      ${seloStatus(stUltima)}
+      <span class="chevron">${ic('seta')}</span>
+    </a>` : '';
+
   main.innerHTML = `
     <p class="sub" style="margin:0">${hoje}</p>
-    <h1>${saudacao}${nome}</h1>
-
-    <a class="heroi" href="#/nova">
-      <span class="heroi-icone">${ic('lapis')}</span>
+    <h1>${saudacao}${nome ? `, <span class="cor-marca">${nome.replace(/^, /, '')}</span>` : ''}</h1>
+    ${agora}
+    <a class="heroi${agora ? ' compacto' : ''}" href="#/nova">
+      <img class="heroi-coruja" src="${CORUJA}" alt="" width="64" height="64" />
       <h2>Criar prova nova</h2>
       <p>Escolha a turma e o conteúdo. A prova, a versão adaptada e o gabarito ficam prontos em minutos.</p>
       <span class="botao">Começar ${ic('seta', 'p')}</span>
     </a>
+
+    <ul class="numeros" aria-label="Resumo">
+      <li><a href="#/provas"><strong class="n-marca" data-contar="${provas.length}">${provas.length}</strong><span>${provas.length === 1 ? 'prova' : 'provas'}</span></a></li>
+      <li><a href="#/banco"><strong data-contar="${banco.length}">${banco.length}</strong><span>no banco</span></a></li>
+      <li><a href="${aConferir && ultima ? `#/prova/${ultima.id}` : '#/banco'}"><strong class="${aConferir ? 'n-atencao' : ''}" data-contar="${aConferir}">${aConferir}</strong><span>a conferir</span></a></li>
+    </ul>
 
     ${faltam ? `<div class="cabeca-secao">Primeiros passos · ${3 - faltam} de 3</div>
       <ul class="grupo passos">${passos.map((p, i) => `<li class="${p.feito ? 'feito' : ''}">${p.feito
@@ -277,13 +313,35 @@ function telaInicio() {
       ${linha({ href: '#/banco', icone: 'banco', titulo: 'Banco de questões', meta: `${plural(banco.length, 'questão', 'questões')} · ${confiaveis} conferidas` })}
       ${linha({ href: '#/ajustes', icone: 'escola', cor: 'cinza', titulo: 'Minha escola', meta: cfg.escola.nome ? esc(cfg.escola.nome) : 'Cabeçalho das provas' })}
     </ul>`;
+  contarNumeros();
 }
 
-function itemProva(p) {
-  return linha({
-    href: `#/prova/${p.id}`, icone: 'doc', titulo: esc(p.titulo),
-    meta: `${esc(p.turma || p.serie)} · ${plural(p.questoes.length, 'questão', 'questões')} · ${new Date(p.atualizadaEm).toLocaleDateString('pt-BR')}`,
+/** Números do resumo "contam" até o valor (ou aparecem direto, com menos movimento). */
+function contarNumeros() {
+  if (menosMovimento()) return;
+  main.querySelectorAll('[data-contar]').forEach((el) => {
+    const alvo = Number(el.dataset.contar);
+    if (!alvo) return;
+    const t0 = performance.now();
+    const passo = (t) => {
+      const k = Math.min(1, (t - t0) / 700);
+      el.textContent = Math.round(alvo * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(passo);
+    };
+    el.textContent = '0';
+    requestAnimationFrame(passo);
   });
+}
+
+/** Card de prova: título (o que identifica), situação em cor (o que decide) e dados pequenos. */
+function itemProva(p) {
+  const st = statusProva(p);
+  return `<li><a class="linha linha-prova" href="#/prova/${p.id}">
+    <span class="icone-app">${ic('doc')}</span>
+    <span class="texto-linha"><span class="titulo-linha">${esc(p.titulo)}</span>
+      <span class="meta">${esc(p.turma || p.serie)} · ${plural(p.questoes.length, 'questão', 'questões')} · ${new Date(p.atualizadaEm || p.criadaEm).toLocaleDateString('pt-BR')}</span>
+      ${seloStatus(st)}</span>
+    <span class="chevron">${ic('seta')}</span></a></li>`;
 }
 
 /* =================== CRIAR PROVA (assistente em 4 passos) =================== */
@@ -405,6 +463,7 @@ function desenharPasso() {
   }
 
   main.innerHTML = `
+    <div class="modo-criar" aria-hidden="true"><span class="modo-icone">${ic('lapis')}</span>Criar prova</div>
     <div class="progresso">
       <div class="progresso-trilho" role="progressbar" aria-valuemin="1" aria-valuemax="${TOTAL_PASSOS}" aria-valuenow="${r.passo}" aria-label="Passo ${r.passo} de ${TOTAL_PASSOS}">${[1, 2, 3, 4].map((n) => `<span class="${n <= r.passo ? 'feito' : ''}"></span>`).join('')}</div>
       <span class="progresso-rotulo">${r.passo} de ${TOTAL_PASSOS}</span>
@@ -469,8 +528,9 @@ function telaCriando(etapas) {
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-labelledby', 'criando-titulo');
   el.innerHTML = `<div class="criando-caixa">
-    <img class="criando-icone" src="/icon.svg" alt="" width="64" height="64" />
-    <h1 id="criando-titulo" style="margin-top:16px">Preparando sua prova</h1>
+    <img class="criando-icone" src="${CORUJA}" alt="" width="72" height="72" />
+    <h1 id="criando-titulo" class="cor-marca" style="margin-top:16px">Preparando sua prova</h1>
+    <span class="selo ia-selo">${ic('brilho')} Com IA</span>
     <p class="sub">Leva cerca de 1 minuto. Pode deixar esta tela aberta.</p>
     <div class="criando-barra" aria-hidden="true"><span></span></div>
     <ol class="etapas" aria-live="polite">${etapas.map((t) => `<li><span class="estado" aria-hidden="true"></span><span>${esc(t)}</span></li>`).join('')}</ol>
@@ -753,6 +813,7 @@ function telaProva(id) {
       <button role="tab" data-aba="adaptada">Adaptada</button>
       <button role="tab" data-aba="gabarito">Gabarito</button>
     </div>
+    <div id="faixa-versao" class="nao-imprimir"></div>
     <p class="dica-editar">${ic('editar', 'p')} Toque em qualquer texto da folha para editar.</p>
     <div id="recados" class="nao-imprimir"></div>
     <div id="painel-revisao" class="nao-imprimir"></div>
@@ -1123,6 +1184,11 @@ function desenharFolha() {
   document.querySelectorAll('.segmentos button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.aba === estado.aba)));
   folha.classList.toggle('adaptada', estado.aba === 'adaptada');
   document.getElementById('b-add').hidden = estado.aba === 'gabarito';
+  // A versão adaptada é um "modo": ganha faixa com cor e ícone próprios
+  const faixa = document.getElementById('faixa-versao');
+  if (faixa) faixa.innerHTML = estado.aba === 'adaptada'
+    ? `<div class="faixa-adaptada">${ic('inclusao')}<span><strong>Versão adaptada</strong>Letra maior, frases curtas, palavras-chave em negrito e dicas. Para TDAH, autismo, dislexia e deficiência intelectual.</span></div>`
+    : estado.aba === 'gabarito' ? `<div class="faixa-gabarito">${ic('certo')}<span><strong>Gabarito</strong>Só para você. Não sai junto com a prova.</span></div>` : '';
 
   if (estado.aba === 'gabarito') {
     folha.innerHTML = cabecalhoHTML(p, escola) + gabaritoHTML(p);
@@ -1201,9 +1267,9 @@ function telaBanco() {
       <button class="botao fantasma icone" id="b-banco-mais" aria-label="Importar ou exportar questões">${ic('pontos')}</button></div>
     <p class="sub">Suas questões ficam guardadas neste aparelho e funcionam sem internet.</p>
     <div class="contagem">
-      <div><strong>${nConf}</strong><span>conferidas</span></div>
+      <div><strong class="n-ok">${nConf}</strong><span>conferidas</span></div>
       <div><strong>${banco.filter((q) => ['exemplo', 'importada', 'internet'].includes(q.origem)).length}</strong><span>exemplos e da internet</span></div>
-      <div><strong>${banco.filter((q) => q.origem === 'ia').length}</strong><span>novas para conferir</span></div>
+      <div><strong class="n-atencao">${banco.filter((q) => q.origem === 'ia').length}</strong><span>novas para conferir</span></div>
     </div>
     <button class="cartao-busca" id="b-buscar-web" ${temIA ? '' : 'disabled'}>
       <span class="icone-app">${ic('brilho')}</span>

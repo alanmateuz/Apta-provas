@@ -691,3 +691,114 @@ dialog.gaveta.fechando::backdrop { animation: sumir 0.2s ease-in forwards; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   .criando-icone, .esqueleto-folha i { animation: none; }
 }
+
+/* =========================================================
+   Identidade Prova Izi (aplicando a skill ui-ux-do-alan)
+   Paleta com papéis:
+   - amarelo = marca e ação principal
+   - azul-tinta (o "check" do logo) = unidade de marca: nome da professora,
+     títulos de marca, números da casa
+   - degradê amarelo→laranja = IA (função especial)
+   - azul inclusão = versão adaptada (um "modo" da prova)
+   - laranja = algo pede atenção (a conferir); verde = pronta
+   Superfícies: flat, com contorno fino e sombra macia só no que precisa destacar.
+   ========================================================= */
+:root {
+  --marca-azul: #1f4e79;
+  --gradiente-ia: linear-gradient(135deg, #ffd25a 0%, #ff9a3c 100%);
+  --inclusao: #1a5fb8;
+  --inclusao-suave: #e8f1fd;
+  --sombra-cartao: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.06);
+  --contorno: 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --marca-azul: #8fbdf0; --inclusao: #6aa8ff; --inclusao-suave: #13253d; --sombra-cartao: none; --contorno: 0 0 0 1px rgba(255, 255, 255, 0.06); }
+}
+.cor-marca { color: var(--marca-azul); }
+
+/* Barra de abas flutuante, branca e arredondada (celular) */
+@media (max-width: 899px) {
+  .nav {
+    left: 12px; right: 12px; bottom: calc(8px + var(--seguro-baixo));
+    height: var(--nav-h); padding: 6px 6px; border-radius: 26px;
+    background: var(--superficie); border: 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--separador);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .nav a { justify-content: center; }
+  main { padding-bottom: calc(var(--nav-h) + var(--seguro-baixo) + 40px); }
+  .avisos { bottom: calc(var(--nav-h) + var(--seguro-baixo) + 20px); }
+  .fab { bottom: calc(var(--nav-h) + var(--seguro-baixo) + 20px); }
+}
+
+/* Superfícies com profundidade sutil */
+.grupo, .cartao-form, .questao-banco, .cartao-busca, .alternar, details.revelar, .fichas.lista, .vazio, .numeros a { box-shadow: var(--sombra-cartao), var(--contorno); }
+
+/* Home: herói com a coruja e o título na cor do logo (unidade) */
+.heroi { position: relative; overflow: hidden; background: linear-gradient(160deg, #ffd45e 0%, var(--amarelo) 55%, #ffbf2e 100%); box-shadow: 0 10px 28px rgba(245, 184, 0, 0.28); }
+.heroi h2 { color: #1f4e79; margin-top: 0; padding-right: 76px; }
+.heroi-coruja { position: absolute; top: var(--e-5); right: var(--e-5); width: 64px; height: 64px; border-radius: 18px; box-shadow: 0 6px 16px rgba(31, 78, 121, 0.25); animation: flutuar 3.2s ease-in-out infinite; }
+@keyframes flutuar { 50% { transform: translateY(-4px) rotate(-2deg); } }
+.heroi.compacto { padding: var(--e-4) var(--e-5); }
+.heroi.compacto p { display: none; }
+.heroi.compacto h2 { font-size: 1.2rem; margin-bottom: var(--e-3); }
+.heroi.compacto .heroi-coruja { width: 52px; height: 52px; top: var(--e-4); }
+
+/* "Continue de onde parou": o que está acontecendo agora */
+.agora { position: relative; display: grid; gap: 4px; margin: var(--e-4) 0 var(--e-3); padding: var(--e-4) 44px var(--e-4) var(--e-4); border-radius: var(--r-lg); background: var(--superficie); color: var(--texto); text-decoration: none; box-shadow: var(--sombra-cartao), var(--contorno), inset 4px 0 0 var(--laranja); transition: transform 0.15s var(--mola); }
+.agora:active { transform: scale(0.985); }
+.agora-rotulo { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--laranja); text-transform: uppercase; letter-spacing: 0.02em; }
+.agora-rotulo .ic { width: 16px; height: 16px; }
+.agora-titulo { font-size: 1.1rem; line-height: 1.3; }
+.agora-meta { color: var(--texto-3); font-size: 0.88rem; }
+.agora .selo { justify-self: start; margin-top: 4px; }
+.agora .chevron { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--chevron); }
+.agora .chevron .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+
+/* Números do resumo: número grande + rótulo curto */
+.numeros { list-style: none; margin: var(--e-4) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
+.numeros a { display: block; padding: var(--e-3); border-radius: var(--r-md); background: var(--superficie); color: var(--texto); text-decoration: none; min-height: 72px; transition: transform 0.15s var(--mola); }
+.numeros a:active { transform: scale(0.97); }
+.numeros strong { display: block; font-size: 1.7rem; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; }
+.numeros strong.n-marca { color: var(--marca-azul); }
+.numeros strong.n-atencao { color: var(--laranja); }
+.numeros span { font-size: 0.8rem; color: var(--texto-3); font-weight: 600; }
+
+/* Selos de situação: cor + ícone + texto (cor nunca sozinha) */
+.selo.atencao { color: var(--laranja); background: var(--laranja-suave); }
+.selo.pronta { color: var(--verde); background: var(--verde-suave); }
+.linha-prova .selo { margin-top: 6px; }
+.linha-prova { align-items: flex-start; padding-top: 12px; padding-bottom: 12px; }
+.linha-prova .icone-app { margin-top: 2px; }
+.linha-prova .chevron { align-self: center; }
+a.linha:active { transform: scale(0.99); }
+
+/* IA: o degradê marca a função especial */
+.selo.ia, .selo.ia-selo { color: #4a2a00; background: var(--gradiente-ia); }
+.cartao-busca .icone-app { background: var(--gradiente-ia); }
+.criando-barra span { background: var(--gradiente-ia); }
+.criando-caixa .selo.ia-selo { margin-top: var(--e-1); }
+.criando-icone { border-radius: 20px; box-shadow: 0 8px 20px rgba(31, 78, 121, 0.25); }
+
+/* Criar prova é um "modo": faixa com ícone e cor da marca */
+.modo-criar { display: flex; align-items: center; gap: 10px; margin: 0 0 var(--e-3); padding: 8px 14px 8px 8px; border-radius: var(--r-lg); font-size: 1rem !important; background: var(--amarelo-suave); color: var(--tinta); font-weight: 700; font-size: 0.9rem; }
+.modo-icone { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--amarelo); color: var(--sobre-amarelo); }
+.modo-icone .ic { width: 16px; height: 16px; }
+.progresso-trilho span.feito { background: linear-gradient(90deg, var(--amarelo-forte), var(--amarelo)); }
+
+/* Editor: faixas das versões */
+.faixa-adaptada, .faixa-gabarito { display: flex; gap: var(--e-3); align-items: flex-start; padding: var(--e-3) var(--e-4); border-radius: var(--r-md); margin: 0 0 var(--e-3); animation: entrar 0.3s var(--mola); }
+.faixa-adaptada { background: var(--inclusao-suave); }
+.faixa-adaptada > .ic { color: var(--inclusao); }
+.faixa-adaptada strong { display: block; color: var(--inclusao); }
+.faixa-gabarito { background: var(--verde-suave); }
+.faixa-gabarito > .ic { color: var(--verde); }
+.faixa-gabarito strong { display: block; color: var(--verde); }
+.faixa-adaptada span, .faixa-gabarito span { font-size: 0.9rem; color: var(--texto-2); line-height: 1.4; }
+.segmentos button[data-aba='adaptada'][aria-selected='true'] { color: var(--inclusao); }
+
+@media (prefers-reduced-motion: reduce) { .heroi-coruja { animation: none; } }
+
+.contagem div { box-shadow: var(--sombra-cartao), var(--contorno); }
+.contagem strong.n-ok { color: var(--verde); }
+.contagem strong.n-atencao { color: var(--laranja); }
