@@ -865,11 +865,13 @@ a.linha:active { transform: scale(0.99); }
 @media print { .folha.adaptada.sem-letra-maior { font-size: 12pt; } }
 
 /* Data da prova */
-.linha-data { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e-2) var(--e-3); margin: 0 0 var(--e-3); }
+.linha-data { display: grid; gap: var(--e-2); margin: 0 0 var(--e-3); }
 .linha-data .dica-editar { margin: 0; }
-.data-prova { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px 0 12px; border-radius: 99px; background: var(--superficie); box-shadow: inset 0 0 0 1px var(--borda); font-weight: 600; font-size: 0.9rem; color: var(--texto); cursor: pointer; }
+.data-prova { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 8px 6px 14px; border-radius: var(--r-md); background: var(--superficie); box-shadow: var(--sombra-cartao), var(--contorno); font-weight: 600; color: var(--texto); cursor: pointer; }
 .data-prova .ic { color: var(--tinta); }
-.data-prova input[type='date'] { width: auto; min-height: 36px; padding: 4px 8px; border-radius: 99px; background: var(--amarelo-suave); font-size: 0.95rem; font-weight: 600; color: var(--texto); }
+.data-prova span { flex: 1; }
+.data-prova input[type='date'] { width: auto; min-height: 40px; padding: 6px 8px; border: 0; border-radius: 8px; outline: none; background: transparent; box-shadow: none; font: inherit; font-weight: 600; color: var(--tinta); text-align: right; -webkit-appearance: none; appearance: none; }
+.data-prova input[type='date']:focus-visible { box-shadow: 0 0 0 2px var(--amarelo-forte); }
 
 /* ---------- CRUD na folha (rodada 4) ---------- */
 /* Remover alternativa (x) e "+ Alternativa": só na tela, perto do item */
