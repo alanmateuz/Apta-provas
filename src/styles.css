@@ -172,20 +172,20 @@ main.largo { max-width: 980px; }
   min-height: 50px; padding: 12px 20px;
   font: inherit; font-size: 1rem; font-weight: 600; text-decoration: none; cursor: pointer; line-height: 1.2;
   border-radius: var(--r-lg); border: 0;
-  background: var(--superficie-2); color: var(--texto);
+  background: var(--superficie); color: var(--texto); box-shadow: inset 0 0 0 1px var(--borda);
   transition: transform 0.12s var(--mola), background 0.2s, opacity 0.2s;
   -webkit-user-select: none; user-select: none;
 }
-.botao:hover { background: var(--superficie-3); }
+.botao:hover { background: var(--campo); }
 .botao:active { transform: scale(0.97); }
-.botao.principal { background: var(--amarelo); color: var(--sobre-amarelo); }
+.botao.principal { background: var(--amarelo); color: var(--sobre-amarelo); box-shadow: none; }
 .botao.principal:hover { background: var(--amarelo-forte); }
-.botao.escuro { background: var(--escuro-fundo); color: var(--escuro-texto); }
+.botao.escuro { background: var(--escuro-fundo); color: var(--escuro-texto); box-shadow: none; }
 .botao.escuro:hover { background: var(--escuro-hover); }
 .botao.grande { min-height: 56px; font-size: 1.06rem; padding: 14px 24px; }
 .botao.cheio { width: 100%; }
-.botao.perigo { color: var(--vermelho); }
-.botao.fantasma { background: transparent; color: var(--tinta); }
+.botao.perigo { color: var(--vermelho); box-shadow: inset 0 0 0 1px var(--vermelho); }
+.botao.fantasma { background: transparent; color: var(--tinta); box-shadow: none; }
 .botao.fantasma:hover { background: rgba(0, 0, 0, 0.05); }
 .botao.pequeno { min-height: 44px; padding: 8px 14px; font-size: 0.92rem; border-radius: var(--r-md); }
 .botao.icone { width: 44px; min-height: 44px; padding: 0; border-radius: 50%; }
@@ -493,9 +493,9 @@ a.selo:hover { text-decoration: underline; }
 }
 .q-ferramentas .botao { min-height: 44px; height: 44px; padding: 6px 12px; font-size: 0.88rem; border-radius: 99px; }
 .q-ferramentas .botao.conferida { background: var(--verde-suave); color: var(--verde); }
-.q-ferramentas .mais { margin-left: auto; width: 44px; height: 44px; min-height: 44px; padding: 0; background: var(--superficie-2); color: var(--texto-2); }
+.q-ferramentas .mais { margin-left: auto; width: 44px; height: 44px; min-height: 44px; padding: 0; background: var(--superficie); box-shadow: inset 0 0 0 1px var(--borda); color: var(--texto-2); }
 .q-ferramentas label.certa { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.88rem; color: var(--texto-2); }
-.q-ferramentas label.certa select { min-height: 44px; height: 44px; width: auto; padding: 4px 32px 4px 12px; font-size: 0.95rem; border-radius: 99px; background-color: var(--superficie-2); }
+.q-ferramentas label.certa select { min-height: 44px; height: 44px; width: auto; padding: 4px 32px 4px 12px; font-size: 0.95rem; border-radius: 99px; background-color: var(--superficie); box-shadow: inset 0 0 0 1px var(--borda); }
 .q-alertas { display: flex; gap: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14.5px; line-height: 1.4; margin-top: var(--e-2); padding: var(--e-3); border-radius: var(--r-sm); background: var(--vermelho-suave); color: var(--texto); }
 .q-alertas > .ic { color: var(--vermelho); width: 20px; height: 20px; }
 .q-alertas.leve { background: var(--laranja-suave); }
@@ -741,16 +741,6 @@ html.escuro { --marca-azul: #8fbdf0; --inclusao: #6aa8ff; --inclusao-suave: #132
 .heroi.compacto h2 { font-size: 1.2rem; margin-bottom: var(--e-3); }
 .heroi.compacto .heroi-coruja { width: 52px; height: 52px; top: var(--e-4); }
 
-/* "Continue de onde parou": o que está acontecendo agora */
-.agora { position: relative; display: grid; gap: 4px; margin: var(--e-4) 0 var(--e-3); padding: var(--e-4) 44px var(--e-4) var(--e-4); border-radius: var(--r-lg); background: var(--superficie); color: var(--texto); text-decoration: none; box-shadow: var(--sombra-cartao), var(--contorno), inset 4px 0 0 var(--laranja); transition: transform 0.15s var(--mola); }
-.agora:active { transform: scale(0.985); }
-.agora-rotulo { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: var(--laranja); text-transform: uppercase; letter-spacing: 0.02em; }
-.agora-rotulo .ic { width: 16px; height: 16px; }
-.agora-titulo { font-size: 1.1rem; line-height: 1.3; }
-.agora-meta { color: var(--texto-3); font-size: 0.88rem; }
-.agora .selo { justify-self: start; margin-top: 4px; }
-.agora .chevron { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--chevron); }
-.agora .chevron .ic { width: 18px; height: 18px; stroke-width: 2.4; }
 
 /* Números do resumo: número grande + rótulo curto */
 .numeros { list-style: none; margin: var(--e-4) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--e-2); }
@@ -802,13 +792,10 @@ a.linha:active { transform: scale(0.99); }
 
 /* ---------- Home em blocos de atenção (rodada 2 com o Alan) ---------- */
 /* 1) Saudação: um bloco próprio, na cor suave da marca */
-.saudacao { display: flex; align-items: center; gap: var(--e-3); margin: var(--e-2) 0 var(--e-4); padding: var(--e-4) var(--e-5); border-radius: var(--r-xl); background: var(--amarelo-suave); }
-.saudacao > div { flex: 1; min-width: 0; }
-.saudacao h1 { margin: 2px 0 0; font-size: 1.75rem; }
-.saudacao-data { font-size: 0.85rem; font-weight: 600; color: var(--texto-2); }
+.saudacao { margin: var(--e-2) 0 var(--e-4); }
+.saudacao h1 { margin: 0; }
 .saudacao-escola { display: block; margin-top: 2px; font-size: 0.88rem; color: var(--texto-2); }
 .cor-nome { color: var(--tinta); }
-.saudacao-coruja { width: 48px; height: 48px; border-radius: 14px; flex: none; box-shadow: 0 4px 12px rgba(31, 78, 121, 0.2); animation: flutuar 3.2s ease-in-out infinite; }
 
 /* 2) Duas funções principais lado a lado */
 .funcoes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
@@ -845,4 +832,41 @@ a.linha:active { transform: scale(0.99); }
 .cartao-prova strong { font-size: 1.02rem; line-height: 1.3; }
 .cartao-prova .meta { color: var(--texto-3); font-size: 0.85rem; margin-top: 2px; }
 .cartao-prova > .selo { position: absolute; top: var(--e-4); right: var(--e-4); }
-@media (prefers-reduced-motion: reduce) { .saudacao-coruja { animation: none; } }
+
+/* ---------- Rodada 3 (feedback do Alan) ---------- */
+/* Sem prova para continuar, "Criar prova" ocupa a linha toda */
+.funcoes.unica { grid-template-columns: 1fr; }
+.funcoes.unica .funcao.principal { min-height: 112px; }
+
+/* Editor: cada questão é um bloco com contorno, e as ferramentas ficam dentro dele */
+@media screen {
+  .folha .q[data-i] { border: 1px solid #d9d9de; border-radius: 12px; padding: 14px 14px 12px; margin: 0 0 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .folha.adaptada .q[data-i] { border-bottom: 1px solid #d9d9de; padding-bottom: 12px; margin-bottom: 18px; }
+  .folha .q[data-i]:focus-within { border-color: var(--amarelo-forte); box-shadow: 0 0 0 3px var(--amarelo-suave); }
+  .folha .q[data-i] .q-ferramentas { margin-top: 12px; padding-top: 12px; }
+  .gabarito tr.q[data-i] { border: 0; }
+}
+
+/* Abas das versões: cada uma com a sua cor quando selecionada */
+.segmentos button[data-aba='gabarito'][aria-selected='true'] { color: var(--verde); }
+
+/* Faixa da versão adaptada com as opções */
+.faixa-adaptada > div { flex: 1; min-width: 0; }
+.faixa-adaptada > div > span { display: block; }
+.opcoes-adaptada { margin-top: var(--e-3); gap: 6px; }
+.opcoes-adaptada .ficha > span { min-height: 40px; padding: 8px 12px; font-size: 0.88rem; background: var(--superficie); }
+.opcoes-adaptada .ficha input:checked + span { background: var(--inclusao); color: #fff; }
+
+/* O que a versão adaptada inclui (vale na tela e na impressão) */
+.folha.adaptada.sem-letra-maior { font-size: 15px; line-height: 1.5; }
+.folha.adaptada.sem-dicas .q-dica { display: none; }
+.folha.adaptada.sem-negrito .q [contenteditable] strong { font-weight: 400; }
+@media (min-width: 900px) { .folha.adaptada.sem-letra-maior { font-size: 12pt; } }
+@media print { .folha.adaptada.sem-letra-maior { font-size: 12pt; } }
+
+/* Data da prova */
+.linha-data { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--e-2) var(--e-3); margin: 0 0 var(--e-3); }
+.linha-data .dica-editar { margin: 0; }
+.data-prova { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px 0 12px; border-radius: 99px; background: var(--superficie); box-shadow: inset 0 0 0 1px var(--borda); font-weight: 600; font-size: 0.9rem; color: var(--texto); cursor: pointer; }
+.data-prova .ic { color: var(--tinta); }
+.data-prova input[type='date'] { width: auto; min-height: 36px; padding: 4px 8px; border-radius: 99px; background: var(--amarelo-suave); font-size: 0.95rem; font-weight: 600; color: var(--texto); }

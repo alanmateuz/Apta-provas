@@ -9,6 +9,12 @@ import {
 import { textoGabarito, TIPOS } from './montador.js';
 import { obterImagem } from './imagens.js';
 
+/** Configuração da versão adaptada (a professora liga e desliga cada parte). */
+export function cfgAdaptada(prova) {
+  return { letraMaior: true, dicas: true, negrito: true, ...(prova?.adaptadaCfg || {}) };
+}
+const semNegrito = (t) => String(t || "").replace(/**([^*]+)**/g, "$1");
+
 /** Converte "texto com **negrito**" em pedaços de TextRun. */
 function trechos(texto, tamanho, extra = {}) {
   // Cada linha vira uma quebra de linha no Word
@@ -56,8 +62,9 @@ function cabecalho(prova, escola, tam) {
   });
 }
 
-function questao(q, i, versao, tam) {
-  const d = versao === 'adaptada' ? { ...q, ...q.adaptada } : q;
+function questao(q, i, versao, tam, ca = cfgAdaptada()) {
+  let d = versao === 'adaptada' ? { ...q, ...q.adaptada } : q;
+  if (versao === 'adaptada' && !ca.negrito) d = { ...d, enunciado: semNegrito(d.enunciado), alternativas: (d.alternativas || []).map(semNegrito), dica: semNegrito(d.dica) };
   const ps = [];
   const espaco = versao === 'adaptada' ? 360 : 200;
   ps.push(new Paragraph({
@@ -93,7 +100,7 @@ function questao(q, i, versao, tam) {
     const n = versao === 'adaptada' ? 4 : 3;
     for (let k = 0; k < n; k++) ps.push(new Paragraph({ children: [new TextRun({ text: '_'.repeat(78), size: tam, color: '555555' })], spacing: { before: 120 } }));
   }
-  if (versao === 'adaptada' && d.dica) {
+  if (versao === 'adaptada' && ca.dicas && d.dica) {
     ps.push(new Paragraph({
       children: [new TextRun({ text: 'Dica: ', bold: true, size: tam - 2 }), ...trechos(d.dica, tam - 2)],
       border: { top: BORDA, bottom: BORDA, left: BORDA, right: BORDA }, spacing: { before: 120 },
@@ -103,7 +110,8 @@ function questao(q, i, versao, tam) {
 }
 
 export async function baixarWord(prova, escola, versao) {
-  const tam = versao === 'adaptada' ? 30 : 24; // meios-pontos: 30 = 15pt, 24 = 12pt
+  const ca = cfgAdaptada(prova);
+  const tam = versao === 'adaptada' && ca.letraMaior ? 30 : 24; // meios-pontos: 30 = 15pt, 24 = 12pt
   const filhos = [cabecalho(prova, escola, tam)];
   const titulo = versao === 'gabarito' ? `GABARITO — ${prova.titulo}` : prova.titulo + (versao === 'adaptada' ? '' : '');
   filhos.push(new Paragraph({ children: [new TextRun({ text: titulo, bold: true, size: tam + 4 })], alignment: AlignmentType.CENTER, spacing: { before: 240, after: 120 } }));
@@ -124,7 +132,7 @@ export async function baixarWord(prova, escola, versao) {
       filhos.push(new Paragraph({ children: [new TextRun({ text: 'Instruções:', bold: true, size: tam - 2 })], spacing: { before: 120 } }));
       filhos.push(new Paragraph({ children: trechos(prova.instrucoes, tam - 2), spacing: { after: 200 } }));
     }
-    prova.questoes.forEach((q, i) => filhos.push(...questao(q, i, versao, tam)));
+    prova.questoes.forEach((q, i) => filhos.push(...questao(q, i, versao, tam, ca)));
   }
 
   const doc = new Document({

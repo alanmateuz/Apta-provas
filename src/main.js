@@ -15,7 +15,7 @@ import {
 import { validarQuestao, validarProva } from './validador.js';
 import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA } from './ia.js';
 import { carregarImagens, obterImagem, guardarImagem, rasterizar, svgSeguro, imagensDasQuestoes, importarImagens } from './imagens.js';
-import { baixarWord } from './word.js';
+import { baixarWord, cfgAdaptada } from './word.js';
 
 registerSW({ immediate: true });
 
@@ -110,8 +110,6 @@ const ICONES_MATERIA = {
   'Ensino Religioso': '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
 };
 const icMateria = (m) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONES_MATERIA[m] || ICONES.doc}</svg>`;
-/** Mascote da marca: a coruja (sabedoria, sala de aula). Aparece pouco, porque o público é adulto. */
-const CORUJA = '/icones/3-coruja.svg';
 
 /** Situação de uma prova: quantas questões ainda pedem o ok da professora. */
 function statusProva(p) {
@@ -303,33 +301,27 @@ function telaInicio() {
   const ultima = provas[0];
   const stUltima = ultima ? statusProva(ultima) : null;
   const aConferir = provas.reduce((s, p) => s + statusProva(p).pendentes, 0);
-  const temIA = iaDisponivel(cfg);
+  // Sem prova para continuar, "Criar prova" ocupa a linha toda (sem buraco ao lado)
   const segunda = ultima
     ? `<a class="funcao" href="#/prova/${ultima.id}">
         <span class="funcao-icone">${icMateria(ultima.materia)}</span>
         <strong>Continuar</strong>
         <span class="funcao-sub">${esc(ultima.materia)} · ${esc(ultima.turma || ultima.serie)}</span>
         ${stUltima.pendentes ? `<span class="funcao-selo">${stUltima.pendentes} a conferir</span>` : ''}
-      </a>`
-    : `<a class="funcao" href="#/banco">
-        <span class="funcao-icone ${temIA ? 'ia' : ''}">${ic(temIA ? 'brilho' : 'banco')}</span>
-        <strong>${temIA ? 'Buscar questões' : 'Banco de questões'}</strong>
-        <span class="funcao-sub">${temIA ? 'Provas públicas, com a fonte' : plural(banco.length, 'questão pronta', 'questões prontas')}</span>
-      </a>`;
+      </a>` : '';
+  void hoje;
 
   main.innerHTML = `
     <section class="saudacao" aria-label="Saudação">
-      <div><span class="saudacao-data">${hoje}</span>
-        <h1>${saudacao}${nome ? `, <span class="cor-nome">${nome.replace(/^, /, '')}</span>` : ''}</h1>
-        ${cfg.escola.nome ? `<span class="saudacao-escola">${esc(cfg.escola.nome)}</span>` : ''}</div>
-      <img class="saudacao-coruja" src="${CORUJA}" alt="" width="48" height="48" />
+      <h1>${saudacao}${nome ? `, <span class="cor-nome">${nome.replace(/^, /, '')}</span>` : ''}</h1>
+      ${cfg.escola.nome ? `<span class="saudacao-escola">${esc(cfg.escola.nome)}</span>` : ''}
     </section>
 
-    <div class="funcoes">
+    <div class="funcoes${segunda ? '' : ' unica'}">
       <a class="funcao principal" href="#/nova">
         <span class="funcao-icone">${ic('lapis')}</span>
         <strong>Criar prova</strong>
-        <span class="funcao-sub">Prova, adaptada e gabarito</span>
+        <span class="funcao-sub">Prova, adaptada e gabarito${segunda ? '' : ' em poucos minutos'}</span>
       </a>
       ${segunda}
     </div>
@@ -569,7 +561,7 @@ function telaCriando(etapas) {
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-labelledby', 'criando-titulo');
   el.innerHTML = `<div class="criando-caixa">
-    <img class="criando-icone" src="${CORUJA}" alt="" width="72" height="72" />
+    <img class="criando-icone" src="/icon.svg" alt="" width="72" height="72" />
     <h1 id="criando-titulo" class="cor-marca" style="margin-top:16px">Preparando sua prova</h1>
     <span class="selo ia-selo">${ic('brilho')} Com IA</span>
     <p class="sub">Leva cerca de 1 minuto. Pode deixar esta tela aberta.</p>
@@ -855,7 +847,11 @@ function telaProva(id) {
       <button role="tab" data-aba="gabarito">Gabarito</button>
     </div>
     <div id="faixa-versao" class="nao-imprimir"></div>
-    <p class="dica-editar">${ic('editar', 'p')} Toque em qualquer texto da folha para editar.</p>
+    <div class="linha-data nao-imprimir">
+      <label class="data-prova">${ic('relogio', 'p')}<span>Data da prova</span>
+        <input type="date" id="data-prova" value="${dataParaInput(prova.data)}" /></label>
+      <p class="dica-editar">${ic('editar', 'p')} Toque no texto da folha para editar.</p>
+    </div>
     <div id="recados" class="nao-imprimir"></div>
     <div id="painel-revisao" class="nao-imprimir"></div>
     <div role="tabpanel"><div id="folha" class="folha"></div></div>
@@ -883,8 +879,27 @@ function telaProva(id) {
   });
   folha.addEventListener('click', aoClicarFolha);
   folha.addEventListener('change', aoMudarFolha);
+  // Data da prova: nem sempre é o dia em que a prova foi criada
+  main.querySelector('#data-prova').addEventListener('change', (e) => {
+    const [a, m, d] = e.target.value.split('-');
+    estado.prova.data = e.target.value ? `${d}/${m}/${a}` : '';
+    salvarDepois(); desenharFolha();
+  });
+  // O que a versão adaptada inclui (a professora liga e desliga cada parte)
+  main.querySelector('#faixa-versao').addEventListener('change', (e) => {
+    const chave = e.target.dataset.adaptada;
+    if (!chave) return;
+    estado.prova.adaptadaCfg = { ...cfgAdaptada(estado.prova), [chave]: e.target.checked };
+    salvarDepois(); desenharFolha();
+  });
   desenharFolha();
   if (sessionStorage.getItem('pf.celebrar')) { sessionStorage.removeItem('pf.celebrar'); setTimeout(() => celebrar('Prova pronta!'), 350); }
+}
+
+/** "13/11/2026" → "2026-11-13" (para o seletor de data). */
+function dataParaInput(t = '') {
+  const m = String(t).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
 }
 
 /** Comemoração curta quando a prova fica pronta: selo, confete e vibração.
@@ -1225,11 +1240,18 @@ function desenharFolha() {
   document.querySelectorAll('.segmentos button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.aba === estado.aba)));
   folha.classList.toggle('adaptada', estado.aba === 'adaptada');
   document.getElementById('b-add').hidden = estado.aba === 'gabarito';
-  // A versão adaptada é um "modo": ganha faixa com cor e ícone próprios
+  // A versão adaptada é um "modo": faixa com cor, para quem é, e o que ligar/desligar
+  const ca = cfgAdaptada(p);
+  folha.classList.toggle('sem-letra-maior', !ca.letraMaior);
+  folha.classList.toggle('sem-dicas', !ca.dicas);
+  folha.classList.toggle('sem-negrito', !ca.negrito);
   const faixa = document.getElementById('faixa-versao');
+  const opcao = (chave, rotulo) => `<label class="ficha"><input type="checkbox" data-adaptada="${chave}" ${ca[chave] ? 'checked' : ''}/><span>${rotulo}</span></label>`;
   if (faixa) faixa.innerHTML = estado.aba === 'adaptada'
-    ? `<div class="faixa-adaptada">${ic('inclusao')}<span><strong>Versão adaptada</strong>Letra maior, frases curtas, palavras-chave em negrito e dicas. Para TDAH, autismo, dislexia e deficiência intelectual.</span></div>`
-    : estado.aba === 'gabarito' ? `<div class="faixa-gabarito">${ic('certo')}<span><strong>Gabarito</strong>Só para você. Não sai junto com a prova.</span></div>` : '';
+    ? `<div class="faixa-adaptada">${ic('inclusao')}<div><strong>Versão adaptada</strong>
+        <span>Para alunos com TDAH, autismo, dislexia ou deficiência intelectual.</span>
+        <div class="fichas opcoes-adaptada" role="group" aria-label="O que a versão adaptada inclui">${opcao('letraMaior', 'Letra maior')}${opcao('dicas', 'Dicas')}${opcao('negrito', 'Palavras em negrito')}</div></div></div>`
+    : '';
 
   if (estado.aba === 'gabarito') {
     folha.innerHTML = cabecalhoHTML(p, escola) + gabaritoHTML(p);
