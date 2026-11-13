@@ -60,7 +60,7 @@
   --seguro-baixo: env(safe-area-inset-bottom, 0px);
   --mola: cubic-bezier(0.2, 0.9, 0.3, 1);
   font-size: 17px;
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -567,8 +567,8 @@ a.selo:hover { text-decoration: underline; }
    Modo escuro (segue o sistema). A folha da prova continua branca:
    ela representa o papel impresso.
    ========================================================= */
-@media (prefers-color-scheme: dark) {
-  :root {
+html.escuro {
+    color-scheme: dark;
     --amarelo-suave: #3a3220;
     --tinta: #ffd36b;
     --fundo: #000000;
@@ -598,10 +598,9 @@ a.selo:hover { text-decoration: underline; }
     --escuro-fundo: #f2f2f7;
     --escuro-texto: #1c1c1e;
     --escuro-hover: #d1d1d6;
-  }
-  .heroi p { color: #4a3d16; }
-  .aviso .botao { color: var(--amarelo); }
 }
+html.escuro .heroi p { color: #4a3d16; }
+html.escuro .aviso .botao { color: var(--amarelo); }
 /* A folha (papel) e a prévia do cabeçalho mantêm as cores claras em qualquer tema */
 .folha, .previa-cabecalho {
   color-scheme: light;
@@ -711,9 +710,7 @@ dialog.gaveta.fechando::backdrop { animation: sumir 0.2s ease-in forwards; }
   --sombra-cartao: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 18px rgba(0, 0, 0, 0.06);
   --contorno: 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
-@media (prefers-color-scheme: dark) {
-  :root { --marca-azul: #8fbdf0; --inclusao: #6aa8ff; --inclusao-suave: #13253d; --sombra-cartao: none; --contorno: 0 0 0 1px rgba(255, 255, 255, 0.06); }
-}
+html.escuro { --marca-azul: #8fbdf0; --inclusao: #6aa8ff; --inclusao-suave: #13253d; --sombra-cartao: none; --contorno: 0 0 0 1px rgba(255, 255, 255, 0.06); }
 .cor-marca { color: var(--marca-azul); }
 
 /* Barra de abas flutuante, branca e arredondada (celular) */
@@ -802,3 +799,50 @@ a.linha:active { transform: scale(0.99); }
 .contagem div { box-shadow: var(--sombra-cartao), var(--contorno); }
 .contagem strong.n-ok { color: var(--verde); }
 .contagem strong.n-atencao { color: var(--laranja); }
+
+/* ---------- Home em blocos de atenção (rodada 2 com o Alan) ---------- */
+/* 1) Saudação: um bloco próprio, na cor suave da marca */
+.saudacao { display: flex; align-items: center; gap: var(--e-3); margin: var(--e-2) 0 var(--e-4); padding: var(--e-4) var(--e-5); border-radius: var(--r-xl); background: var(--amarelo-suave); }
+.saudacao > div { flex: 1; min-width: 0; }
+.saudacao h1 { margin: 2px 0 0; font-size: 1.75rem; }
+.saudacao-data { font-size: 0.85rem; font-weight: 600; color: var(--texto-2); }
+.saudacao-escola { display: block; margin-top: 2px; font-size: 0.88rem; color: var(--texto-2); }
+.cor-nome { color: var(--tinta); }
+.saudacao-coruja { width: 48px; height: 48px; border-radius: 14px; flex: none; box-shadow: 0 4px 12px rgba(31, 78, 121, 0.2); animation: flutuar 3.2s ease-in-out infinite; }
+
+/* 2) Duas funções principais lado a lado */
+.funcoes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-3); }
+.funcao { position: relative; display: flex; flex-direction: column; gap: 2px; min-height: 132px; padding: var(--e-4); border-radius: var(--r-lg); background: var(--superficie); color: var(--texto); text-decoration: none; box-shadow: var(--sombra-cartao), var(--contorno); transition: transform 0.15s var(--mola); }
+.funcao:active { transform: scale(0.97); }
+.funcao.principal { background: var(--amarelo); color: var(--sobre-amarelo); box-shadow: 0 8px 22px rgba(245, 184, 0, 0.3); }
+.funcao-icone { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: auto; border-radius: 12px; background: var(--amarelo-suave); color: var(--tinta); }
+.funcao.principal .funcao-icone { background: rgba(255, 255, 255, 0.6); color: var(--sobre-amarelo); }
+.funcao-icone.ia { background: var(--gradiente-ia); color: #4a2a00; }
+.funcao-icone .ic { width: 22px; height: 22px; }
+.funcao strong { margin-top: var(--e-3); font-size: 1.05rem; line-height: 1.2; }
+.funcao-sub { font-size: 0.82rem; line-height: 1.3; color: var(--texto-3); }
+.funcao.principal .funcao-sub { color: #4a3d16; }
+.funcao-selo { position: absolute; top: var(--e-3); right: var(--e-3); font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 99px; color: var(--laranja); background: var(--laranja-suave); }
+
+/* 3) Números do app: um bloco único, neutro, com divisórias */
+.numeros { gap: 0; margin: var(--e-3) 0 0; border-radius: var(--r-lg); background: var(--superficie); box-shadow: var(--sombra-cartao), var(--contorno); overflow: hidden; }
+.numeros a { box-shadow: none !important; border-radius: 0; background: transparent; text-align: center; min-height: 68px; padding: var(--e-3) var(--e-2); }
+.numeros li + li a { box-shadow: inset 1px 0 0 var(--separador) !important; }
+.numeros strong, .numeros strong.n-marca, .numeros strong.n-atencao { color: var(--texto); font-size: 1.5rem; }
+.numeros span { display: block; }
+
+.cabeca-com-link { display: flex; align-items: baseline; justify-content: space-between; }
+.cabeca-com-link a { font-size: 0.85rem; font-weight: 600; color: var(--tinta); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+
+/* 4) Cards de prova: ícone da matéria, respiro e situação no canto superior direito */
+.cartao-prova { position: relative; display: flex; align-items: flex-start; gap: var(--e-3); padding: var(--e-4) var(--e-4) 18px; border-radius: var(--r-lg); background: var(--superficie); color: var(--texto); text-decoration: none; box-shadow: var(--sombra-cartao), var(--contorno); transition: transform 0.15s var(--mola); }
+.cartao-prova:active { transform: scale(0.985); }
+.materia-icone { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 13px; background: var(--amarelo-suave); color: var(--tinta); }
+.materia-icone .ic { width: 22px; height: 22px; }
+.cartao-prova-texto { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.cartao-prova-materia { padding-right: 104px; }
+.cartao-prova-materia { font-size: 0.78rem; font-weight: 700; color: var(--tinta); text-transform: uppercase; letter-spacing: 0.03em; }
+.cartao-prova strong { font-size: 1.02rem; line-height: 1.3; }
+.cartao-prova .meta { color: var(--texto-3); font-size: 0.85rem; margin-top: 2px; }
+.cartao-prova > .selo { position: absolute; top: var(--e-4); right: var(--e-4); }
+@media (prefers-reduced-motion: reduce) { .saudacao-coruja { animation: none; } }

@@ -41,6 +41,23 @@ function transicao(desenhar, direcao = 'aba') {
 }
 /** Vibração curta (Android); ignorada onde não existe. */
 const vibrar = (padrao = 10) => { try { navigator.vibrate?.(padrao); } catch {} };
+/* =================== Tema (claro por padrão; escolhido em Ajustes) ===================
+   App de professor abre claro: a tela fica parecida com a folha impressa. */
+const TEMAS = [['claro', 'Claro'], ['escuro', 'Escuro'], ['auto', 'Automático']];
+function temaAtual() { try { return localStorage.getItem('pf.tema') || 'claro'; } catch { return 'claro'; } }
+function aplicarTema(t = temaAtual()) {
+  const escuro = t === 'escuro' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.classList.toggle('escuro', escuro);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#000000' : '#f2f2f7');
+}
+aplicarTema();
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => aplicarTema());
+document.addEventListener('change', (e) => {
+  if (e.target.name !== 'tema') return;
+  try { localStorage.setItem('pf.tema', e.target.value); } catch {}
+  transicao(() => aplicarTema(e.target.value), 'segmento');
+});
+
 // Resposta tátil leve nas ações principais (onde o aparelho suporta)
 document.addEventListener('click', (e) => { if (e.target.closest?.('.botao.principal, .nav a, .heroi, .agora')) vibrar(8); });
 /** Reinicia a animação de entrada em cascata das listas. */
@@ -80,6 +97,19 @@ const ICONES = {
   inclusao: '<circle cx="12" cy="4.5" r="2"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M8.5 21l3.5-6 3.5 6"/>',
   relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
+/** Um ícone por matéria: a professora reconhece a prova de relance. */
+const ICONES_MATERIA = {
+  'Matemática': '<path d="M4 7h6M7 4v6M14 7h6M5 15l4 4M9 15l-4 4M14 16h6M14 19h6"/>',
+  'Português': '<path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6v14"/>',
+  'Ciências': '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 15h9"/>',
+  'História': '<path d="M3 21h18M4 10h16M12 3l9 5H3z"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/>',
+  'Geografia': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  'Inglês': '<path d="M4 5h16v11H9l-5 4z"/><path d="M9 9h6M9 12h4"/>',
+  'Arte': '<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2H18a3 3 0 0 0 3-3c0-6-4-11-9-11z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+  'Educação Física': '<circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 0 1 0 18M3.5 9h17M3.5 15h17"/>',
+  'Ensino Religioso': '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
+};
+const icMateria = (m) => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONES_MATERIA[m] || ICONES.doc}</svg>`;
 /** Mascote da marca: a coruja (sabedoria, sala de aula). Aparece pouco, porque o público é adulto. */
 const CORUJA = '/icones/3-coruja.svg';
 
@@ -268,34 +298,46 @@ function telaInicio() {
   const faltam = passos.filter((p) => !p.feito).length;
   const confiaveis = banco.filter((q) => q.origem === 'minha' || q.origem === 'revisada').length;
 
-  // One-pager: o que está acontecendo agora em cima, depois criar, números e atalhos
+  // One-pager em blocos de atenção: 1) saudação  2) duas funções lado a lado
+  // 3) números do app num bloco único e neutro  4) o que é recente
   const ultima = provas[0];
   const stUltima = ultima ? statusProva(ultima) : null;
   const aConferir = provas.reduce((s, p) => s + statusProva(p).pendentes, 0);
-  const agora = ultima && stUltima.pendentes ? `
-    <a class="agora" href="#/prova/${ultima.id}">
-      <span class="agora-rotulo">${ic('relogio', 'p')} Continue de onde parou</span>
-      <strong class="agora-titulo">${esc(ultima.titulo)}</strong>
-      <span class="agora-meta">${esc(ultima.turma || ultima.serie)} · ${plural(ultima.questoes.length, 'questão', 'questões')}</span>
-      ${seloStatus(stUltima)}
-      <span class="chevron">${ic('seta')}</span>
-    </a>` : '';
+  const temIA = iaDisponivel(cfg);
+  const segunda = ultima
+    ? `<a class="funcao" href="#/prova/${ultima.id}">
+        <span class="funcao-icone">${icMateria(ultima.materia)}</span>
+        <strong>Continuar</strong>
+        <span class="funcao-sub">${esc(ultima.materia)} · ${esc(ultima.turma || ultima.serie)}</span>
+        ${stUltima.pendentes ? `<span class="funcao-selo">${stUltima.pendentes} a conferir</span>` : ''}
+      </a>`
+    : `<a class="funcao" href="#/banco">
+        <span class="funcao-icone ${temIA ? 'ia' : ''}">${ic(temIA ? 'brilho' : 'banco')}</span>
+        <strong>${temIA ? 'Buscar questões' : 'Banco de questões'}</strong>
+        <span class="funcao-sub">${temIA ? 'Provas públicas, com a fonte' : plural(banco.length, 'questão pronta', 'questões prontas')}</span>
+      </a>`;
 
   main.innerHTML = `
-    <p class="sub" style="margin:0">${hoje}</p>
-    <h1>${saudacao}${nome ? `, <span class="cor-marca">${nome.replace(/^, /, '')}</span>` : ''}</h1>
-    ${agora}
-    <a class="heroi${agora ? ' compacto' : ''}" href="#/nova">
-      <img class="heroi-coruja" src="${CORUJA}" alt="" width="64" height="64" />
-      <h2>Criar prova nova</h2>
-      <p>Escolha a turma e o conteúdo. A prova, a versão adaptada e o gabarito ficam prontos em minutos.</p>
-      <span class="botao">Começar ${ic('seta', 'p')}</span>
-    </a>
+    <section class="saudacao" aria-label="Saudação">
+      <div><span class="saudacao-data">${hoje}</span>
+        <h1>${saudacao}${nome ? `, <span class="cor-nome">${nome.replace(/^, /, '')}</span>` : ''}</h1>
+        ${cfg.escola.nome ? `<span class="saudacao-escola">${esc(cfg.escola.nome)}</span>` : ''}</div>
+      <img class="saudacao-coruja" src="${CORUJA}" alt="" width="48" height="48" />
+    </section>
+
+    <div class="funcoes">
+      <a class="funcao principal" href="#/nova">
+        <span class="funcao-icone">${ic('lapis')}</span>
+        <strong>Criar prova</strong>
+        <span class="funcao-sub">Prova, adaptada e gabarito</span>
+      </a>
+      ${segunda}
+    </div>
 
     <ul class="numeros" aria-label="Resumo">
-      <li><a href="#/provas"><strong class="n-marca" data-contar="${provas.length}">${provas.length}</strong><span>${provas.length === 1 ? 'prova' : 'provas'}</span></a></li>
+      <li><a href="#/provas"><strong data-contar="${provas.length}">${provas.length}</strong><span>${provas.length === 1 ? 'prova' : 'provas'}</span></a></li>
       <li><a href="#/banco"><strong data-contar="${banco.length}">${banco.length}</strong><span>no banco</span></a></li>
-      <li><a href="${aConferir && ultima ? `#/prova/${ultima.id}` : '#/banco'}"><strong class="${aConferir ? 'n-atencao' : ''}" data-contar="${aConferir}">${aConferir}</strong><span>a conferir</span></a></li>
+      <li><a href="${aConferir && ultima ? `#/prova/${ultima.id}` : '#/banco'}"><strong data-contar="${aConferir}">${aConferir}</strong><span>a conferir</span></a></li>
     </ul>
 
     ${faltam ? `<div class="cabeca-secao">Primeiros passos · ${3 - faltam} de 3</div>
@@ -303,16 +345,10 @@ function telaInicio() {
         ? `<div class="linha"><span class="bolinha" aria-hidden="true">✓</span><span class="texto-linha"><span class="titulo-linha">${p.txt}<span class="sr"> (feito)</span></span></span></div>`
         : `<a class="linha" href="${p.link}"><span class="bolinha" aria-hidden="true">${i + 1}</span><span class="texto-linha"><span class="titulo-linha">${p.txt}</span></span><span class="valor">${p.acao}</span><span class="chevron">${ic('seta')}</span></a>`}</li>`).join('')}</ul>` : ''}
 
-    <div class="cabeca-secao">Últimas provas</div>
-    ${provas.length ? `<ul class="grupo">${provas.slice(0, 3).map(itemProva).join('')}
-        ${provas.length > 3 ? linha({ href: '#/provas', titulo: `Ver todas as ${provas.length} provas` }) : ''}</ul>`
-      : `<div class="vazio">${ic('doc')}<strong>Nenhuma prova ainda</strong>Suas provas aparecem aqui.</div>`}
-
-    <div class="cabeca-secao">Atalhos</div>
-    <ul class="grupo">
-      ${linha({ href: '#/banco', icone: 'banco', titulo: 'Banco de questões', meta: `${plural(banco.length, 'questão', 'questões')} · ${confiaveis} conferidas` })}
-      ${linha({ href: '#/ajustes', icone: 'escola', cor: 'cinza', titulo: 'Minha escola', meta: cfg.escola.nome ? esc(cfg.escola.nome) : 'Cabeçalho das provas' })}
-    </ul>`;
+    <div class="cabeca-secao cabeca-com-link"><span>Últimas provas</span>${provas.length > 3 ? `<a href="#/provas">Ver todas</a>` : ''}</div>
+    ${provas.length ? `<ul class="lista-cartoes">${provas.slice(0, 3).map(itemProva).join('')}</ul>`
+      : `<div class="vazio">${ic('doc')}<strong>Nenhuma prova ainda</strong>Suas provas aparecem aqui.</div>`}`;
+  void confiaveis;
   contarNumeros();
 }
 
@@ -333,15 +369,20 @@ function contarNumeros() {
   });
 }
 
-/** Card de prova: título (o que identifica), situação em cor (o que decide) e dados pequenos. */
+/** Card de prova: ícone da matéria (reconhecer de relance), título, dados pequenos
+ *  e a situação no canto superior direito. */
 function itemProva(p) {
   const st = statusProva(p);
-  return `<li><a class="linha linha-prova" href="#/prova/${p.id}">
-    <span class="icone-app">${ic('doc')}</span>
-    <span class="texto-linha"><span class="titulo-linha">${esc(p.titulo)}</span>
+  const curto = p.titulo.replace(/^Avaliação de [^—]+—\s*/, '') || p.titulo;
+  const titulo = esc(curto.charAt(0).toUpperCase() + curto.slice(1));
+  return `<li><a class="cartao-prova" href="#/prova/${p.id}">
+    <span class="materia-icone" aria-hidden="true">${icMateria(p.materia)}</span>
+    <span class="cartao-prova-texto">
+      <span class="cartao-prova-materia">${esc(p.materia || 'Prova')}</span>
+      <strong>${titulo}</strong>
       <span class="meta">${esc(p.turma || p.serie)} · ${plural(p.questoes.length, 'questão', 'questões')} · ${new Date(p.atualizadaEm || p.criadaEm).toLocaleDateString('pt-BR')}</span>
-      ${seloStatus(st)}</span>
-    <span class="chevron">${ic('seta')}</span></a></li>`;
+    </span>
+    ${seloStatus(st)}</a></li>`;
 }
 
 /* =================== CRIAR PROVA (assistente em 4 passos) =================== */
@@ -1249,7 +1290,7 @@ function telaProvas() {
   const provas = getProvas();
   main.innerHTML = `<h1>Provas</h1>
     <p class="sub">${provas.length ? plural(provas.length, 'prova salva neste aparelho', 'provas salvas neste aparelho') : 'Tudo o que você criar fica salvo aqui, mesmo sem internet.'}</p>
-    ${provas.length ? `<ul class="grupo">${provas.map(itemProva).join('')}</ul>`
+    ${provas.length ? `<ul class="lista-cartoes">${provas.map(itemProva).join('')}</ul>`
       : `<div class="vazio">${ic('doc')}<strong>Crie sua primeira prova</strong>Leva poucos minutos.<div class="acoes" style="justify-content:center"><a class="botao principal" href="#/nova">Criar prova</a></div></div>`}`;
 }
 
@@ -1550,6 +1591,15 @@ function telaAjustes(ancora) {
   const pronta = iaDisponivel(cfg);
   main.innerHTML = `<h1>Ajustes</h1>
     <p class="sub">Preencha uma vez. Vale para todas as provas.</p>
+
+    <section aria-labelledby="t-tema">
+      <div class="cabeca-secao" id="t-tema">Aparência</div>
+      <div class="cartao-form">
+        <fieldset style="border:0;padding:0;margin:0"><legend class="rotulo">Tema do app</legend>
+          <span class="dica">Recomendado: Claro. A tela fica parecida com a folha que os alunos recebem.</span>
+          ${fichas('tema', TEMAS, temaAtual())}</fieldset>
+      </div>
+    </section>
 
     <section id="escola" aria-labelledby="t-escola">
       <div class="cabeca-secao" id="t-escola">Minha escola</div>
