@@ -1,0 +1,3 @@
+{
+  "functions": { "api/openai.js": { "maxDuration": 300 } }
+}

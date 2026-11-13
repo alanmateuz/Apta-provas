@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#fffbf2" />
+    <meta name="color-scheme" content="light" />
+    <meta name="description" content="Prova Izi: monte provas em minutos, com versão adaptada, mesmo sem internet." />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <title>Prova Izi</title>
+  </head>
+  <body>
+    <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+    <header class="topo nao-imprimir">
+      <a href="#/" class="marca" aria-label="Prova Izi, ir para o início"><img src="/icon.svg" alt="" width="36" height="36" /> Prova Izi</a>
+      <nav aria-label="Menu principal" class="nav" id="nav"></nav>
+      <span id="conexao" class="conexao" role="status"></span>
+    </header>
+    <main id="conteudo" tabindex="-1"></main>
+    <div id="avisos" class="avisos nao-imprimir" aria-live="polite"></div>
+    <dialog id="gaveta" class="gaveta" aria-labelledby="gaveta-titulo"></dialog>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
