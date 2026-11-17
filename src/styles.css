@@ -1383,3 +1383,143 @@ div.outra-turma .conteudo { padding: 0; }
 .estado-chip .ic { flex: none; }
 .data-chip { padding: 0 4px 0 10px; }
 .data-chip input[type='date'] { font-size: 0.85rem; max-width: 116px; }
+
+/* =========================================================
+   APTA · REVISÃO 3 (feedback do Alan, 17/11/2026)
+   Uma linguagem só, a do iOS: título grande, listas agrupadas,
+   valor à direita na cor de destaque, ✓ para escolhas, switch.
+   Versão adaptada = AZUL de acessibilidade.
+   ========================================================= */
+:root { --inclusao: #1a62c4; --inclusao-suave: #e8f0fc; --verde-ios: #34c759; }
+html.escuro { --inclusao: #6fa8ff; --inclusao-suave: #13253d; --verde-ios: #30d158; }
+.folha, .previa-cabecalho { --inclusao: #1a62c4; }
+
+/* Sem barra com logo no celular: cada tela tem o seu título grande, como no iOS */
+@media (max-width: 899px) {
+  .topo { display: none; }
+  main { padding-top: calc(max(12px, env(safe-area-inset-top)) + 8px); }
+  .editor-topo { position: sticky; top: 0; z-index: 25; margin: calc(-1 * var(--e-2)) calc(-1 * var(--e-4)) 0; padding: max(6px, env(safe-area-inset-top)) 8px 6px; background: var(--barra-fundo); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); }
+  .segmentos:not(.segmentos-form):not(.segmento-criar) { top: 58px; margin-top: 8px; }
+}
+
+/* ---------- Lista agrupada do iOS ---------- */
+.cabeca-grupo { margin: var(--e-5) var(--e-4) 6px; font-family: var(--fonte); font-size: 0.8rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.02em; color: var(--texto-3); }
+.rodape-grupo { margin: 6px var(--e-4) 0; font-size: 0.8rem; line-height: 1.4; color: var(--texto-3); }
+.grupo-ios { background: var(--superficie); border-radius: 12px; overflow: hidden; }
+.linha-ios { position: relative; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px; color: var(--texto); font-size: 1rem; cursor: pointer; }
+.linha-ios + .linha-ios, .grupo-ios > * + .linha-ios, .campo-outra .linha-ios, .grupo-ios > .campo-outra + .linha-ios { box-shadow: inset 16px 0.5px 0 0 var(--superficie), inset 0 0.5px 0 0 var(--separador); }
+.linha-ios.coluna { flex-direction: column; align-items: stretch; gap: 4px; padding-top: 12px; padding-bottom: 12px; }
+.li-rotulo { flex: 1; min-width: 0; }
+.li-rotulo small { display: block; font-size: 0.82rem; color: var(--texto-3); }
+.li-valor { display: inline-flex; align-items: center; gap: 4px; color: var(--tinta); flex: none; max-width: 62%; }
+.li-valor select { appearance: none; -webkit-appearance: none; width: auto; min-height: 36px; padding: 0; border: 0; background: transparent; box-shadow: none; color: var(--tinta); font: inherit; font-size: 1rem; text-align: right; text-align-last: right; cursor: pointer; max-width: 100%; }
+.li-valor select:focus { box-shadow: none; background: transparent; }
+.li-seta { width: 14px !important; height: 14px !important; color: var(--texto-3); stroke-width: 2.2; }
+.li-campo { flex: 1; min-width: 0; min-height: 36px !important; padding: 0 !important; border: 0; background: transparent !important; box-shadow: none !important; text-align: right; font-size: 1rem !important; color: var(--texto); }
+.li-campo:focus { box-shadow: none !important; }
+.li-texto { display: block; width: 100%; min-height: 96px; padding: 12px 16px; border: 0; border-radius: 0; background: transparent !important; box-shadow: none !important; resize: vertical; }
+.linha-ios.coluna .li-texto { padding: 0; min-height: 72px; }
+.li-ic { display: grid; place-items: center; color: var(--tinta); }
+.li-ic.azul { color: var(--inclusao); }
+.linha-ios.escolha .li-check { display: grid; color: var(--tinta); opacity: 0; transition: opacity 0.15s; }
+.linha-ios.escolha .li-check .ic { stroke-width: 2.6; width: 20px; height: 20px; }
+.linha-ios.escolha input:checked ~ .li-check { opacity: 1; }
+.linha-ios.escolha input:focus-visible ~ .li-rotulo { outline: 3px solid var(--foco); outline-offset: 2px; border-radius: 4px; }
+.linha-ios:active { background: var(--pressionado); }
+.grupo-ios .chevron { color: var(--chevron); }
+.grupo-ios .chevron .ic { width: 16px; height: 16px; stroke-width: 2.4; }
+details.grupo-ios > summary { list-style: none; }
+details.grupo-ios > summary::-webkit-details-marker { display: none; }
+details.grupo-ios[open] > summary .chevron { transform: rotate(90deg); }
+details.grupo-ios > summary .chevron { transition: transform 0.25s var(--mola); }
+.mais-opcoes { margin-top: var(--e-5); }
+
+/* Stepper e switch do iOS */
+.stepper { display: inline-flex; align-items: center; height: 32px; margin-left: 10px; border-radius: 9px; background: var(--superficie-2); }
+.stepper button { display: grid; place-items: center; width: 46px; height: 32px; border: 0; background: transparent; color: var(--texto); cursor: pointer; border-radius: 9px; }
+.stepper button:active { background: var(--superficie-3); }
+.stepper .ic { width: 18px; height: 18px; stroke-width: 2.2; }
+.st-div { width: 1px; height: 18px; background: var(--borda); }
+.li-valor output { min-width: 2ch; text-align: right; font-weight: 600; color: var(--texto); font-variant-numeric: tabular-nums; }
+.switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 51px; height: 31px; margin: 0; border-radius: 99px; background: var(--superficie-3); cursor: pointer; transition: background 0.25s; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transition: left 0.25s var(--mola); }
+.switch:checked { background: var(--verde-ios); }
+.switch.azul:checked { background: var(--inclusao); }
+.switch:checked::after { left: 22px; }
+.switch:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.segmentos.segmentos-form { flex: none; grid-template-columns: repeat(3, auto); padding: 2px; border-radius: 9px; background: var(--superficie-2); }
+.segmentos-form span { padding: 5px 12px; font-family: var(--fonte); font-size: 0.86rem; border-radius: 7px; }
+
+/* ---------- Topo de tela modal (Nova prova / Várias provas / Formato) ---------- */
+.barra-modal { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 44px; margin: calc(-1 * var(--e-2)) 0 var(--e-3); }
+.bm-titulo { font-family: var(--fonte); font-size: 1.06rem; font-weight: 600; text-align: center; }
+.bm-lado.direita { justify-self: end; }
+.bm-botao { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 4px 0 0; border: 0; background: none; color: var(--tinta); font: inherit; font-size: 1rem; cursor: pointer; }
+.segmento-criar { position: static; display: grid; grid-template-columns: 1fr 1fr; margin: 0 0 var(--e-2); }
+.turmas-recentes { margin-bottom: var(--e-3); }
+.turma-chip { position: relative; background: var(--superficie); border: 0; box-shadow: inset 0 0 0 1px var(--separador); padding-right: 34px; }
+.turma-chip[aria-checked='true'] { background: var(--superficie); box-shadow: inset 0 0 0 2px var(--amarelo-forte); }
+.turma-chip small { color: var(--texto-3); font-weight: 500; }
+.turma-check { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--amarelo); color: var(--sobre-amarelo); opacity: 0; transition: opacity 0.15s; }
+.turma-check .ic { width: 13px; height: 13px; stroke-width: 3; }
+.turma-chip[aria-checked='true'] .turma-check { opacity: 1; }
+.sugestoes { margin-top: var(--e-3); }
+.sugestoes button { background: var(--superficie); color: var(--texto); box-shadow: inset 0 0 0 1px var(--separador); font-weight: 500; }
+.resumo-pedido { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: 0 0 var(--e-1); padding: 0 var(--e-4); border: 0; border-radius: 12px; background: var(--superficie); color: var(--texto-2); font: inherit; font-size: 0.92rem; text-align: left; cursor: pointer; }
+.resumo-pedido > span:nth-child(2) { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-alterar { color: var(--tinta); font-weight: 500; }
+.erro-campo { margin: 8px var(--e-4) 0; }
+.lote-item { padding: 0; background: none; }
+.lote-topo { margin: 0; }
+.lote-topo .cabeca-grupo { margin-bottom: 6px; }
+.lote-remover { border: 0; background: none; color: var(--vermelho); font: inherit; font-size: 0.9rem; min-height: 44px; margin-top: 12px; cursor: pointer; }
+.lote-adicionar { width: 100%; margin: var(--e-3) 0 0; border-radius: 12px; color: var(--tinta); }
+
+/* ---------- Início: funções e a prova de verdade em miniatura ---------- */
+.saudacao { margin: var(--e-2) 0 var(--e-4); }
+.saudacao-escola { margin: 4px 0 0; color: var(--texto-2); font-size: 1rem; }
+.funcoes, .funcoes.unica { grid-template-columns: 1fr 1fr; }
+.funcao-icone.neutro { background: var(--superficie-2); color: var(--texto); }
+.funcao:not(.principal) { box-shadow: inset 0 0 0 1px var(--separador); }
+.filtro-materias button { background: var(--superficie); box-shadow: inset 0 0 0 1px var(--separador); }
+.filtro-materias button[aria-pressed='true'] { background: var(--amarelo-suave); color: var(--texto); box-shadow: inset 0 0 0 1.5px var(--amarelo-forte); }
+.cartao-folha { display: block; color: var(--texto); text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.mini-quadro { position: relative; display: block; aspect-ratio: 210 / 297; overflow: hidden; border-radius: 6px; background: #fff; box-shadow: var(--sombra-papel); transition: transform 0.18s var(--mola); }
+.cartao-folha:active .mini-quadro { transform: scale(0.97); }
+.mini-folha { position: absolute; top: 0; left: 0; width: 794px !important; max-width: none !important; min-height: 1123px; margin: 0 !important; padding: 56px 60px !important; border-radius: 0 !important; box-shadow: none !important; font-size: 15px !important; transform: scale(var(--k, 0.2)); transform-origin: top left; pointer-events: none; }
+.mini-folha .nao-imprimir, .mini-folha .alt-remover, .mini-folha .q-dica.vazia { display: none !important; }
+.mini-folha .q[data-i] { border: 0 !important; padding: 0 !important; margin: 0 0 20px !important; box-shadow: none !important; }
+.mini-folha .q-alts li { padding-right: 0; }
+.mini-quadro.vazio { width: 72px; flex: none; }
+.cf-texto { display: grid; gap: 2px; margin-top: 10px; }
+.cf-texto strong { font-family: var(--fonte-r); font-size: 0.95rem; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cf-meta { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--texto-3); white-space: nowrap; overflow: hidden; }
+.cf-estado { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 0.8rem; font-weight: 600; }
+.cf-estado .ic { width: 14px; height: 14px; stroke-width: 2.4; }
+.cf-estado.pronta { color: var(--verde); }
+.cf-estado.conferir { color: var(--laranja); }
+.vazio-provas { display: flex; gap: 16px; align-items: center; padding: 16px; border-radius: 16px; background: var(--superficie); }
+.vazio-provas strong { font-family: var(--fonte-r); }
+.vazio-provas p { margin: 4px 0 0; font-size: 0.9rem; color: var(--texto-2); }
+
+/* ---------- Banco ---------- */
+.cabeca-tela .botao.principal.icone { background: var(--superficie); color: var(--tinta); box-shadow: 0 4px 14px rgba(60, 45, 10, 0.12), inset 0 0 0 0.5px var(--separador); }
+.questao-banco .rodape-q { border-top: 0; padding-top: 0; margin-top: 4px; }
+.conferir-q { min-height: 40px !important; height: 40px; padding: 0 14px !important; border-radius: 99px !important; background: var(--verde-suave) !important; color: var(--verde) !important; box-shadow: none !important; font-weight: 600; }
+.atalho-ia { margin-top: var(--e-2); }
+.data-chip { position: relative; gap: 6px; padding: 0 14px; font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+.data-chip input[type='date'] { position: absolute; inset: 0; width: 100%; max-width: none; opacity: 0; cursor: pointer; }
+.estado-chip { font-size: 0.9rem; }
+/* A barra de abas mora dentro do .topo: no celular, some só o logo (o topo vira invisível) */
+@media (max-width: 899px) {
+  .topo { display: flex; position: fixed; top: 0; right: 0; left: auto; min-height: 0; padding: 0; background: none !important; border: 0; z-index: 30; }
+  .topo .marca { display: none; }
+  .topo .conexao { margin: max(8px, env(safe-area-inset-top)) 12px 0 0; padding: 4px 10px; border-radius: 99px; background: var(--laranja-suave); }
+}
+.questao-banco .meta-texto { flex-basis: 100%; }
+.questao-banco .meta-texto .ponto-materia { vertical-align: 1px; margin-right: 2px; }
+.cabeca-grupo.cabeca-com-acao { display: flex; align-items: center; justify-content: space-between; }
+.cabeca-grupo .bm-botao { text-transform: none; font-size: 0.9rem; min-height: 32px; }
+#form-escola .previa-cabecalho { border-radius: 12px; }
+#form-ia .alternar, #form-ia details.revelar { border-radius: 12px; }
+.linha-ios:has(.li-campo) .li-rotulo { flex: none; }
