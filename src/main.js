@@ -1,5 +1,5 @@
 // =========================================================
-// Prova Izi — telas do app (mobile primeiro)
+// Apta — telas do app (mobile primeiro). Evolução do MVP Prova Izi.
 // Rotas: #/  #/nova  #/prova/ID  #/provas  #/banco  #/ajustes
 // =========================================================
 import '@fontsource-variable/nunito';
@@ -55,11 +55,10 @@ function aplicarTema(t = temaAtual()) {
   document.documentElement.classList.toggle('escuro', escuro);
   corDaBarra();
 }
-/** Cor da barra do sistema: amarela no Início (faixa da marca), neutra nas outras telas. */
+/** Cor da barra do sistema: a cor do papel (claro) ou do grafite (escuro). */
 function corDaBarra() {
   const escuro = document.documentElement.classList.contains('escuro');
-  const inicio = document.body?.classList.contains('em-inicio');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', inicio ? '#ffc93c' : escuro ? '#000000' : '#f2f2f7');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#121110' : '#FAF8F3');
 }
 aplicarTema();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => aplicarTema());
@@ -105,7 +104,7 @@ const ICONES = {
   tipo: '<path d="M4 6h16M4 12h10M4 18h7"/>',
   lapis: '<path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/>',
   embaralhar: '<path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4"/><path d="M19 5l2 2-2 2M19 15l2 2-2 2"/>',
-  inclusao: '<circle cx="12" cy="4.5" r="2"/><path d="M5 8.5l7 1.5 7-1.5M12 10v5M8.5 21l3.5-6 3.5 6"/>',
+  inclusao: '<path d="M2.5 19L8 5l5.5 14M4.6 14h6.8"/><path d="M14.5 19l3.25-7.5L21 19M15.6 16.4h4.3"/>', // "Aa": como textformat.size do SF Symbols
   relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   calendario: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
 };
@@ -241,15 +240,17 @@ addEventListener('offline', atualizarConexao);
 atualizarConexao();
 
 /* =================== Navegação =================== */
+// Barra de abas no padrão do iOS 26/27 (HIG · Tab bars): poucas abas de nível superior
+// e a ação de criar como botão redondo separado, como a "Buscar" do sistema.
 const NAV = [
-  { rota: '', rotulo: 'Início', icone: 'casa' },
-  { rota: 'provas', rotulo: 'Provas', icone: 'doc' },
-  { rota: 'nova', rotulo: 'Criar', icone: 'mais', classe: 'criar', longo: 'Criar prova' },
+  { rota: '', rotulo: 'Provas', icone: 'doc' },
   { rota: 'banco', rotulo: 'Banco', icone: 'banco', longo: 'Banco de questões' },
   { rota: 'ajustes', rotulo: 'Ajustes', icone: 'ajustes' },
+  { rota: 'nova', rotulo: 'Criar', icone: 'mais', classe: 'criar', longo: 'Criar prova' },
 ];
-document.getElementById('nav').innerHTML = NAV.map((n) => `<a href="#/${n.rota}" class="${n.classe || ''}" data-rota="${n.rota}">
-  <span class="pilula">${ic(n.icone)}</span><span>${n.rotulo}</span></a>`).join('');
+const linkNav = (n) => `<a href="#/${n.rota}" class="${n.classe || ''}" data-rota="${n.rota}"${n.classe === 'criar' ? ` aria-label="${n.longo}"` : ''}>
+  <span class="pilula">${ic(n.icone)}</span><span class="nav-rotulo">${n.rotulo}</span></a>`;
+document.getElementById('nav').innerHTML = `<div class="abas">${NAV.filter((n) => n.classe !== 'criar').map(linkNav).join('')}</div>${NAV.filter((n) => n.classe === 'criar').map(linkNav).join('')}`;
 
 /** Telas "empilhadas" (criar e editar) entram deslizando da direita, como no iPhone;
  *  trocar de aba só esmaece. */
@@ -266,7 +267,7 @@ function direcaoEntre(de, para) {
 function rotear() {
   const [rotaBruta = '', id] = location.hash.replace(/^#\/?/, '').split('/');
   const rota = ['escola', 'ia'].includes(rotaBruta) ? 'ajustes' : rotaBruta;
-  const ativa = rota === 'prova' ? 'provas' : rota;
+  const ativa = ['prova', 'provas'].includes(rota) ? '' : rota;
   const direcao = direcaoEntre(rotaAnterior, rota);
   rotaAnterior = rota;
   fecharGaveta();
@@ -290,7 +291,7 @@ function rotear() {
 addEventListener('hashchange', rotear);
 const telasConhecidas = ['', 'nova', 'lote', 'prova', 'provas', 'banco', 'ajustes'];
 
-function titulo(t) { document.title = `${t} · Prova Izi`; }
+function titulo(t) { document.title = `${t} · Apta`; }
 /** Leva o foco para o título da tela (bom para leitor de tela). */
 function focarTitulo() { main.querySelector('h1')?.setAttribute('tabindex', '-1'); main.querySelector('h1')?.focus({ preventScroll: true }); }
 
@@ -2157,7 +2158,11 @@ function telaAjustes(ancora) {
       <form id="form-ia">
         <label class="alternar" style="margin-bottom:16px"><input type="checkbox" name="revisora" ${cfg.ia.revisora ? 'checked' : ''}/>
           <span><strong>Conferir questões novas automaticamente</strong><small>Recomendado. Uma segunda verificação resolve cada questão sem ver o gabarito e avisa quando discorda.</small></span></label>
-        <details class="revelar"><summary>Como o Prova Izi evita erros<span class="chevron">${ic('seta')}</span></summary>
+        <details class="revelar"><summary>Sobre o Apta<span class="chevron">${ic('seta')}</span></summary>
+          <div class="conteudo"><p style="margin:0 0 8px"><img src="/apta-marca.svg" alt="Apta" width="88" height="48" class="marca-clara" /><img src="/apta-marca-escuro.svg" alt="Apta" width="88" height="48" class="marca-escura" /></p>
+            <p style="margin:0 0 8px">Prova, versão adaptada e gabarito prontos para imprimir, com questões conferidas. Evolução do MVP Prova Izi.</p>
+            <p style="margin:0;color:var(--texto-3);font-size:.88rem">Interface desenhada seguindo as Human Interface Guidelines da Apple: barra de abas flutuante, sheets, listas agrupadas, controle segmentado e tipografia do sistema (SF Pro e SF Pro Rounded).</p></div></details>
+        <details class="revelar"><summary>Como o Apta evita erros<span class="chevron">${ic('seta')}</span></summary>
           <div class="conteudo"><ul style="margin:0;padding-left:20px">
             <li>Usa <strong>primeiro as questões do seu banco</strong> e só cria as que faltarem.</li>
             <li>Toda questão passa por uma <strong>verificação automática</strong>: gabarito, alternativas repetidas, “todas as anteriores” e outros erros comuns.</li>

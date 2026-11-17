@@ -1,5 +1,5 @@
 /* =========================================================
-   Prova Izi — sistema visual
+   Apta — sistema visual (evolução do Prova Izi; a camada Apta está no fim do arquivo)
    Estilo: flat e minimalista, inspirado nos apps nativos do iPhone
    (fundo cinza agrupado, listas brancas, títulos grandes, barra de
    abas translúcida). Cor da marca: amarelo do ícone.
@@ -960,3 +960,188 @@ body.em-inicio .saudacao .cor-nome { color: #9a5a00; }
 body.em-inicio .saudacao-escola { color: var(--sobre-amarelo); }
 body.em-inicio { overflow-x: clip; }
 body.em-inicio .topo .marca img { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.12); }
+
+/* =========================================================
+   APTA · camada de marca e interface (nov/2026)
+   Fonte da verdade: protótipo no Figma + apta/docs/07-style-guide.md
+   - Paleta "lápis, grafite e papel": amarelo-lápis para agir, grafite no texto,
+     papel morno no fundo. Uma cor por modo: terracota = Adaptada,
+     verde-lousa = Gabarito/conferida, lavanda = IA.
+   - Tipografia da Apple pela pilha do sistema (HIG · Typography):
+     SF Pro Rounded nos títulos, números e botões; SF Pro no texto.
+     Em aparelhos sem as fontes da Apple, entra a Nunito (arredondada).
+   - Liquid Glass só no que flutua (barra de abas); o conteúdo é sólido.
+   ========================================================= */
+:root {
+  --fonte: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --fonte-r: ui-rounded, 'SF Pro Rounded', 'Nunito Variable', 'Nunito', -apple-system, system-ui, sans-serif;
+  --amarelo: #ffc72c;
+  --amarelo-forte: #f2b300;
+  --amarelo-suave: #fff3cc;
+  --tinta: #8a5a00;
+  --fundo: #faf8f3;
+  --superficie: #ffffff;
+  --superficie-2: #efebe2;
+  --separador: #e6e1d6;
+  --borda: #d9d3c6;
+  --texto: #1d1d1f;
+  --texto-2: #5c574f;
+  --texto-3: #6b655c;
+  --verde: #1c7a52;
+  --verde-fill: #1c7a52;
+  --verde-suave: #e3f2ea;
+  --laranja: #9a5b00;
+  --laranja-suave: #fff1d6;
+  --vermelho: #c8291c;
+  --vermelho-suave: #fbeae8;
+  --foco: #8a5a00;
+  --barra-fundo: rgba(250, 248, 243, 0.86);
+  --topo-fundo: #faf8f3;
+  --campo: #f4f1ea;
+  --pressionado: #efebe2;
+  --superficie-3: #e6e1d6;
+  --chevron: #c4bdb0;
+  --placeholder: #9c958a;
+  --escuro-fundo: #1d1d1f;
+  --escuro-hover: #3a3936;
+  --sobre-amarelo: #1d1d1f;
+  --marca-azul: #8a5a00;
+  --inclusao: #a8481f;
+  --inclusao-suave: #f8e9e1;
+  --ia: #6b4fd8;
+  --ia-suave: #efebfc;
+  --gradiente-ia: #efebfc;
+  --vidro: rgba(255, 255, 255, 0.72);
+  --sombra-cartao: 0 1px 2px rgba(60, 45, 10, 0.04), 0 6px 18px rgba(60, 45, 10, 0.06);
+  --contorno: 0 0 0 1px rgba(80, 60, 20, 0.07);
+}
+html.escuro {
+  --amarelo-suave: #3a3120;
+  --tinta: #ffd36b;
+  --fundo: #121110;
+  --superficie: #1f1e1c;
+  --superficie-2: #2c2a27;
+  --separador: #3a3834;
+  --borda: #4a4741;
+  --texto: #f5f2ea;
+  --texto-2: #cdc7bb;
+  --texto-3: #a39d92;
+  --verde: #4cc38a; --verde-fill: #2f9e6a; --verde-suave: #13291f;
+  --laranja: #ffb347; --laranja-suave: #3a2a12;
+  --vermelho: #ff7a6e; --vermelho-suave: #3b1715;
+  --barra-fundo: rgba(31, 30, 28, 0.86);
+  --topo-fundo: #121110;
+  --campo: #2c2a27; --pressionado: #2c2a27;
+  --chevron: #5d5953; --placeholder: #8d877c;
+  --escuro-fundo: #f5f2ea; --escuro-texto: #1d1d1f; --escuro-hover: #ddd8cc;
+  --marca-azul: #ffd36b;
+  --inclusao: #f0a07a; --inclusao-suave: #3a2219;
+  --ia: #b3a2ff; --ia-suave: #262040; --gradiente-ia: #262040;
+  --vidro: rgba(40, 38, 35, 0.72);
+}
+/* A folha continua papel branco em qualquer tema */
+.folha, .previa-cabecalho { --inclusao: #a8481f; --verde: #1c7a52; --tinta: #8a5a00; }
+
+/* ---------- Tipografia: voz arredondada nos títulos, números e botões ---------- */
+h1, h2, h3, .botao, .funcao strong, .numeros strong, .contagem strong, .contador output,
+.gaveta-cabeca h2, .editor-topo .titulo-ed strong, .cartao-prova strong, .celebra-centro strong,
+.segmentos button, .nav-rotulo, .cabeca-secao, .progresso-rotulo { font-family: var(--fonte-r); }
+h1 { font-size: 2.125rem; font-weight: 700; letter-spacing: -0.02em; }     /* Large Title 34 */
+h2 { font-size: 1.375rem; font-weight: 700; }                              /* Title 2 22 */
+.cabeca-secao { font-size: 1.25rem; font-weight: 700; color: var(--texto); margin: var(--e-6) 0 var(--e-3); } /* Title 3 */
+
+/* ---------- Barra superior: só a palavra-marca, sobre o papel ---------- */
+.marca img { border-radius: 0; width: auto; height: 34px; }
+.marca .marca-escura { display: none; }
+html.escuro .marca .marca-clara { display: none; }
+html.escuro .marca .marca-escura { display: block; }
+.topo { border-bottom-color: var(--separador); }
+@media (min-width: 900px) { .topo { background: var(--barra-fundo); } }
+
+/* Início sem faixa amarela: saudação no papel, nome em âmbar (HIG · Large Title) */
+body.em-inicio .topo { background: var(--topo-fundo); border-bottom-color: transparent; }
+body.em-inicio .topo .marca { color: var(--texto); }
+body.em-inicio .saudacao { margin: var(--e-2) 0 var(--e-5); padding: 0; color: var(--texto); }
+body.em-inicio .saudacao::before { display: none; }
+body.em-inicio .saudacao h1 { color: var(--texto); }
+body.em-inicio .saudacao .cor-nome, .cor-nome { color: var(--tinta); }
+body.em-inicio .saudacao-escola { color: var(--texto-2); }
+body.em-inicio .topo .marca img { box-shadow: none; }
+
+/* ---------- Barra de abas: Liquid Glass flutuante + "Criar" redondo separado ---------- */
+@media (max-width: 899px) {
+  .nav {
+    left: 16px; right: 16px; bottom: calc(10px + var(--seguro-baixo));
+    display: flex; align-items: center; gap: 10px; height: var(--nav-h); padding: 0;
+    background: transparent; border: 0; box-shadow: none; border-radius: 0;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  .nav .abas, .nav a.criar {
+    background: var(--vidro);
+    -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
+    box-shadow: 0 10px 30px rgba(60, 45, 10, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.6), 0 0 0 0.5px rgba(80, 60, 20, 0.12);
+  }
+  .nav .abas { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); height: 100%; padding: 5px; border-radius: 99px; }
+  .nav .abas a { justify-content: center; border-radius: 99px; min-height: 0; transition: background 0.25s var(--mola), color 0.2s; }
+  .nav .abas a .pilula { width: auto; height: 28px; background: none !important; }
+  .nav .abas a[aria-current='page'] { background: var(--amarelo-suave); color: var(--texto); }
+  .nav .abas a[aria-current='page'] .pilula { color: var(--tinta); }
+  .nav a.criar { flex: none; width: var(--nav-h); height: var(--nav-h); border-radius: 50%; justify-content: center; min-height: 0; background: var(--amarelo); color: var(--sobre-amarelo); }
+  .nav a.criar .pilula { background: none; width: auto; height: auto; color: var(--sobre-amarelo); }
+  .nav a.criar .pilula .ic { width: 28px; height: 28px; stroke-width: 2.4; }
+  .nav a.criar .nav-rotulo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  html.escuro .nav .abas, html.escuro .nav a.criar:not([aria-current]) { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  html.escuro .nav a.criar { background: var(--amarelo); }
+}
+@media (min-width: 900px) {
+  .nav .abas { display: contents; }
+  .nav a[aria-current='page'] { background: var(--amarelo-suave); color: var(--texto); }
+  .nav a.criar { background: var(--amarelo); color: var(--sobre-amarelo); }
+  .nav a.criar:hover { background: var(--amarelo-forte); }
+}
+
+/* ---------- Botões: principal amarelo, secundário branco com contorno ---------- */
+.botao { border-radius: 14px; }
+.botao.principal:hover { background: var(--amarelo-forte); }
+.botao.escuro { background: var(--escuro-fundo); }
+.botao.perigo { background: var(--superficie); }
+
+/* ---------- Cartões das funções (Início) ---------- */
+.funcao { border-radius: 20px; }
+.funcao.principal { background: var(--amarelo); box-shadow: 0 8px 22px rgba(242, 179, 0, 0.28); }
+.funcao.principal .funcao-sub { color: #4a3a10; }
+.funcao-icone { border-radius: 50%; }
+.funcao.principal .funcao-icone { background: rgba(255, 255, 255, 0.65); }
+.funcao-icone.ia { background: var(--ia-suave); color: var(--ia); }
+.materia-icone { border-radius: 12px; }
+.cartao-prova, .numeros, .grupo, .cartao-form, .questao-banco, .cartao-busca, .alternar, details.revelar, .fichas.lista, .vazio, .lote-item { border-radius: 16px; }
+
+/* ---------- Modos: Adaptada = terracota · Gabarito = verde-lousa · IA = lavanda ---------- */
+.segmentos { background: var(--superficie-2); border-radius: 12px; }
+.segmentos button { border-radius: 10px; }
+.segmentos button[data-aba='adaptada'][aria-selected='true'] { color: var(--inclusao); }
+.segmentos button[data-aba='gabarito'][aria-selected='true'] { color: var(--verde); }
+.faixa-adaptada { background: var(--inclusao-suave); box-shadow: inset 4px 0 0 var(--inclusao); }
+.faixa-gabarito { background: var(--verde-suave); box-shadow: inset 4px 0 0 var(--verde); }
+.opcoes-adaptada .ficha input:checked + span { background: var(--inclusao); color: #fff; }
+.selo.ia, .selo.ia-selo { color: var(--ia); background: var(--ia-suave); }
+.cartao-busca .icone-app { background: var(--ia-suave); color: var(--ia); }
+.criando-barra span { background: var(--amarelo-forte); }
+.q-ferramentas .botao.conferida { background: var(--verde-suave); color: var(--verde); }
+.alternar input:checked { background: var(--verde-fill); }
+
+/* ---------- Estados: atenção em âmbar, pronta em verde-lousa ---------- */
+.selo.atencao, .funcao-selo { color: var(--laranja); background: var(--laranja-suave); }
+.selo.pronta { color: var(--verde); background: var(--verde-suave); }
+
+/* ---------- Tela "preparando": ícone do Apta ---------- */
+.criando-icone { border-radius: 22%; box-shadow: 0 8px 20px rgba(242, 179, 0, 0.3); }
+.criando-caixa img { border-radius: 22%; }
+
+/* ---------- Gaveta (sheet do iOS): cantos de 38 pt e alça ---------- */
+dialog.gaveta { border-radius: 28px 28px 0 0; background: var(--fundo); }
+@media (min-width: 700px) { dialog.gaveta { border-radius: 28px; } }
+.gaveta-cabeca { background: var(--fundo); }
+.revelar .marca-escura { display: none; }
+html.escuro .revelar .marca-clara { display: none; }
+html.escuro .revelar .marca-escura { display: inline; }

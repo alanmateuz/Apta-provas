@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   try {
     let r;
     for (let i = 0; i < 4; i++) {
-      r = await fetch(alvo, { redirect: 'manual', headers: { 'User-Agent': 'ProvaIzi/1.0 (imagem de questao)' } });
+      r = await fetch(alvo, { redirect: 'manual', headers: { 'User-Agent': 'Apta/1.0 (imagem de questao)' } });
       if (r.status >= 300 && r.status < 400 && r.headers.get('location')) {
         alvo = enderecoPermitido(new URL(r.headers.get('location'), alvo).toString());
         if (!alvo) return res.status(400).json({ error: 'Redirecionamento não permitido.' });

@@ -3,18 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f2f2f7" />
+    <meta name="theme-color" content="#FAF8F3" />
     <meta name="color-scheme" content="light" />
     <script>/* tema escolhido em Ajustes (padrão: claro), aplicado antes de pintar */try{var t=localStorage.getItem("pf.tema")||"claro";if(t==="escuro"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("escuro")}catch(e){}</script>
-    <meta name="description" content="Prova Izi: monte provas em minutos, com versão adaptada, mesmo sem internet." />
+    <meta name="description" content="Apta: prova, versão adaptada e gabarito prontos para imprimir, com questões conferidas. Funciona mesmo sem internet." />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon.svg" />
-    <title>Prova Izi</title>
+    <meta name="apple-mobile-web-app-title" content="Apta" />
+    <title>Apta</title>
   </head>
   <body>
     <a class="pular" href="#conteudo">Pular para o conteúdo</a>
     <header class="topo nao-imprimir">
-      <a href="#/" class="marca" aria-label="Prova Izi, ir para o início"><img src="/icon.svg" alt="" width="36" height="36" /> Prova Izi</a>
+      <a href="#/" class="marca" aria-label="Apta, ir para o início"><img class="marca-clara" src="/apta-marca.svg" alt="" width="73" height="40" /><img class="marca-escura" src="/apta-marca-escuro.svg" alt="" width="73" height="40" /></a>
       <nav aria-label="Menu principal" class="nav" id="nav"></nav>
       <span id="conexao" class="conexao" role="status"></span>
     </header>

@@ -1,4 +1,11 @@
-# Prova Izi — MVP
+# Apta (antes Prova Izi)
+
+> **Apta** é a evolução do MVP Prova Izi: mesma base funcional, com nova marca e interface redesenhada
+> seguindo as **Human Interface Guidelines da Apple** (barra de abas flutuante em Liquid Glass, sheets,
+> listas agrupadas, controle segmentado, tipografia SF Pro / SF Pro Rounded pela fonte do sistema).
+> Pesquisa, marca, style guide e protótipo no Figma: pasta `../apta` (veja `apta/apple.md`).
+> No ar: https://prova-izi.vercel.app
+
 
 App para professores montarem provas em minutos: cabeçalho da escola, **versão adaptada**
 (TDAH, autismo, dislexia, deficiência intelectual), gabarito, impressão/PDF e Word.
