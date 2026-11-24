@@ -385,7 +385,7 @@ function cartaoProvaApta(p) {
   const st = statusProva(p);
   return `<div class="cartao-apta" style="position:relative">
     <a class="prova-cartao" href="#/prova/${p.id}">
-      <span class="mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="mini">${miniaturaFolha(p, getConfig().escola)}</span>
       <span class="txt"><strong>${esc(tituloCurto(p))}</strong><small>${esc(p.materia || 'Prova')} · ${esc(turmaDe(p))} · ${plural((p.questoes || []).length, 'questão', 'questões')}</small><br>
         <span class="estado-apta ${st.pendentes ? 'rev' : 'ok'}">${st.pendentes ? `${ic('alerta')} ${st.pendentes} para revisar` : `${ic('certo')} Pronta`}</span></span>
     </a>
@@ -435,6 +435,7 @@ function telaInicio() {
       ? `<div class="provas-lista" role="list">${(verTodas ? provas : provas.slice(0, 3)).map((p) => `<div role="listitem">${cartaoProvaApta(p)}</div>`).join('')}</div>`
       : `<div class="cartao-apta vazio-apta"><strong>Nenhuma prova ainda</strong>Escreva o conteúdo no caderno e toque em Criar. Em cerca de um minuto ela fica pronta, com as versões adaptadas e o gabarito.</div>`}
   </div>`;
+  escalarMiniaturas(main);
   main.querySelectorAll('[data-baixar]').forEach((b) => (b.onclick = () => menuBaixar(getProva(b.dataset.baixar))));
   main.querySelectorAll('[data-rapida]').forEach((b) => (b.onclick = () => {
     turmaRapida = Number(b.dataset.rapida) === turmaRapida ? -1 : Number(b.dataset.rapida);
@@ -1275,11 +1276,12 @@ function telaProva(id) {
   }
   if (!Array.isArray(prova.versoes)) prova.versoes = versoesDa(prova);
   const mesma = estado.prova?.id === id;
+  const recemCriada = Boolean(sessionStorage.getItem('pf.celebrar'));
   estado = { prova, aba: mesma ? estado.aba : 'normal', versao: mesma ? estado.versao || 0 : 0 };
   titulo(prova.titulo);
   main.innerHTML = `<div class="prova-apta">
     ${ceu({ esquerda: voltarBtn('#/', 'Provas'), titulo: `<span id="titulo-texto">${esc(tituloCurto(prova))}</span>`,
-      direita: `<button type="button" class="ceu-botao icone" id="b-exportar-topo" aria-label="Exportar">${ic('compartilhar')}</button><button type="button" class="ceu-botao icone" id="b-opcoes" aria-label="Mais opções da prova">${ic('pontos')}</button>`, etapa: 5 })}
+      direita: `<button type="button" class="ceu-botao icone" id="b-exportar-topo" aria-label="Exportar">${ic('compartilhar')}</button><button type="button" class="ceu-botao icone" id="b-opcoes" aria-label="Mais opções da prova">${ic('pontos')}</button>`, etapa: recemCriada ? 5 : 0, baixo: !recemCriada })}
     <div class="folha-branca">
       <div class="cabeca-folha nao-imprimir" id="cabeca-prova"></div>
       <div class="seg-apta nao-imprimir" role="tablist" aria-label="Versões da prova">
@@ -3208,17 +3210,15 @@ function telaAjustes(sub) {
           <input type="checkbox" class="switch-apta" id="sw-revisora" ${cfg.ia.revisora ? 'checked' : ''} /></label></li>
         ${itemLink('#/ajustes/escola', 'lista', 'Instruções padrão', instr ? `${instr.slice(0, 38)}${instr.length > 38 ? '…' : ''}` : 'Saem abaixo do cabeçalho')}
       </ul></div>
-    </header>
-    <div class="depois-ceu">
       <h2 class="grupo-titulo">${ic('aparencia')} Aplicativo</h2>
-      <ul class="lista-apta">
+      <div class="pilha-cartao"><ul class="lista-apta">
         <li><div class="item-apta">${ic('aparencia')}<span class="txt"><strong>Aparência</strong></span></div>
           <div style="padding:0 16px 14px"><div class="seg-apta cinza" role="radiogroup" aria-label="Tema">${TEMAS.map(([v, r]) => `<button type="button" role="radio" data-tema="${v}" aria-selected="${temaAtual() === v}" aria-checked="${temaAtual() === v}">${r}</button>`).join('')}</div></div></li>
         ${itemLink('#/ajustes/ia', 'brilho', 'Criação automática', iaDisponivel(cfg) ? 'Ligada' : 'Desligada')}
         <li><button type="button" class="item-apta" id="b-exemplo">${ic('doc')}<span class="txt"><strong>Preencher com um exemplo</strong><small>Turmas, semana de provas e provas prontas para ver o app funcionando</small></span></button></li>
-      </ul>
-      <p class="ajuda" style="text-align:center;margin:20px 0">Apta · desenhado seguindo as Human Interface Guidelines da Apple</p>
-    </div></div>`;
+      </ul></div>
+      <p class="ajuda-ceu">Apta · desenhado seguindo as Human Interface Guidelines da Apple</p>
+    </header></div>`;
   main.querySelector('#sw-revisora').onchange = (ev) => { const c = getConfig(); salvarConfig({ ...c, ia: { ...c.ia, revisora: ev.target.checked } }); aviso(ev.target.checked ? 'Conferência automática ligada.' : 'Conferência automática desligada.'); };
   main.querySelectorAll('[data-tema]').forEach((b) => (b.onclick = () => {
     try { localStorage.setItem('pf.tema', b.dataset.tema); } catch {}

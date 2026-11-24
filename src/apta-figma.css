@@ -484,3 +484,24 @@ body.figma #folha.folha.moldura-escolar { border: 2px dashed #111; }
 body.figma:has(.livro-apta) main { padding-bottom: 0; }
 .busca-cartao .chip-apta[aria-pressed='true'] { background: var(--azul-suave); color: var(--azul); border-color: transparent; }
 .busca-cartao .chip-apta[aria-pressed='true'] .ic { color: var(--azul); }
+
+/* ---------- Revisão 2: respiro no topo, telas todas azuis, miniatura real ---------- */
+/* Respiro de cima como no Figma: a barra de status do iPhone ocupa 54 pt */
+.ceu { padding-top: calc(env(safe-area-inset-top, 0px) + 40px); }
+.inicio .ceu, .banco-apta .ceu, .ajustes-apta .ceu { padding-top: calc(env(safe-area-inset-top, 0px) + 56px); }
+/* Início e Ajustes: o azul vai até o fim da tela; os cartões brancos ficam sobre ele */
+body.figma main:has(> .inicio), body.figma main:has(> .ajustes-apta) { background: var(--ceu); min-height: 100vh; min-height: 100dvh; }
+body.figma:has(main > .inicio), body.figma:has(main > .ajustes-apta) { background: var(--ceu); }
+@media (min-width: 700px) { body.figma:has(main > .inicio), body.figma:has(main > .ajustes-apta) { background: #eef1f7; } html.escuro body.figma:has(main > .inicio), html.escuro body.figma:has(main > .ajustes-apta) { background: #07080a; } }
+.inicio .secao-linha h2, .inicio .secao-linha a, .inicio .secao-linha button { color: #fff; }
+.inicio .ceu { padding-bottom: 150px; }
+.semana-cartao { margin-top: 30px; }
+.ajustes-apta .ceu { padding-bottom: 40px; min-height: 100vh; min-height: 100dvh; }
+.ajuda-ceu { margin: 22px 0 0; text-align: center; font-size: .82rem; color: rgba(255,255,255,.8); }
+/* Miniatura: a folha de verdade, reduzida */
+.prova-cartao .mini { padding: 0; display: block; overflow: hidden; }
+.prova-cartao .mini .mini-quadro { width: 64px; height: 84px; aspect-ratio: auto; border-radius: 6px; box-shadow: none; }
+/* Rodapé da questão numa linha só: estado e nível à esquerda, ações à direita */
+body.figma .prova-apta .q-ferramentas { flex-wrap: nowrap; gap: 6px; }
+body.figma .prova-apta .q-ferramentas .q-nivel { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.figma .prova-apta .q-ferramentas .certa { flex: none; font-size: .82rem; }
