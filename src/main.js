@@ -4,6 +4,7 @@
 // =========================================================
 import '@fontsource-variable/nunito';
 import './styles.css';
+import './apta-figma.css';
 import { registerSW } from 'virtual:pwa-register';
 import {
   getConfig, salvarConfig, getBanco, salvarBanco, adicionarAoBanco, getProvas, getProva,
@@ -14,16 +15,27 @@ import {
   embaralharAlternativas, textoGabarito, adaptarSemIA,
 } from './montador.js';
 import { validarQuestao, validarProva } from './validador.js';
-import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA, questoesDoMaterial } from './ia.js';
+import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA, questoesDoMaterial, questoesDaFoto } from './ia.js';
 import { carregarImagens, obterImagem, guardarImagem, rasterizar, svgSeguro, imagensDasQuestoes, importarImagens } from './imagens.js';
 import { baixarWord, cfgAdaptada } from './word.js';
 import { lerCabecalhoWord, camposCabecalho } from './importar-cabecalho.js';
 import { temModelo, modeloEmCache, preencherModelos } from './modelo-tela.js';
 import { carregarMateriais, listarMateriais, guardarArquivo, obterMaterial, salvarMaterial, apagarMaterial, lerPDF, trechosRelevantes, paginasComQuestoes, lotesDePaginas, estaNoTexto } from './materiais.js';
 
-registerSW({ immediate: true });
+// Atualiza sozinho: procura versão nova ao abrir, a cada 30 min e ao voltar para o app.
+// Assim nenhum aparelho fica preso numa versão antiga guardada pelo modo offline.
+registerSW({
+  immediate: true,
+  onRegisteredSW(_url, reg) {
+    if (!reg) return;
+    const checar = () => reg.update().catch(() => {});
+    setInterval(checar, 30 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) checar(); });
+  },
+});
 
 const main = document.getElementById('conteudo');
+document.body.classList.add('figma');
 
 /* =================== Movimento =================== */
 const menosMovimento = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -60,7 +72,7 @@ function aplicarTema(t = temaAtual()) {
 /** Cor da barra do sistema: a cor do papel (claro) ou do grafite (escuro). */
 function corDaBarra() {
   const escuro = document.documentElement.classList.contains('escuro');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#111318' : '#FCFCFD');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#163f9e' : '#1f56d1');
 }
 aplicarTema();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => aplicarTema());
@@ -112,6 +124,16 @@ const ICONES = {
   updown: '<path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4"/>',
   relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   aparencia: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
+  compartilhar: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M8 10H6v11h12V10h-2"/>',
+  turma: '<circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.2 14c2.5.1 4.2 1.6 4.8 4"/>',
+  livro: '<path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M13 4h5.5c.8 0 1.5.7 1.5 1.5v13c0 .8-.7 1.5-1.5 1.5H13z"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  refazer: '<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/>',
+  texto: '<path d="M3.5 18L8 6h1l4.5 12M5 14h7"/><path d="M14.5 18l3-7.5h.6l3 7.5M15.6 15.5h4.4"/>',
+  lista: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  certoCirc: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+  negrito: '<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/>',
+  moldura: '<rect x="4" y="4" width="16" height="16" rx="1.5"/><rect x="7.5" y="7.5" width="9" height="9"/>',
   calendario: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
 };
 /** Um ícone por matéria: a professora reconhece a prova de relance. */
@@ -190,7 +212,8 @@ function baixarArquivo(nome, conteudo, tipo = 'application/json') {
    No celular sobe de baixo (zona do polegar); no computador vira diálogo. */
 const gavetaEl = document.getElementById('gaveta');
 let fechandoGaveta = null;
-function abrirGaveta(titulo, corpo, aoMontar) {
+function abrirGaveta(titulo, corpo, aoMontar, { centro = false } = {}) {
+  gavetaEl.classList.toggle('centro', centro);
   if (fechandoGaveta) { clearTimeout(fechandoGaveta); fechandoGaveta = null; gavetaEl.classList.remove('fechando'); }
   gavetaEl.innerHTML = `<div class="gaveta-cabeca"><h2 id="gaveta-titulo">${esc(titulo)}</h2>
     <button class="botao fantasma icone" data-fechar aria-label="Fechar">${ic('fechar')}</button></div>
@@ -252,7 +275,6 @@ const NAV = [
   { rota: '', rotulo: 'Provas', icone: 'doc' },
   { rota: 'banco', rotulo: 'Banco', icone: 'banco', longo: 'Banco de questões' },
   { rota: 'ajustes', rotulo: 'Ajustes', icone: 'ajustes' },
-  { rota: 'nova', rotulo: 'Criar', icone: 'mais', classe: 'criar', longo: 'Criar prova' },
 ];
 const linkNav = (n) => `<a href="#/${n.rota}" class="${n.classe || ''}" data-rota="${n.rota}"${n.classe === 'criar' ? ` aria-label="${n.longo}"` : ''}>
   <span class="pilula">${ic(n.icone)}</span><span class="nav-rotulo">${n.rotulo}</span></a>`;
@@ -260,7 +282,7 @@ document.getElementById('nav').innerHTML = `<div class="abas">${NAV.filter((n) =
 
 /** Telas "empilhadas" (criar e editar) entram deslizando da direita, como no iPhone;
  *  trocar de aba só esmaece. */
-const EMPILHADAS = ['nova', 'lote', 'prova'];
+const EMPILHADAS = ['nova', 'lote', 'prova', 'semana', 'livro'];
 let rotaAnterior = null;
 function direcaoEntre(de, para) {
   if (de === null || de === para) return null;
@@ -273,7 +295,7 @@ function direcaoEntre(de, para) {
 function rotear() {
   const [rotaBruta = '', id] = location.hash.replace(/^#\/?/, '').split('/');
   const rota = ['escola', 'ia'].includes(rotaBruta) ? 'ajustes' : rotaBruta === 'provas' ? '' : rotaBruta;
-  const ativa = ['prova', 'nova', 'lote'].includes(rota) ? '' : rota;
+  const ativa = ['prova', 'nova', 'lote', 'semana'].includes(rota) ? '' : rota === 'livro' ? 'banco' : rota;
   const direcao = direcaoEntre(rotaAnterior, rota);
   rotaAnterior = rota;
   fecharGaveta();
@@ -282,13 +304,13 @@ function rotear() {
     document.querySelectorAll('.nav a').forEach((a) => {
       if (a.dataset.rota === ativa) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    document.body.classList.toggle('foco', rota === 'nova' || rota === 'prova');
+    document.body.classList.toggle('foco', ['nova', 'prova', 'semana', 'livro', 'lote'].includes(rota) || (rota === 'ajustes' && id === 'modelo'));
     document.body.classList.toggle('em-inicio', !telasConhecidas.includes(rota) || rota === '');
     corDaBarra();
     main.classList.toggle('largo', rota === 'prova');
     main.onclick = null;
     if (!direcao || !usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
-    const telas = { '': telaInicio, nova: telaNova, lote: telaLote, prova: () => telaProva(id), banco: telaBanco, ajustes: () => telaAjustes(rotaBruta) };
+    const telas = { '': telaInicio, nova: telaNova, lote: telaLote, prova: () => telaProva(id), banco: telaBanco, ajustes: () => telaAjustes(['escola', 'ia'].includes(rotaBruta) ? rotaBruta : id), semana: telaSemana, livro: telaLivro };
     document.body.classList.remove('boas-vindas');
     if (rota === '' && precisaBoasVindas()) { telaBoasVindas(); window.scrollTo(0, 0); return; }
     (telas[rota] || telaInicio)();
@@ -298,7 +320,7 @@ function rotear() {
   if (direcao) transicao(desenhar, direcao); else desenhar();
 }
 addEventListener('hashchange', rotear);
-const telasConhecidas = ['', 'nova', 'lote', 'prova', 'provas', 'banco', 'ajustes'];
+const telasConhecidas = ['', 'nova', 'lote', 'prova', 'provas', 'banco', 'ajustes', 'semana', 'livro'];
 
 function titulo(t) { document.title = `${t} · Apta`; }
 /** Leva o foco para o título da tela (bom para leitor de tela). */
@@ -356,6 +378,19 @@ function cartaoProva(p, escola) {
 }
 
 let filtroProvas = '';
+let turmaRapida = -1;
+let verTodas = false;
+/** Cartão de uma prova na Início: miniatura da folha, matéria, turma e situação. */
+function cartaoProvaApta(p) {
+  const st = statusProva(p);
+  return `<div class="cartao-apta" style="position:relative">
+    <a class="prova-cartao" href="#/prova/${p.id}">
+      <span class="mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="txt"><strong>${esc(tituloCurto(p))}</strong><small>${esc(p.materia || 'Prova')} · ${esc(turmaDe(p))} · ${plural((p.questoes || []).length, 'questão', 'questões')}</small><br>
+        <span class="estado-apta ${st.pendentes ? 'rev' : 'ok'}">${st.pendentes ? `${ic('alerta')} ${st.pendentes} para revisar` : `${ic('certo')} Pronta`}</span></span>
+    </a>
+    <button type="button" class="baixar-redondo" data-baixar="${p.id}" aria-label="Baixar ${esc(tituloCurto(p))}">${ic('baixar')}</button></div>`;
+}
 function telaInicio() {
   titulo('Provas');
   const cfg = getConfig();
@@ -363,65 +398,61 @@ function telaInicio() {
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
   const primeiroNome = (cfg.escola.professora || '').trim().split(' ')[0];
-  const materias = [...new Set(provas.map((p) => p.materia).filter(Boolean))];
-  if (filtroProvas && !materias.includes(filtroProvas)) filtroProvas = '';
-  const lista = provas.filter((p) => !filtroProvas || p.materia === filtroProvas);
-
-  const recentes = turmasRecentes();
-  let turmaRapida = -1; // nenhuma turma vem marcada: a professora escolhe
-
-  // Blocos: 1) saudação  2) o caderno onde a prova começa  3) as provas, como folhas de verdade
-  main.innerHTML = `
-    <header class="saudacao">
-      <h1>${saudacao}${primeiroNome ? `, <span class="cor-nome">${esc(primeiroNome)}</span>` : ''}</h1>
-      ${cfg.escola.nome ? `<p class="saudacao-escola">${ic('escola', 'p')} ${esc(cfg.escola.nome)}</p>` : ''}
+  const turmas = getTurmas().slice(0, 3);
+  if (turmaRapida >= turmas.length) turmaRapida = -1;
+  const s = getSemana();
+  const itens = itensSemana(s);
+  const c = contarSemana(itens);
+  // Blocos: 1) saudação no céu  2) o caderno onde a prova começa  3) a semana de provas  4) as provas
+  main.innerHTML = `<div class="inicio">
+    <header class="ceu">
+      <div class="ceu-grande"><div><h1>${saudacao}${primeiroNome ? `, ${esc(primeiroNome)}` : ''}</h1>
+        ${cfg.escola.nome ? `<p>${ic('escola')} ${esc(cfg.escola.nome)}</p>` : ''}</div></div>
     </header>
-
-    <section class="caderno" aria-labelledby="t-caderno">
-      <h2 class="caderno-titulo" id="t-caderno">O que vamos avaliar?</h2>
-      <form class="pilula-campo" id="form-rapido" role="search" aria-label="Começar uma prova">
-        <label for="rapido-tema" class="visualmente-oculto">Conteúdo da prova</label>
-        <input type="text" id="rapido-tema" name="tema" placeholder="Ex.: frações" autocomplete="off" enterkeyhint="go" />
-        <button class="pilula-ir" type="submit">${ic('mais', 'p')} Criar</button>
-      </form>
-      ${recentes.length ? `<div class="caderno-turmas" role="radiogroup" aria-label="Para qual turma">
-        <span class="caderno-para">Para</span>
-        ${recentes.map((t, k) => `<button type="button" role="radio" class="pilula-turma" data-rapida="${k}" aria-checked="${k === turmaRapida}" style="--cor:${corMateria(t.materia)}">
-          ${icMateria(t.materia)}<span>${esc(t.turma || t.serie)}</span><small>${esc(t.materia)}</small></button>`).join('')}
-      </div>` : ''}
+    <section class="caderno-apta" aria-labelledby="t-caderno">
+      ${VISTO('caderno-visto')}
+      <div class="caderno-folha">
+        <h2 id="t-caderno">O que vamos avaliar?</h2>
+        <form class="campo-criar" id="form-rapido" role="search" aria-label="Começar uma prova">
+          <label for="rapido-tema" class="visualmente-oculto">Conteúdo da prova</label>
+          <input type="text" id="rapido-tema" name="tema" placeholder="Ex.: frações" autocomplete="off" enterkeyhint="go" />
+          <button type="submit">${ic('brilho')} Criar</button>
+        </form>
+        <div class="para-turmas" role="radiogroup" aria-label="Para qual turma">
+          <span>Para</span>
+          ${turmas.map((t, k) => `<button type="button" role="radio" class="chip-apta" data-rapida="${k}" aria-checked="${k === turmaRapida}">${ic('turma')} ${esc(t.nome)}</button>`).join('')}
+          <button type="button" class="chip-apta mais" id="b-outra-turma">${ic('mais')} Outra</button>
+        </div>
+      </div>
     </section>
-
-    <h2 class="titulo-secao">Suas provas</h2>
-    ${materias.length > 1 ? `<div class="filtro-materias" role="group" aria-label="Filtrar por matéria">
-      <button type="button" data-m="" aria-pressed="${!filtroProvas}">Todas</button>
-      ${materias.map((m) => `<button type="button" data-m="${esc(m)}" aria-pressed="${filtroProvas === m}">${esc(m)}</button>`).join('')}</div>` : ''}
+    <a class="cartao-apta semana-cartao" href="#/semana">
+      <div class="semana-topo">${ic('calendario')}<div class="txt"><strong>Semana de provas</strong>
+        <small>${s ? `${periodoTexto(s)} · ${faltamDias(s)}` : 'Planeje as provas da semana e acompanhe o que falta'}</small></div><span class="chev">${ic('seta', 'p')}</span></div>
+      ${s && itens.length ? `${barraProgresso(c)}${legendaProgresso(c)}` : ''}
+    </a>
+    <div class="secao-linha"><h2>Suas provas</h2>${provas.length > 3 ? `<button type="button" id="b-ver-todas">${verTodas ? 'Ver menos' : 'Ver todas'}</button>` : ''}</div>
     ${provas.length
-      ? `<div class="grade-folhas" role="list">${lista.map((p) => `<div role="listitem">${cartaoProva(p, cfg.escola)}</div>`).join('')}</div>`
-      : `<div class="vazio-provas">
-          <span class="mini-quadro vazio" aria-hidden="true"></span>
-          <div><strong>Nenhuma prova ainda</strong><p>Escreva o conteúdo no caderno acima e toque em <em>Criar</em>. Em cerca de um minuto ela fica pronta, com a versão adaptada e o gabarito.</p></div>
-        </div>`}`;
-  escalarMiniaturas(main);
+      ? `<div class="provas-lista" role="list">${(verTodas ? provas : provas.slice(0, 3)).map((p) => `<div role="listitem">${cartaoProvaApta(p)}</div>`).join('')}</div>`
+      : `<div class="cartao-apta vazio-apta"><strong>Nenhuma prova ainda</strong>Escreva o conteúdo no caderno e toque em Criar. Em cerca de um minuto ela fica pronta, com as versões adaptadas e o gabarito.</div>`}
+  </div>`;
   main.querySelectorAll('[data-baixar]').forEach((b) => (b.onclick = () => menuBaixar(getProva(b.dataset.baixar))));
   main.querySelectorAll('[data-rapida]').forEach((b) => (b.onclick = () => {
     turmaRapida = Number(b.dataset.rapida) === turmaRapida ? -1 : Number(b.dataset.rapida);
     main.querySelectorAll('[data-rapida]').forEach((x) => x.setAttribute('aria-checked', String(Number(x.dataset.rapida) === turmaRapida)));
     vibrar(6);
   }));
-  // Com o conteúdo e a turma, vai direto para o formato da prova
+  main.querySelector('#b-outra-turma').onclick = () => gavetaTurma(() => { turmaRapida = Math.min(getTurmas().length - 1, 2); telaInicio(); });
+  main.querySelector('#b-ver-todas')?.addEventListener('click', () => { verTodas = !verTodas; transicao(telaInicio, 'segmento'); });
+  // Com o conteúdo e a turma, vai direto para os ajustes da prova (etapa 2)
   main.querySelector('#form-rapido').onsubmit = (ev) => {
     ev.preventDefault();
     const tema = ev.target.tema.value.trim();
     rascunho = novoRascunho();
-    if (turmaRapida >= 0) Object.assign(rascunho, recentes[turmaRapida]);
+    if (turmaRapida >= 0) Object.assign(rascunho, { turma: turmas[turmaRapida].nome, serie: turmas[turmaRapida].serie });
     rascunho.tema = tema;
     if (tema && turmaRapida >= 0) rascunho.passo = 2;
     location.hash = '#/nova';
   };
-  main.querySelector('.filtro-materias')?.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-m]'); if (!b) return;
-    filtroProvas = b.dataset.m; transicao(telaInicio, 'segmento');
-  });
 }
 
 /** Baixar direto do Início: as três versões, um toque cada. */
@@ -429,12 +460,18 @@ function menuBaixar(p) {
   if (!p) return;
   abrirGaveta('Baixar em Word', menu([
     { op: 'normal', icone: 'doc', rotulo: 'Prova', dica: tituloCurto(p) },
-    ...(p.questoes?.length && p.temAdaptada !== false ? [{ op: 'adaptada', icone: 'inclusao', rotulo: 'Prova adaptada', dica: 'Letra maior, frases curtas e dicas' }] : []),
+    ...versoesDa(p).map((v, k) => ({ op: `v${k}`, icone: 'inclusao', rotulo: `V${k + 1} · ${v.nome}`, dica: resumoCfg(v.cfg) })),
     { op: 'gabarito', icone: 'certo', rotulo: 'Gabarito', dica: 'Só para você' },
   ]), (g) => g.addEventListener('click', async (e) => {
     const op = e.target.closest('[data-op]')?.dataset.op; if (!op) return;
     fecharGaveta();
-    try { const nome = await baixarWord(p, getConfig().escola, op); aviso(`“${nome}” baixado.`); }
+    const moldura = getFolhaCfg().moldura;
+    try {
+      let nome;
+      if (op.startsWith('v')) { const v = versoesDa(p)[Number(op.slice(1))]; nome = await baixarWord({ ...provaDaVersao(p, v), titulo: `${p.titulo} - ${v.nome}` }, getConfig().escola, 'adaptada', { moldura }); }
+      else nome = await baixarWord(p, getConfig().escola, op, { moldura });
+      aviso(`“${nome}” baixado.`);
+    }
     catch (err) { console.error(err); aviso('Não foi possível gerar o arquivo do Word.'); }
   }));
 }
@@ -491,7 +528,7 @@ const EXEMPLO_TIPO = {
   completar: 'Ex.: A água ferve a ____ graus.',
   aberta: 'Ex.: Explique com suas palavras o que é fotossíntese.',
 };
-const TOTAL_PASSOS = 2;
+const TOTAL_PASSOS = 4;
 let rascunho = null;
 
 /* Matérias: as da lista + as que a professora escreveu em "Outra" (ficam salvas) */
@@ -569,217 +606,163 @@ const linhaTexto = (id, rotulo, nome, valor, ph) => `<label class="linha-ios" fo
 const linhaEscolha = (tipo, nome, valor, marcado, rotulo, sub = '') => `<label class="linha-ios escolha"><input class="visualmente-oculto" type="${tipo}" name="${nome}" value="${esc(valor)}" ${marcado ? 'checked' : ''}/>
   <span class="li-rotulo">${rotulo}${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="li-check" aria-hidden="true">${ic('certo')}</span></label>`;
 
+/* Criar prova em 4 etapas na tela (Turma · Ajustes · Questões · Adaptadas); a 5ª, Revisão, é a própria prova. */
+const ICONE_TIPO = { multipla: 'lista', vf: 'certoCirc', completar: 'lapis', aberta: 'doc' };
 function desenharPasso(opcoes = {}) {
   const r = rascunho;
   const cfg = getConfig();
   const temIA = iaDisponivel(cfg);
+  if (!r.versoes) r.versoes = getPerfis().map(novaVersao);
+  if (!r.fontes) r.fontes = { ia: temIA && r.modo !== 'banco', banco: r.modo !== 'ia' };
   let corpo = '';
-  let topo = '';
+  let cabeca = ['', ''];
+  let botao = '';
   if (r.passo === 1) {
-    const recentes = turmasRecentes();
-    const igual = (t) => t.materia === r.materia && t.serie === r.serie && (t.turma || '') === (r.turma || '');
-    const algumaRecente = recentes.some(igual);
-    const abrirOutra = r.outraTurma || !recentes.length || !algumaRecente;
-    const sugs = SUGESTOES[r.materia] || [];
+    const turmas = getTurmas();
     const materias = todasMaterias();
-    topo = barraModal('<button type="button" class="bm-botao" id="b-voltar">Cancelar</button>', 'Nova prova', '<span class="bm-passo">1 de 2</span>') + segmentoCriar('uma');
-    corpo = `
-      <section class="pergunta" aria-labelledby="q-turma">
-        <h2 class="pergunta-titulo" id="q-turma">Para qual turma?</h2>
-        ${recentes.length ? `<div class="turmas-cartoes" role="radiogroup" aria-labelledby="q-turma">${recentes.map((t, k) => `
-          <button type="button" role="radio" class="turma-cartao" data-turma="${k}" aria-checked="${!r.outraTurma && igual(t)}" style="--cor:${corMateria(t.materia)}">
-            <span class="tc-ic">${icMateria(t.materia)}</span>
-            <strong>${esc(t.turma || t.serie)}</strong><small>${esc(t.materia)}${t.turma ? ` · ${esc(t.serie.replace(' (Ensino Médio)', ' EM'))}` : ''}</small>
-            <span class="tc-check" aria-hidden="true">${ic('certo')}</span></button>`).join('')}
-          <button type="button" role="radio" class="turma-cartao outra" data-outra aria-checked="${abrirOutra}">
-            <span class="tc-ic">${ic('mais')}</span><strong>Outra turma</strong><small>Escolher matéria e ano</small>
-            <span class="tc-check" aria-hidden="true">${ic('certo')}</span></button>
-        </div>` : ''}
-        <div class="painel-turma" ${abrirOutra ? '' : 'hidden'}>
-          <p class="rotulo-forte" id="rot-materia">Matéria</p>
-          <div class="materias-grade" role="radiogroup" aria-labelledby="rot-materia">
-            ${materias.map((m) => `<label class="materia-peca" style="--cor:${corMateria(m)}"><input class="visualmente-oculto" type="radio" name="materia" value="${esc(m)}" ${r.materia === m ? 'checked' : ''}/>
-              <span class="mp-ic">${icMateria(m)}</span><span class="mp-nome">${esc(m)}</span></label>`).join('')}
-            <label class="materia-peca outra"><input class="visualmente-oculto" type="radio" name="materia" value="${OUTRA}" ${r.materia === OUTRA ? 'checked' : ''}/>
-              <span class="mp-ic">${ic('mais')}</span><span class="mp-nome">Outra</span></label>
-          </div>
-          <div class="campo-outra" ${r.materia === OUTRA ? '' : 'hidden'}>
-            <div class="campo"><label for="materia-outra">Qual matéria?</label><input type="text" id="materia-outra" name="materiaOutra" value="${esc(r.materiaOutra || '')}" placeholder="Ex.: Filosofia" /></div>
-          </div>
-          <div class="erro-campo" id="outra-erro" hidden>${ic('alerta', 'p')} Escreva o nome da matéria.</div>
-          <div class="duas-colunas">
-            <div class="campo"><label for="serie">Ano</label>
-              <select id="serie" name="serie">${SERIES.map((s) => `<option value="${esc(s)}" ${s === r.serie ? 'selected' : ''}>${esc(s.replace(' (Ensino Médio)', ' EM'))}</option>`).join('')}</select></div>
-            <div class="campo"><label for="turma">Turma <span class="opcional">(opcional)</span></label>
-              <input type="text" id="turma" name="turma" value="${esc(r.turma)}" placeholder="Ex.: 5º A" autocomplete="off" /></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="pergunta" aria-labelledby="q-tema">
-        <h2 class="pergunta-titulo" id="q-tema"><label for="tema">Sobre o que é a prova?</label></h2>
-        <div class="folha-pautada"><textarea id="tema" name="tema" aria-describedby="tema-erro" placeholder="Ex.: frações: comparar e somar frações com o mesmo denominador. Quanto mais específico, melhor.">${esc(r.tema)}</textarea></div>
-        <div class="erro-campo" id="tema-erro" hidden>${ic('alerta', 'p')} Escreva o conteúdo para continuar.</div>
-        ${sugs.length ? `<div class="sugestoes" aria-label="Sugestões de conteúdo">${sugs.map((s) => `<button type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
-      </section>`;
+    cabeca = ['Para quem é a prova?', 'Escolha a turma. A gente cuida do resto.'];
+    corpo = `<h2 class="secao-azul" id="q-turma">Para qual turma?</h2>
+      <div role="radiogroup" aria-labelledby="q-turma">${turmas.map((t, k) => `<button type="button" role="radio" class="turma-op" data-turma="${k}" aria-checked="${r.turma === t.nome && r.serie === t.serie}">
+        <span class="avatar">${ic('turma')}</span><span class="txt"><strong>${esc(t.nome)}</strong><small>${esc(descTurma(t))}</small></span><span class="marca-circ">${ic('certo')}</span></button>`).join('')}</div>
+      ${turmas.length ? '' : '<p class="ajuda" style="margin:0 2px 6px">Cadastre a primeira turma para começar.</p>'}
+      <button type="button" class="link-apta" id="b-outra-turma">${ic('mais')} Outra turma</button>
+      <div class="erro-apta" id="turma-erro" hidden>${ic('alerta', 'p')} Escolha a turma.</div>
+      <h2 class="secao-azul" id="q-materia">Matéria</h2>
+      <div class="chips-apta" role="radiogroup" aria-labelledby="q-materia">${materias.map((m) => `<button type="button" role="radio" class="chip-apta" data-materia="${esc(m)}" aria-checked="${r.materia === m}">${icMateria(m)} ${esc(m)}</button>`).join('')}
+        <button type="button" class="chip-apta mais" id="b-outra-materia">${ic('mais')} Outra matéria</button></div>`;
+    botao = 'Continuar para configurações';
   }
   if (r.passo === 2) {
-    const origens = [['misto', 'Banco + questões novas'], ['banco', 'Só do meu banco'], ['ia', 'Só questões novas']];
-    const DESENHO_TIPO = {
-      multipla: '<span class="dt-alt">a)</span><span class="dt-alt">b)</span><span class="dt-alt">c)</span>',
-      vf: '<span class="dt-vf">( V )</span><span class="dt-vf">( F )</span>',
-      completar: '<span class="dt-linha-txt">A água ferve a <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u></span>',
-      aberta: '<span class="dt-pauta"></span><span class="dt-pauta"></span><span class="dt-pauta curta"></span>',
-    };
-    topo = barraModal(`<button type="button" class="bm-botao" id="b-voltar">${ic('voltar', 'p')} Voltar</button>`, 'Formato da prova', '<span class="bm-passo">2 de 2</span>');
-    corpo = `
-      <button type="button" class="resumo-linha" data-ir="1" aria-label="Alterar turma e conteúdo">
-        <span class="ponto-materia" style="--cor:${corMateria(r.materia)}"></span>
-        <span class="rl-texto"><strong>${esc(r.tema.split(/\n/)[0].slice(0, 80) || 'Prova')}</strong><small>${esc(r.materia)} · ${esc(r.turma || r.serie)}</small></span>
-        <span class="rl-alterar">Alterar</span>
-      </button>
-
-      <section class="pergunta" aria-labelledby="q-qtd">
-        <div class="linha-qtd">
-          <h2 class="pergunta-titulo" id="q-qtd">Questões</h2>
-          <div class="contador" role="group" aria-labelledby="q-qtd">
-            <button type="button" class="cg-botao" data-passo="-1" aria-label="Uma questão a menos">${ic('menos')}</button>
-            <output id="qtd" aria-live="polite">${r.quantidade}</output>
-            <button type="button" class="cg-botao" data-passo="1" aria-label="Uma questão a mais">${ic('mais')}</button>
-          </div>
-        </div>
-        <div class="atalhos-qtd" role="group" aria-label="Quantidades comuns">${[5, 10, 15, 20].map((n) => `<button type="button" data-qtd="${n}" aria-pressed="${r.quantidade === n}">${n}</button>`).join('')}</div>
-      </section>
-
-      <section class="pergunta" aria-labelledby="q-tipos">
-        <h2 class="pergunta-titulo" id="q-tipos">Tipos de questão</h2>
-        <div class="tipos-lista" role="group" aria-labelledby="q-tipos">${Object.entries(TIPOS).map(([v, rot]) => `
-          <label class="tipo-linha"><input class="visualmente-oculto" type="checkbox" name="tipos" value="${v}" ${r.tipos.includes(v) ? 'checked' : ''}/>
-            <span class="tp-desenho" aria-hidden="true">${DESENHO_TIPO[v] || ''}</span>
-            <span class="tp-nome">${esc(rot.split(' (')[0])}</span>
-            <span class="tp-check" aria-hidden="true">${ic('certo')}</span></label>`).join('')}</div>
-        <div class="erro-campo" id="tipos-erro" hidden>${ic('alerta', 'p')} Marque pelo menos um tipo.</div>
-      </section>
-
-      <section class="pergunta" aria-labelledby="q-dif">
-        <h2 class="pergunta-titulo" id="q-dif">Dificuldade</h2>
-        <div class="segmento-simples" role="radiogroup" aria-labelledby="q-dif">${Object.entries(DIFICULDADES).map(([v, rot]) => `
-          <label><input class="visualmente-oculto" type="radio" name="dificuldade" value="${v}" ${r.dificuldade === v ? 'checked' : ''}/><span>${esc(rot)}</span></label>`).join('')}</div>
-      </section>
-
-      <label class="linha-adaptada">
-        <span class="la-ic">${ic('inclusao')}</span>
-        <span class="la-texto"><strong>Versão adaptada</strong><small>Letra maior, frases curtas e dicas</small></span>
-        <input type="checkbox" class="switch azul" name="adaptada" ${r.adaptada ? 'checked' : ''} aria-label="Criar também a versão adaptada" />
-      </label>
-
-      <details class="grupo-ios mais-opcoes">
-        <summary class="linha-ios"><span class="li-rotulo">Mais opções</span><span class="chevron">${ic('seta')}</span></summary>
-        ${temIA ? `<label class="linha-ios"><span class="li-rotulo">Figuras quando ajudarem</span><input type="checkbox" class="switch" name="figuras" ${r.figuras ? 'checked' : ''} /></label>` : ''}
-        ${linhaSelect('modo', 'Origem das questões', 'modo', origens.filter(([v]) => temIA || v === 'banco'), temIA ? r.modo : 'banco')}
-        ${temIA && listarMateriais().length ? linhaSelect('material-base', 'Livro de base', 'materialId', [['', 'Nenhum'], ...materiaisDaMateria(r.materia).map((m) => [m.id, m.nome])], r.materialId || '') : ''}
-        <label class="linha-ios coluna" for="obs"><span class="li-rotulo">Pedido especial</span>
-          <textarea id="obs" name="observacoes" class="li-texto" placeholder="Ex.: usar situações de mercado e dinheiro">${esc(r.observacoes)}</textarea></label>
-      </details>`;
+    cabeca = ['Seu jeito de avaliar', 'Quantidade, formato e desafio na medida.'];
+    corpo = `<h2 class="secao-azul" id="q-qtd">Quantas questões?</h2>
+      <div class="cartao-apta contador-apta" style="box-shadow:none"><span>Questões</span><div class="ctrl" role="group" aria-labelledby="q-qtd">
+        <button type="button" data-passo="-1" aria-label="Uma questão a menos">${ic('menos')}</button><output id="qtd" aria-live="polite">${r.quantidade}</output>
+        <button type="button" data-passo="1" aria-label="Uma questão a mais">${ic('mais')}</button></div></div>
+      <div class="atalhos-apta" role="group" aria-label="Quantidades comuns">${[5, 10, 15, 20].map((n) => `<button type="button" data-qtd="${n}" aria-pressed="${r.quantidade === n}">${n}</button>`).join('')}</div>
+      <h2 class="secao-azul" id="q-tipos">Tipos de questão</h2>
+      <ul class="lista-apta" role="group" aria-labelledby="q-tipos">${Object.entries(TIPOS).map(([v, rot]) => `<li><label class="opcao-linha">${ic(ICONE_TIPO[v] || 'doc')}<span class="txt">${esc(rot.split(' (')[0])}</span>
+        <input type="checkbox" name="tipos" value="${v}" ${r.tipos.includes(v) ? 'checked' : ''}/><span class="marca-circ">${ic('certo')}</span></label></li>`).join('')}</ul>
+      <div class="erro-apta" id="tipos-erro" hidden>${ic('alerta', 'p')} Marque pelo menos um tipo.</div>
+      <h2 class="secao-azul" id="q-dif">Dificuldade</h2>
+      <div class="seg-apta cinza" role="radiogroup" aria-labelledby="q-dif">${Object.entries(DIFICULDADES).map(([v, rot]) => `<button type="button" role="radio" data-dif="${v}" aria-selected="${r.dificuldade === v}" aria-checked="${r.dificuldade === v}">${esc(rot)}</button>`).join('')}</div>
+      ${temIA ? `<ul class="lista-apta" style="margin-top:18px"><li><label class="opcao-linha">${ic('imagem')}<span class="txt">Figuras quando ajudarem<small>A IA cria e confere cada figura</small></span>
+        <input type="checkbox" class="switch-apta" name="figuras" ${r.figuras ? 'checked' : ''}/></label></li></ul>` : ''}`;
+    botao = 'Continuar para questões';
+  }
+  if (r.passo === 3) {
+    cabeca = ['O que vamos avaliar?', 'Traga o conteúdo que sua turma aprendeu.'];
+    const sugs = (SUGESTOES[r.materia] || []).filter((s) => !r.tema.toLowerCase().includes(s.toLowerCase())).slice(0, 3);
+    const conferidas = getBanco().filter((q) => q.materia === r.materia && ['minha', 'revisada'].includes(q.origem)).length;
+    corpo = `<h2 class="secao-azul"><label for="tema">Sobre o que é a prova?</label></h2>
+      <div class="caderno-campo"><textarea id="tema" name="tema" placeholder="Ex.: frações: comparar e somar frações com o mesmo denominador">${esc(r.tema)}</textarea></div>
+      <p class="ajuda">Quanto mais específico, mais certeira fica a prova.</p>
+      <div class="erro-apta" id="tema-erro" hidden>${ic('alerta', 'p')} Escreva o conteúdo para continuar.</div>
+      ${sugs.length ? `<div class="pilha" style="justify-items:start;margin-top:10px;gap:8px">${sugs.map((s) => `<button type="button" class="chip-apta" data-sug="${esc(s)}">${ic('mais')} ${esc(s)}</button>`).join('')}</div>` : ''}
+      <h2 class="secao-azul">De onde vêm as questões?</h2>
+      <ul class="lista-apta">
+        <li><label class="opcao-linha">${ic('brilho')}<span class="txt">Criar com IA<small>${temIA ? 'Questões novas, conferidas uma a uma' : 'Ligue a criação automática em Ajustes'}</small></span>
+          <input type="checkbox" class="switch-apta" name="fonteIA" ${r.fontes.ia && temIA ? 'checked' : ''} ${temIA ? '' : 'disabled'}/></label></li>
+        <li><label class="opcao-linha">${ic('banco')}<span class="txt">Do meu banco<small>${conferidas} ${conferidas === 1 ? 'questão' : 'questões'} de ${esc(r.materia)} já ${conferidas === 1 ? 'conferida' : 'conferidas'}</small></span>
+          <input type="checkbox" class="switch-apta" name="fonteBanco" ${r.fontes.banco ? 'checked' : ''}/></label></li>
+        ${temIA && listarMateriais().length ? `<li><label class="opcao-linha">${ic('livro')}<span class="txt">Livro de base<small>A IA segue o conteúdo do livro</small></span>
+          <select name="materialId" style="max-width:45%;border:0;background:none;color:var(--azul);font:inherit"><option value="">Nenhum</option>${materiaisDaMateria(r.materia).map((m) => `<option value="${m.id}" ${m.id === r.materialId ? 'selected' : ''}>${esc(m.nome)}</option>`).join('')}</select></label></li>` : ''}
+      </ul>
+      <div class="erro-apta" id="fonte-erro" hidden>${ic('alerta', 'p')} Ligue pelo menos uma origem.</div>`;
+    botao = 'Continuar para adaptações';
+  }
+  if (r.passo === 4) {
+    cabeca = ['Uma prova, vários jeitos', 'Crie quantas versões sua turma precisar.'];
+    corpo = `<div style="text-align:center"><button type="button" class="link-apta" id="b-add-versao" style="font-weight:600">${ic('mais')} Adicionar versão adaptada</button></div>
+      <div style="margin-top:12px">${r.versoes.map((v, k) => `<div class="cartao-apta versao-cartao" style="box-shadow:none">
+        <div class="topo-v"><span class="tag-v">V${k + 1}</span><strong>${esc(v.nome)}</strong><button type="button" class="q-icone cinza" data-rem-versao="${k}" aria-label="Tirar a versão ${esc(v.nome)}">${ic('fechar', 'p')}</button></div>
+        <p>${esc(resumoCfg(v.cfg))}</p>
+        <div class="duas"><button type="button" class="btn-apta suave pequeno" style="width:100%" data-editar-versao="${k}">Editar ajustes</button>
+          <button type="button" class="btn-apta suave pequeno" style="width:100%" data-dup-versao="${k}">Duplicar versão</button></div></div>`).join('')}</div>
+      <p class="ajuda">${r.versoes.length ? 'A original é mantida. Cada versão tem seus ajustes.' : 'Sem versões adaptadas: sai só a original e o gabarito.'}</p>`;
+    botao = `${ic('brilho')} ${r.versoes.length ? `Criar original + ${plural(r.versoes.length, 'adaptada', 'adaptadas')}` : 'Criar prova'}`;
   }
 
-  main.innerHTML = `${topo}
-    <form id="form-passo" novalidate>${corpo}</form>
-    <div class="barra-acoes">
-      ${r.passo === TOTAL_PASSOS ? '<span class="barra-resumo" id="barra-resumo" aria-hidden="true"></span>' : ''}
-      <button type="button" class="botao principal grande" id="b-seguir">${r.passo === TOTAL_PASSOS ? `${ic('brilho', 'p')} Criar prova` : `Continuar ${ic('seta', 'p')}`}</button>
-    </div>`;
+  main.innerHTML = `${ceu({ esquerda: `<button type="button" class="ceu-botao" id="b-voltar">${r.passo === 1 ? 'Cancelar' : `${ic('voltar')} Voltar`}</button>`, titulo: 'Nova prova', direita: `<span class="ceu-passo">${r.passo} de 5</span>`, etapa: r.passo })}
+    <div class="folha-branca"><div class="cabeca-folha"><h1>${cabeca[0]}</h1><p>${cabeca[1]}</p></div>
+      <form id="form-passo" novalidate>${corpo}</form></div>
+    <div class="barra-acoes"><button type="button" class="btn-apta" id="b-seguir">${botao}</button></div>`;
 
   const form = main.querySelector('#form-passo');
+  const redesenhar = () => { lerPasso(form); desenharPasso({ manterRolagem: true }); };
   form.addEventListener('submit', (e) => { e.preventDefault(); seguir(); });
   form.addEventListener('change', () => lerPasso(form));
   form.addEventListener('input', () => lerPasso(form));
-  form.querySelectorAll('[data-sug]').forEach((b) => (b.onclick = () => {
-    form.tema.value = b.dataset.sug; lerPasso(form); form.tema.focus();
-  }));
+  // Etapa 1
   form.querySelectorAll('[data-turma]').forEach((b) => (b.onclick = () => {
-    lerPasso(form);
-    Object.assign(r, turmasRecentes()[Number(b.dataset.turma)]);
-    r.outraTurma = false; vibrar(6);
-    desenharPasso({ manterRolagem: true });
+    const t = getTurmas()[Number(b.dataset.turma)];
+    Object.assign(r, { turma: t.nome, serie: t.serie });
+    form.querySelectorAll('[data-turma]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+    form.querySelector('#turma-erro').hidden = true; vibrar(6);
   }));
-  form.querySelector('[data-outra]')?.addEventListener('click', () => {
-    r.outraTurma = true;
-    form.querySelectorAll('[data-turma]').forEach((x) => x.setAttribute('aria-checked', 'false'));
-    form.querySelector('[data-outra]').setAttribute('aria-checked', 'true');
-    form.querySelector('.painel-turma').hidden = false;
-    form.querySelector('.painel-turma input[name=materia]:checked, .painel-turma input[name=materia]')?.focus();
-  });
+  form.querySelector('#b-outra-turma')?.addEventListener('click', () => gavetaTurma((t) => { Object.assign(r, { turma: t.nome, serie: t.serie }); desenharPasso({ manterRolagem: true }); }));
+  form.querySelectorAll('[data-materia]').forEach((b) => (b.onclick = () => {
+    r.materia = b.dataset.materia;
+    form.querySelectorAll('[data-materia]').forEach((x) => x.setAttribute('aria-checked', String(x === b))); vibrar(4);
+  }));
+  form.querySelector('#b-outra-materia')?.addEventListener('click', () => abrirGaveta('Nova matéria', `<p class="gaveta-texto">Adicione uma matéria para usar nesta e nas próximas provas.</p>
+    <form id="f-materia"><label class="campo-apta"><span>Nome da matéria</span><input name="nome" placeholder="Ex.: Arte" autocomplete="off" required /></label>
+    <button class="btn-apta">Adicionar matéria</button><div style="text-align:center"><button type="button" class="texto-btn" data-cancelar>Cancelar</button></div></form>`, (g) => {
+    const f = g.querySelector('form'); f.nome.focus();
+    g.querySelector('[data-cancelar]').onclick = fecharGaveta;
+    f.onsubmit = (ev) => { ev.preventDefault(); const m = guardarMateria(f.nome.value); if (!m) return; r.materia = m; fecharGaveta(); desenharPasso({ manterRolagem: true }); };
+  }, { centro: true }));
+  // Etapa 2
   const mudarQtd = (n) => {
     r.quantidade = Math.min(20, Math.max(1, n));
     form.querySelector('#qtd').textContent = r.quantidade;
     form.querySelectorAll('[data-qtd]').forEach((x) => x.setAttribute('aria-pressed', String(Number(x.dataset.qtd) === r.quantidade)));
-    atualizarResumo(); vibrar(4);
+    vibrar(4);
   };
   form.querySelectorAll('[data-passo]').forEach((b) => (b.onclick = () => mudarQtd(r.quantidade + Number(b.dataset.passo))));
   form.querySelectorAll('[data-qtd]').forEach((b) => (b.onclick = () => mudarQtd(Number(b.dataset.qtd))));
-  atualizarResumo();
-  form.querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { lerPasso(form); r.passo = Number(b.dataset.ir); transicao(desenharPasso, 'tras'); }));
+  form.querySelectorAll('[data-dif]').forEach((b) => (b.onclick = () => {
+    r.dificuldade = b.dataset.dif;
+    form.querySelectorAll('[data-dif]').forEach((x) => { x.setAttribute('aria-selected', String(x === b)); x.setAttribute('aria-checked', String(x === b)); });
+  }));
+  // Etapa 3
+  form.querySelectorAll('[data-sug]').forEach((b) => (b.onclick = () => {
+    const t = form.tema.value.trim();
+    form.tema.value = t ? `${t}${/[.,;:]$/.test(t) ? '' : ','} ${b.dataset.sug.toLowerCase()}` : b.dataset.sug;
+    b.remove(); lerPasso(form); form.tema.focus();
+  }));
+  // Etapa 4
+  form.querySelector('#b-add-versao')?.addEventListener('click', () => escolherPerfil((v) => { r.versoes.push(v); desenharPasso({ manterRolagem: true }); }));
+  form.querySelectorAll('[data-editar-versao]').forEach((b) => (b.onclick = () => gavetaAjustesVersao(r.versoes[Number(b.dataset.editarVersao)], () => desenharPasso({ manterRolagem: true }))));
+  form.querySelectorAll('[data-dup-versao]').forEach((b) => (b.onclick = () => {
+    const v = r.versoes[Number(b.dataset.dupVersao)];
+    r.versoes.splice(Number(b.dataset.dupVersao) + 1, 0, { ...structuredClone(v), id: uid(), nome: `${v.nome} (cópia)` });
+    desenharPasso({ manterRolagem: true });
+  }));
+  form.querySelectorAll('[data-rem-versao]').forEach((b) => (b.onclick = () => { r.versoes.splice(Number(b.dataset.remVersao), 1); redesenhar(); }));
+
   main.querySelector('#b-voltar').onclick = () => {
-    if (r.passo === 1) { rascunho = null; location.hash = '#/'; return; }
+    if (r.passo === 1) { const voltarSemana = r.planejadaId; rascunho = null; location.hash = voltarSemana ? '#/semana' : '#/'; return; }
     lerPasso(form); r.passo--; transicao(desenharPasso, 'tras');
   };
   main.querySelector('#b-seguir').onclick = seguir;
-  main.querySelector('[data-modo-criar=varias]')?.addEventListener('click', () => {
-    lerPasso(form);
-    lote = lote || novoLote();
-    if (rascunho.materia !== OUTRA) Object.assign(lote.linhas[0], { materia: rascunho.materia, serie: rascunho.serie, turma: rascunho.turma, tema: rascunho.tema });
-    location.hash = '#/lote';
-  });
   if (!usaTransicao() && !opcoes.manterRolagem) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
   if (!opcoes.manterRolagem) window.scrollTo(0, 0);
-}
-
-/** Passo 2: o resumo da capa e da barra mudam enquanto a professora escolhe. */
-function atualizarResumo() {
-  const r = rascunho;
-  if (!r || r.passo !== 2) return;
-  const barra = document.getElementById('barra-resumo');
-  if (barra) barra.innerHTML = `<strong>${plural(r.quantidade, 'questão', 'questões')}</strong>${r.adaptada ? 'Prova + adaptada + gabarito' : 'Prova + gabarito'}`;
 }
 
 function lerPasso(form) {
   const r = rascunho;
   const fd = new FormData(form);
-  if (r.passo === 1) {
-    const antes = r.materia;
-    r.materia = fd.get('materia') || r.materia; r.serie = fd.get('serie') || r.serie; r.turma = (fd.get('turma') || '').trim();
-    r.materiaOutra = (fd.get('materiaOutra') || '').trim();
-    r.tema = (fd.get('tema') || '').trim();
-    const caixa = form.querySelector('.campo-outra');
-    const abrir = r.materia === OUTRA && caixa.hidden;
-    caixa.hidden = r.materia !== OUTRA;
-    if (abrir) form.querySelector('#materia-outra').focus();
-    if (r.materiaOutra) form.querySelector('#outra-erro').hidden = true;
-    const recentes = turmasRecentes();
-    form.querySelectorAll('[data-turma]').forEach((b) => {
-      const t = recentes[Number(b.dataset.turma)];
-      b.setAttribute('aria-checked', String(!r.outraTurma && t.materia === r.materia && t.serie === r.serie && (t.turma || '') === (r.turma || '')));
-    });
-    if (r.tema) form.querySelector('#tema-erro').hidden = true;
-    // As sugestões de conteúdo acompanham a matéria
-    if (antes !== r.materia) {
-      const sugs = SUGESTOES[r.materia] || [];
-      let caixa = form.querySelector('.sugestoes');
-      if (!caixa && sugs.length) { caixa = document.createElement('div'); caixa.className = 'sugestoes'; caixa.setAttribute('aria-label', 'Sugestões de conteúdo'); form.querySelector('#tema-erro').after(caixa); }
-      if (caixa) {
-        caixa.innerHTML = sugs.map((x) => `<button type="button" data-sug="${esc(x)}">${esc(x)}</button>`).join('');
-        caixa.hidden = !sugs.length;
-        caixa.querySelectorAll('[data-sug]').forEach((b) => (b.onclick = () => { form.tema.value = b.dataset.sug; lerPasso(form); form.tema.focus(); }));
-      }
-    }
-  }
   if (r.passo === 2) {
-    r.dificuldade = fd.get('dificuldade') || r.dificuldade; r.tipos = fd.getAll('tipos'); r.figuras = fd.get('figuras') === 'on';
-    r.adaptada = fd.get('adaptada') === 'on'; r.modo = fd.get('modo') || r.modo; r.materialId = fd.get('materialId') || '';
-    r.observacoes = (fd.get('observacoes') || '').trim();
+    r.tipos = fd.getAll('tipos'); r.figuras = fd.get('figuras') === 'on';
     if (r.tipos.length) form.querySelector('#tipos-erro').hidden = true;
-    atualizarResumo();
+  }
+  if (r.passo === 3) {
+    r.tema = (fd.get('tema') || '').trim();
+    r.fontes = { ia: fd.get('fonteIA') === 'on', banco: fd.get('fonteBanco') === 'on' };
+    r.modo = r.fontes.ia && r.fontes.banco ? 'misto' : r.fontes.ia ? 'ia' : 'banco';
+    r.materialId = fd.get('materialId') || '';
+    if (r.tema) form.querySelector('#tema-erro').hidden = true;
+    if (r.fontes.ia || r.fontes.banco) form.querySelector('#fonte-erro').hidden = true;
   }
 }
 
@@ -787,16 +770,16 @@ async function seguir() {
   const r = rascunho;
   const form = main.querySelector('#form-passo');
   lerPasso(form);
-  if (r.passo === 1 && r.materia === OUTRA) {
-    if (!r.materiaOutra) { form.querySelector('#outra-erro').hidden = false; form.querySelector('#materia-outra').focus(); return; }
-    r.materia = guardarMateria(r.materiaOutra); r.materiaOutra = '';
+  if (r.passo === 1 && !getTurmas().some((t) => t.nome === r.turma && t.serie === r.serie)) {
+    form.querySelector('#turma-erro').hidden = false; form.querySelector('[data-turma], #b-outra-turma')?.focus(); return;
   }
-  if (r.passo === 1 && !r.tema) { form.querySelector('#tema-erro').hidden = false; form.tema.focus(); return; }
   if (r.passo === 2 && !r.tipos.length) { form.querySelector('#tipos-erro').hidden = false; form.querySelector('[name=tipos]').focus(); return; }
-  if (r.passo < TOTAL_PASSOS) { r.passo++; transicao(desenharPasso, 'frente'); return; }
-  const pedido = { ...r };
-  delete pedido.passo;
-  try { localStorage.setItem('pf.ultimoPedido', JSON.stringify(pedido)); } catch {}
+  if (r.passo === 3 && !r.tema) { form.querySelector('#tema-erro').hidden = false; form.tema.focus(); return; }
+  if (r.passo === 3 && !r.fontes.ia && !r.fontes.banco) { form.querySelector('#fonte-erro').hidden = false; return; }
+  if (r.passo < 4) { r.passo++; transicao(desenharPasso, 'frente'); return; }
+  const pedido = { ...r, adaptada: r.versoes.length > 0 };
+  delete pedido.passo; delete pedido.fontes;
+  try { const { versoes, planejadaId, ...guardar } = pedido; void versoes; void planejadaId; localStorage.setItem('pf.ultimoPedido', JSON.stringify(guardar)); } catch {}
   const botao = main.querySelector('#b-seguir');
   if (botao) botao.disabled = true;
   try {
@@ -805,43 +788,49 @@ async function seguir() {
   } finally { if (botao) botao.disabled = false; }
 }
 
-/* ---------- Tela "criando a prova" com as etapas reais ---------- */
+/* ---------- Tela "Criando sua prova" (céu azul, lista de etapas numa folha) ---------- */
 function telaCriando(etapas) {
   const ctrl = new AbortController();
+  let avisar = false;
   const el = document.createElement('div');
-  el.className = 'criando';
+  el.className = 'criando-apta';
   el.setAttribute('role', 'dialog');
   el.setAttribute('aria-modal', 'true');
   el.setAttribute('aria-labelledby', 'criando-titulo');
-  el.innerHTML = `<div class="criando-caixa">
-    <img class="criando-icone" src="/icon.svg" alt="" width="72" height="72" />
-    <h1 id="criando-titulo" class="cor-marca" style="margin-top:16px">Preparando sua prova</h1>
-    <span class="selo ia-selo">${ic('brilho')} Com IA</span>
-    <p class="sub">Leva cerca de 1 minuto. Pode deixar esta tela aberta.</p>
-    <div class="criando-barra" aria-hidden="true"><span></span></div>
-    <ol class="etapas" aria-live="polite">${etapas.map((t) => `<li><span class="estado" aria-hidden="true"></span><span>${esc(t)}</span></li>`).join('')}</ol>
-    <div class="esqueleto-folha" aria-hidden="true"><i></i><i></i><i class="curta"></i><i></i><i class="curta"></i></div>
-    <button class="botao cheio" id="b-cancelar">Cancelar</button></div>`;
+  el.innerHTML = `<div class="meio">
+      <span class="icone-app"><img src="/icon.svg" alt="" width="84" height="84" /></span>
+      <h1 id="criando-titulo">Criando sua prova</h1>
+      <p class="sub">Leva cerca de 1 minuto. Pode sair do app: avisamos quando ficar pronta.</p>
+      <div class="criando-pilha"><ol aria-live="polite">${etapas.map((t) => `<li><span class="bolinha" aria-hidden="true"></span><span><span class="et">${esc(t)}</span><small></small></span></li>`).join('')}</ol></div>
+    </div>
+    <div class="rodape"><button type="button" class="btn-apta contorno" id="b-avisar">Avisar quando ficar pronta</button>
+      <button type="button" class="texto-btn" id="b-cancelar">Cancelar</button></div>`;
   el.querySelector('#b-cancelar').onclick = () => ctrl.abort();
+  el.querySelector('#b-avisar').onclick = async (e) => {
+    const b = e.currentTarget;
+    try { if ('Notification' in window) avisar = (await Notification.requestPermission()) === 'granted'; } catch {}
+    b.textContent = avisar ? 'Vamos avisar quando ficar pronta' : 'Avisamos aqui quando ficar pronta';
+    b.disabled = true;
+  };
   document.body.append(el);
-  const lis = el.querySelectorAll('.etapas li');
-  const barra = el.querySelector('.criando-barra span');
+  const lis = el.querySelectorAll('ol li');
   return {
     signal: ctrl.signal,
-    titulo(t, sub, comIA = true) {
+    titulo(t, sub) {
       el.querySelector('#criando-titulo').textContent = t;
       if (sub) el.querySelector('.sub').textContent = sub;
-      el.querySelector('.ia-selo').hidden = !comIA;
     },
-    etapa(i, texto) {
+    etapa(i, texto, detalhe = '') {
       lis.forEach((li, j) => {
         li.classList.toggle('feita', j < i); li.classList.toggle('agora', j === i);
-        li.querySelector('.estado').textContent = j < i ? '✓' : '';
+        li.querySelector('.bolinha').innerHTML = j < i ? ic('certo') : '';
+        if (j !== i) li.querySelector('small').textContent = '';
       });
-      if (texto && lis[i]) lis[i].lastElementChild.textContent = texto;
-      barra.style.width = `${Math.round(((i + 0.5) / lis.length) * 100)}%`;
+      if (texto && lis[i]) lis[i].querySelector('.et').textContent = texto;
+      if (lis[i]) lis[i].querySelector('small').textContent = detalhe;
     },
     fechar: () => {
+      if (avisar && document.hidden) { try { new Notification('Sua prova está pronta', { body: 'Abra o Apta para conferir.', icon: '/icon.svg' }); } catch {} }
       if (menosMovimento()) { el.remove(); return; }
       el.classList.add('saindo');
       setTimeout(() => el.remove(), 220);
@@ -900,9 +889,15 @@ async function montarProva(pedido, signal, etapa = () => {}) {
     titulo: `Avaliação de ${pedido.materia} — ${pedido.tema.split(/[:.\n]/)[0].slice(0, 60)}`,
     materia: pedido.materia, serie: pedido.serie, turma: pedido.turma, tema: pedido.tema,
     dificuldade: pedido.dificuldade, data: new Date().toLocaleDateString('pt-BR'),
-    instrucoes: cfg.escola.instrucoes || '',
-    temAdaptada: pedido.adaptada, pedido, questoes, criadaEm: Date.now(),
+    instrucoes: getFolhaCfg().instrucoes ? cfg.escola.instrucoes || '' : '',
+    temAdaptada: pedido.versoes ? pedido.versoes.length > 0 : pedido.adaptada,
+    versoes: (pedido.versoes || (pedido.adaptada === false ? [] : getPerfis().map(novaVersao))).map((v) => ({ ...v, cfg: { ...v.cfg } })),
+    pedido, questoes, criadaEm: Date.now(),
   };
+  // Veio da semana de provas: a prova fica ligada ao planejamento e ganha o dia marcado
+  const semana = pedido.planejadaId ? getSemana() : null;
+  const pl = semana?.planejadas?.find((x) => x.id === pedido.planejadaId);
+  if (pl) { pl.provaId = prova.id; if (pl.data) prova.data = isoParaBR(pl.data); salvarSemana(semana); }
   salvarProva(prova);
   return { prova, recados };
 }
@@ -917,11 +912,13 @@ function precisaIA(pedido) {
 async function criarProva(pedido) {
   const cfg = getConfig();
   let tela = null;
-  const etapas = [pedido.modo === 'ia' ? 'Preparando o pedido' : 'Procurando no seu banco', 'Criando as questões novas'];
-  if (cfg.ia.revisora) etapas.push('Conferindo as respostas');
+  const etapas = [`Escrevendo ${plural(pedido.quantidade, 'questão', 'questões')}`];
+  if (cfg.ia.revisora) etapas.push('Conferindo cada resposta');
   if (pedido.figuras) etapas.push('Criando e conferindo as figuras');
-  etapas.push('Montando a prova e a versão adaptada');
-  const passo = { criar: 1, conferir: etapas.indexOf('Conferindo as respostas'), figuras: etapas.indexOf('Criando e conferindo as figuras'), montar: etapas.length - 1 };
+  const nv = pedido.versoes?.length || 0;
+  if (nv) etapas.push(`Fazendo ${plural(nv, 'versão adaptada', 'versões adaptadas')}`);
+  etapas.push('Montando o gabarito');
+  const passo = { criar: 0, conferir: etapas.indexOf('Conferindo cada resposta'), figuras: etapas.indexOf('Criando e conferindo as figuras'), montar: etapas.length - 1 };
   if (precisaIA(pedido)) { tela = telaCriando(etapas); tela.etapa(0); }
   let r;
   try {
@@ -1067,6 +1064,7 @@ async function criarLote(L) {
   const pedidos = L.linhas.map((l) => ({
     materia: l.materia, serie: l.serie, turma: l.turma, tema: l.tema, observacoes: '',
     dificuldade: L.dificuldade, quantidade: L.quantidade, tipos: L.tipos, adaptada: L.adaptada, figuras: L.figuras, modo: L.modo, materialId: L.materialId || '',
+    planejadaId: l.planejadaId, versoes: L.versoes,
   }));
   const nomes = pedidos.map((p) => `${p.materia} · ${p.tema.split(/[:.\n]/)[0].slice(0, 40)}`);
   const tela = telaCriando(nomes);
@@ -1272,45 +1270,44 @@ function salvarDepois() {
 function telaProva(id) {
   const prova = getProva(id);
   if (!prova) {
-    main.innerHTML = `<div class="vazio">${ic('doc')}<strong>Prova não encontrada</strong>Ela pode ter sido apagada.<div class="acoes" style="justify-content:center"><a class="botao principal" href="#/">Ver minhas provas</a></div></div>`;
+    main.innerHTML = `${ceu({ esquerda: voltarBtn('#/', 'Provas'), titulo: 'Prova', baixo: true })}<div class="folha-branca"><div class="cartao-apta vazio-apta" style="margin:0"><strong>Prova não encontrada</strong>Ela pode ter sido apagada.</div></div>`;
     return;
   }
-  estado = { prova, aba: estado.prova?.id === id ? estado.aba : 'normal' };
-  if (prova.temAdaptada === false && estado.aba === 'adaptada') estado.aba = 'normal';
+  if (!Array.isArray(prova.versoes)) prova.versoes = versoesDa(prova);
+  const mesma = estado.prova?.id === id;
+  estado = { prova, aba: mesma ? estado.aba : 'normal', versao: mesma ? estado.versao || 0 : 0 };
   titulo(prova.titulo);
-  main.innerHTML = `
-    <div class="editor-topo nao-imprimir">
-      <a class="voltar" href="#/">${ic('voltar')} Provas</a>
-      <div class="titulo-ed"><strong id="titulo-texto">${esc(tituloCurto(prova))}</strong><span id="status-salvo" class="salvo" role="status">Salvo</span></div>
-      <button class="botao fantasma icone" id="b-opcoes" aria-label="Mais opções da prova">${ic('pontos')}</button>
+  main.innerHTML = `<div class="prova-apta">
+    ${ceu({ esquerda: voltarBtn('#/', 'Provas'), titulo: `<span id="titulo-texto">${esc(tituloCurto(prova))}</span>`,
+      direita: `<button type="button" class="ceu-botao icone" id="b-exportar-topo" aria-label="Exportar">${ic('compartilhar')}</button><button type="button" class="ceu-botao icone" id="b-opcoes" aria-label="Mais opções da prova">${ic('pontos')}</button>`, etapa: 5 })}
+    <div class="folha-branca">
+      <div class="cabeca-folha nao-imprimir" id="cabeca-prova"></div>
+      <div class="seg-apta nao-imprimir" role="tablist" aria-label="Versões da prova">
+        <button type="button" role="tab" data-aba="normal">Original</button>
+        <button type="button" role="tab" data-aba="adaptada">Adaptadas (${prova.versoes.length})</button>
+        <button type="button" role="tab" data-aba="gabarito">Gabarito</button></div>
+      <div id="painel-revisao" class="nao-imprimir"></div>
+      <div id="painel-versao" class="nao-imprimir"></div>
+      <div id="recados" class="nao-imprimir"></div>
+      <div role="tabpanel"><div id="folha" class="folha"></div></div>
+      <p class="ajuda nao-imprimir" style="display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;margin:14px 0">
+        <span id="status-salvo" role="status">Salvo</span> ·
+        <button type="button" class="texto-btn" id="b-add" style="min-height:36px">+ Questão</button> ·
+        <label class="texto-btn data-chip" style="display:inline-flex;align-items:center;gap:4px;position:relative;min-height:36px">${ic('calendario', 'p')}<span class="data-texto">${dataCurta(prova.data)}</span>
+          <input type="date" id="data-prova" value="${dataParaInput(prova.data)}" aria-label="Data da prova" style="position:absolute;inset:0;opacity:0;width:100%" /></label></p>
     </div>
-    <div class="segmentos nao-imprimir" role="tablist" aria-label="Versões da prova">
-      <button role="tab" data-aba="normal">Prova</button>
-      ${prova.temAdaptada === false ? '' : `<button role="tab" data-aba="adaptada">${ic('inclusao', 'p')} Adaptada</button>`}
-      <button role="tab" data-aba="gabarito">Gabarito</button>
-    </div>
-    <div class="linha-estado nao-imprimir">
-      <div id="painel-revisao"></div>
-      <label class="data-chip" title="Data da prova">${ic('calendario', 'p')}<span class="visualmente-oculto">Data da prova</span>
-        <span class="data-texto" aria-hidden="true">${dataCurta(prova.data)}</span>
-        <input type="date" id="data-prova" value="${dataParaInput(prova.data)}" /></label>
-    </div>
-    <div id="faixa-versao" class="nao-imprimir"></div>
-    <div id="recados" class="nao-imprimir"></div>
-    <div role="tabpanel"><div id="folha" class="folha"></div></div>
-    <div class="barra-acoes nao-imprimir">
-      <button class="botao encolhe" id="b-add">${ic('mais', 'p')} Questão</button>
-      <button class="botao encolhe" id="b-word">${ic('baixar', 'p')} Word</button>
-      <button class="botao principal" id="b-imprimir">${ic('imprimir', 'p')} Imprimir</button>
-    </div>`;
+    <div class="barra-acoes nao-imprimir"><button type="button" class="btn-apta" id="b-exportar">Exportar e imprimir</button></div></div>`;
 
   const recados = JSON.parse(sessionStorage.getItem('pf.recados') || '[]');
   sessionStorage.removeItem('pf.recados');
-  if (recados.length) main.querySelector('#recados').innerHTML = `<div class="aviso-bloco alerta" role="status">${recados.map((t) => `<p>${esc(t)}</p>`).join('')}</div>`.replace('class="aviso-bloco alerta" role="status">', `class="aviso-bloco alerta" role="status">${ic('alerta')}<div>`).replace(/<\/div>$/, '</div></div>');
+  if (recados.length) main.querySelector('#recados').innerHTML = `<div class="banner-conf" role="status" style="cursor:default">${ic('alerta')}<span class="txt">${recados.map((t) => `<small style="display:block;color:var(--texto-2)">${esc(t)}</small>`).join('')}</span></div>`;
 
-  main.querySelectorAll('.segmentos button').forEach((b) => (b.onclick = () => { if (estado.aba === b.dataset.aba) return; estado.aba = b.dataset.aba; transicao(desenharFolha, 'segmento'); }));
-  main.querySelector('#b-imprimir').onclick = imprimir;
-  main.querySelector('#b-word').onclick = baixarVersaoWord;
+  main.querySelectorAll('.seg-apta [data-aba]').forEach((b) => (b.onclick = () => { if (estado.aba === b.dataset.aba) return; estado.aba = b.dataset.aba; transicao(desenharFolha, 'segmento'); }));
+  main.querySelector('#b-exportar').onclick = () => {
+    if (estado.aba === 'adaptada' && estado.prova.versoes.length) { salvarProva(estado.prova); aviso(`Ajustes da versão ${estado.versao + 1} salvos.`); vibrar(8); return; }
+    gavetaExportar();
+  };
+  main.querySelector('#b-exportar-topo').onclick = gavetaExportar;
   main.querySelector('#b-add').onclick = menuAdicionar;
   main.querySelector('#b-opcoes').onclick = menuProva;
 
@@ -1322,23 +1319,10 @@ function telaProva(id) {
   });
   folha.addEventListener('click', aoClicarFolha);
   folha.addEventListener('change', aoMudarFolha);
-  // Data da prova: nem sempre é o dia em que a prova foi criada.
-  // A linha inteira abre o calendário do aparelho (um ícone só, o da esquerda).
-  main.querySelector('.data-chip').addEventListener('click', (e) => {
-    const inp = main.querySelector('#data-prova');
-    if (e.target !== inp) { e.preventDefault(); try { inp.showPicker(); } catch { inp.focus(); } }
-  });
   main.querySelector('#data-prova').addEventListener('change', (e) => {
     const [a, m, d] = e.target.value.split('-');
     estado.prova.data = e.target.value ? `${d}/${m}/${a}` : '';
     main.querySelector('.data-texto').textContent = dataCurta(estado.prova.data);
-    salvarDepois(); desenharFolha();
-  });
-  // O que a versão adaptada inclui (a professora liga e desliga cada parte)
-  main.querySelector('#faixa-versao').addEventListener('change', (e) => {
-    const chave = e.target.dataset.adaptada;
-    if (!chave) return;
-    estado.prova.adaptadaCfg = { ...cfgAdaptada(estado.prova), [chave]: e.target.checked };
     salvarDepois(); desenharFolha();
   });
   desenharFolha();
@@ -1384,9 +1368,8 @@ function menuProva() {
     { op: 'instrucoes', icone: 'tipo', rotulo: 'Editar instruções', dica: 'Tempo de prova, caneta, consulta…' },
     { op: 'embaralhar', icone: 'embaralhar', rotulo: 'Embaralhar alternativas', dica: 'O gabarito é atualizado sozinho' },
     { op: 'copia', icone: 'copiar', rotulo: 'Fazer uma cópia', dica: 'Útil para outra turma' },
-    p.temAdaptada === false
-      ? { op: 'com-adaptada', icone: 'inclusao', rotulo: 'Criar a versão adaptada', dica: 'Feita a partir desta prova, sem custo' }
-      : { op: 'sem-adaptada', icone: 'inclusao', rotulo: 'Tirar a versão adaptada', dica: 'A aba some e ela não sai no gabarito' },
+    { op: 'versoes', icone: 'inclusao', rotulo: 'Versões adaptadas', dica: p.versoes?.length ? plural(p.versoes.length, 'versão', 'versões') : 'Nenhuma ainda' },
+    { op: 'exportar', icone: 'enviar', rotulo: 'Exportar e imprimir', dica: 'Word ou PDF, com moldura' },
     '-',
     { op: 'apagar', icone: 'lixo', rotulo: 'Apagar esta prova', perigo: true },
   ]), (c) => c.addEventListener('click', (e) => {
@@ -1420,20 +1403,18 @@ function menuProva() {
         };
       });
     }
-    if (op === 'com-adaptada' || op === 'sem-adaptada') {
-      p.temAdaptada = op === 'com-adaptada';
-      if (p.temAdaptada) p.questoes.forEach((q) => { if (!q.adaptada?.enunciado) q.adaptada = adaptarSemIA(q); });
-      salvarDepois(); fecharGaveta(); telaProva(p.id);
-      aviso(p.temAdaptada ? 'Versão adaptada criada. Confira na aba Adaptada.' : 'Versão adaptada retirada.');
-    }
+    if (op === 'versoes') { fecharGaveta(); estado.aba = 'adaptada'; transicao(desenharFolha, 'segmento'); }
+    if (op === 'exportar') { fecharGaveta(); setTimeout(gavetaExportar, 220); }
     if (op === 'embaralhar') { p.questoes.forEach(embaralharAlternativas); salvarDepois(); desenharFolha(); fecharGaveta(); aviso('Alternativas embaralhadas. Gabarito atualizado.'); }
     if (op === 'copia') {
       const c3 = structuredClone(p); c3.id = uid(); c3.titulo += ' (cópia)'; salvarProva(c3);
       fecharGaveta(); location.hash = `#/prova/${c3.id}`; aviso('Cópia criada. Você está editando a cópia.');
     }
     if (op === 'apagar') {
-      fecharGaveta(); apagarProva(p.id); location.hash = '#/';
-      aviso(`Prova apagada.`, { rotulo: 'Desfazer', fn: () => { salvarProva(p); location.hash = `#/prova/${p.id}`; } });
+      fecharGaveta();
+      const nv = p.versoes?.length || 0;
+      alertaIOS({ titulo: 'Apagar esta prova?', texto: `A prova, ${nv ? `${nv === 1 ? 'a versão adaptada' : `as ${nv} versões adaptadas`} e o gabarito` : 'e o gabarito'} saem do aparelho. Não dá para desfazer.`, ok: 'Apagar', perigo: true })
+        .then((sim) => { if (!sim) return; apagarProva(p.id); location.hash = '#/'; aviso('Prova apagada.'); });
     }
   }));
 }
@@ -1572,6 +1553,7 @@ function aoClicarFolha(e) {
   const i = Number(b.closest('.q[data-i]').dataset.i);
   const q = estado.prova.questoes[i];
   if (b.dataset.acao === 'mais') return menuQuestao(i);
+  if (b.dataset.acao === 'refazer') return gavetaRefazer(i);
   if (b.dataset.acao === 'add-alt') return adicionarAlternativa(i);
   if (b.dataset.acao === 'rem-alt') return removerAlternativa(i, Number(b.dataset.j));
   if (b.dataset.acao === 'conferi') {
@@ -1629,10 +1611,11 @@ async function trocarQuestao(i) {
   aviso('Não há outra questão desse conteúdo no banco. Edite esta ou escreva uma nova.');
 }
 
-async function novaQuestaoIA(posicao) {
+async function novaQuestaoIA(posicao, pedidoExtra = '') {
   const p = estado.prova;
   const cfg = getConfig();
   const pedido = { ...p.pedido, tema: p.tema, materia: p.materia, serie: p.serie, dificuldade: p.dificuldade, tipos: p.pedido?.tipos || ['multipla'] };
+  if (pedidoExtra) { pedido.observacoes = [p.pedido?.observacoes, pedidoExtra].filter(Boolean).join(' '); if (posicao !== undefined) pedido.tipos = [p.questoes[posicao].tipo]; }
   const etapas = ['Criando a questão'];
   if (cfg.ia.revisora) etapas.push('Conferindo a resposta');
   if (pedido.figuras) etapas.push('Preparando a figura, se houver');
@@ -1736,10 +1719,11 @@ function questaoHTML(q, i, versao) {
   return `<div class="q" data-i="${i}">
     ${corpo}
     <div class="q-ferramentas nao-imprimir">
-      ${seloOrigem(q)}${seloFigura(q)}
-      <button class="botao ${q.revisada ? 'conferida' : ''}" data-acao="conferi" aria-pressed="${Boolean(q.revisada)}">${ic('certo', 'p')} ${q.revisada ? 'Conferida' : 'Conferir'}</button>
-      ${seletorCorreta}
-      <button class="botao fantasma mais" data-acao="mais" aria-label="Mais opções da questão ${i + 1}">${ic('pontos')}</button>
+      <button type="button" class="q-chip ${q.revisada ? 'ok' : 'conferir'}" data-acao="conferi" aria-pressed="${Boolean(q.revisada)}">${ic(q.revisada ? 'certo' : 'alerta', 'p')} ${q.revisada ? 'Conferida' : 'Conferir'}</button>
+      <span class="q-nivel">${esc(DIFICULDADES[q.dificuldade] || '')}${q.etapas ? ` · ${plural(q.etapas, 'etapa', 'etapas')}` : ''}</span>
+      ${seloFigura(q)}${seletorCorreta}
+      <button type="button" class="q-icone" data-acao="refazer" aria-label="Refazer a questão ${i + 1}">${ic('refazer')}</button>
+      <button type="button" class="q-icone cinza" data-acao="mais" aria-label="Mais opções da questão ${i + 1}">${ic('pontos')}</button>
     </div>
     <div class="slot-alertas nao-imprimir">${alertasHTML(q)}</div>
   </div>`;
@@ -1759,7 +1743,7 @@ function gabaritoHTML(p) {
     }).join('')}</tbody></table>`;
   return `<div class="gabarito"><div class="titulo-prova">GABARITO — ${esc(p.titulo)}</div>
     <h3>Prova</h3>${tabela('normal')}
-    ${p.temAdaptada !== false ? `<h3>Prova adaptada</h3>${tabela('adaptada')}` : ''}</div>`;
+    ${(p.versoes ? p.versoes.length > 0 : p.temAdaptada !== false) ? `<h3>Prova adaptada</h3>${tabela('adaptada')}` : ''}</div>`;
 }
 
 function desenharFolha() {
@@ -1767,30 +1751,38 @@ function desenharFolha() {
   const escola = getConfig().escola;
   const folha = document.getElementById('folha');
   if (!folha) return;
-  document.querySelectorAll('.segmentos button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.aba === estado.aba)));
-  folha.classList.toggle('adaptada', estado.aba === 'adaptada');
+  document.querySelectorAll('.seg-apta [data-aba]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.aba === estado.aba)));
+  const cab = document.getElementById('cabeca-prova');
+  if (cab) cab.innerHTML = estado.aba === 'adaptada' ? '<h1>Cada versão, um cuidado</h1><p>Ajuste esta versão sem mudar a original.</p>'
+    : estado.aba === 'gabarito' ? '<h1>Gabarito</h1><p>Só para você. Toque numa resposta para corrigir.</p>'
+      : '<h1>Confira sua prova</h1><p>Revise as questões antes de exportar.</p>';
+  const exp = document.getElementById('b-exportar');
+  if (exp) exp.textContent = estado.aba === 'adaptada' && p.versoes.length ? 'Salvar ajustes desta versão' : 'Exportar e imprimir';
+  folha.className = `folha moldura-${getFolhaCfg().moldura}`;
   folha.dataset.versao = estado.aba;
-  document.getElementById('b-add').hidden = estado.aba === 'gabarito';
-  // A versão adaptada é um "modo": faixa com cor, para quem é, e o que ligar/desligar
-  const ca = cfgAdaptada(p);
-  folha.classList.toggle('sem-letra-maior', !ca.letraMaior);
-  folha.classList.toggle('sem-dicas', !ca.dicas);
-  folha.classList.toggle('sem-negrito', !ca.negrito);
-  const faixa = document.getElementById('faixa-versao');
-  const opcao = (chave, rotulo) => `<label class="ficha"><input type="checkbox" data-adaptada="${chave}" ${ca[chave] ? 'checked' : ''}/><span>${rotulo}</span></label>`;
-  if (faixa) faixa.innerHTML = estado.aba === 'adaptada'
-    ? `<div class="faixa-adaptada">${ic('inclusao')}<div><strong>Versão adaptada</strong>
-        <span>Para alunos com TDAH, autismo, dislexia ou deficiência intelectual.</span>
-        <div class="fichas opcoes-adaptada" role="group" aria-label="O que a versão adaptada inclui">${opcao('letraMaior', 'Letra maior')}${opcao('dicas', 'Dicas')}${opcao('negrito', 'Palavras em negrito')}</div></div></div>`
-    : '';
-
+  document.getElementById('b-add').hidden = estado.aba !== 'normal';
+  const painelV = document.getElementById('painel-versao');
+  let vista = p;
+  if (estado.aba === 'adaptada') {
+    if (estado.versao >= p.versoes.length) estado.versao = Math.max(0, p.versoes.length - 1);
+    const v = p.versoes[estado.versao];
+    painelV.innerHTML = painelVersaoHTML(p, v);
+    ligarPainelVersao(painelV);
+    if (!v) { folha.hidden = true; desenharPainelRevisao(); return; }
+    vista = provaDaVersao(p, v);
+    folha.classList.add('adaptada');
+    folha.classList.toggle('sem-letra-maior', !v.cfg.letraMaior);
+    folha.classList.toggle('sem-dicas', !v.cfg.dicas);
+    folha.classList.toggle('sem-negrito', !v.cfg.negrito);
+  } else painelV.innerHTML = '';
+  folha.hidden = false;
   if (estado.aba === 'gabarito') {
     folha.innerHTML = cabecalhoHTML(p, escola) + gabaritoHTML(p);
   } else {
-    folha.innerHTML = `${cabecalhoHTML(p, escola)}
+    folha.innerHTML = `${cabecalhoHTML(vista, escola)}
       <div class="titulo-prova">${esc(p.titulo)}</div>
       <div class="instrucoes${p.instrucoes ? '' : ' vazia'}"><strong>Instruções:</strong><div contenteditable="true" data-cab="instrucoes" aria-label="Instruções da prova">${md(p.instrucoes || '')}</div></div>
-      ${p.questoes.map((q, i) => questaoHTML(q, i, estado.aba)).join('')}`;
+      ${vista.questoes.map((q, i) => questaoHTML(q, i, estado.aba)).join('')}`;
   }
   desenharPainelRevisao();
 }
@@ -1813,19 +1805,21 @@ function pendentesDaProva(p) {
   return { comErro, novas, todas: [...comErro, ...novas] };
 }
 
+/** Faixa da conferência: quantas estão conferidas e qual questão pede o olhar da professora. */
 function desenharPainelRevisao() {
   const p = estado.prova;
   const el = document.getElementById('painel-revisao');
   if (!el) return;
+  if (estado.aba !== 'normal') { el.innerHTML = ''; return; }
   const { comErro, todas } = pendentesDaProva(p);
-  const geral = validarProva(p.questoes);
+  const total = p.questoes.length;
   if (!todas.length) {
-    el.innerHTML = `<span class="estado-chip ok" ${geral.length ? `title="${esc(geral.join(' '))}"` : ''}>${ic('certo', 'p')} ${geral.length ? 'Pronta · veja a dica' : 'Pronta para imprimir'}</span>`;
+    el.innerHTML = `<div class="banner-conf ok" role="status">${ic('certoCirc')}<span class="txt"><strong>${total} de ${total} questões conferidas</strong><small>Pronta para exportar e imprimir.</small></span></div>`;
     return;
   }
-  el.innerHTML = `<button type="button" class="estado-chip ${comErro.length ? 'erro' : 'conferir'}" id="b-conferencia">
-    ${ic('alerta', 'p')} ${comErro.length ? plural(comErro.length, 'possível erro', 'possíveis erros') : plural(todas.length, 'para conferir', 'para conferir')}
-    <span class="estado-acao">Revisar ${ic('seta', 'p')}</span></button>`;
+  const primeira = todas[0] + 1;
+  el.innerHTML = `<button type="button" class="banner-conf" id="b-conferencia">${ic('alerta')}<span class="txt"><strong>${total - todas.length} de ${total} questões conferidas</strong>
+    <small>${todas.length === 1 ? `A questão ${primeira} precisa do seu olhar.` : `${todas.length} questões precisam do seu olhar${comErro.length ? `, ${plural(comErro.length, 'com possível erro', 'com possível erro')}` : ''}.`}</small></span><span class="ver">Ver</span></button>`;
   el.querySelector('#b-conferencia').onclick = () => modoConferencia();
 }
 
@@ -1938,25 +1932,20 @@ function telaBanco() {
   const banco = getBanco();
   const temIA = iaDisponivel(getConfig());
   const porMateria = todasMaterias().map((m) => [m, banco.filter((q) => q.materia === m).length]).filter(([, n]) => n);
-  main.innerHTML = `
-    <div class="cabeca-tela"><h1>Banco</h1>
-      <button class="botao principal icone" id="b-banco-mais" aria-label="Adicionar questões">${ic('mais')}</button></div>
-    <div class="busca-linha">
-      <div class="busca">${ic('busca')}<label class="sr" for="f-busca">Procurar questões</label>
-        <input type="search" id="f-busca" value="${esc(filtroBanco.busca)}" placeholder="Procurar no banco" /></div>
-      <button class="botao icone" id="b-filtros" aria-label="Filtros">${ic('filtro')}</button>
+  main.innerHTML = `<div class="banco-apta">
+    <header class="ceu"><div class="ceu-grande"><h1>Banco</h1><button type="button" class="ceu-mais" id="b-banco-mais" aria-label="Adicionar questões">${ic('mais')}</button></div></header>
+    <div class="cartao-apta busca-cartao">
+      <div class="busca-apta">${ic('busca')}<label class="sr" for="f-busca">Procurar questões</label><input type="search" id="f-busca" value="${esc(filtroBanco.busca)}" placeholder="Procurar no banco" />
+        <button type="button" id="b-filtros" aria-label="Filtros">${ic('filtro')}</button></div>
+      <div class="chips-apta rolar filtro-materias" role="group" aria-label="Matérias"><button type="button" class="chip-apta" data-m="" aria-pressed="${!filtroBanco.materia}">Todas</button>
+        ${porMateria.map(([m]) => `<button type="button" class="chip-apta" data-m="${esc(m)}" aria-pressed="${filtroBanco.materia === m}">${icMateria(m)} ${esc(m)}</button>`).join('')}</div>
     </div>
-    ${porMateria.length > 1 ? `<div class="filtro-materias" role="group" aria-label="Matérias">
-      <button type="button" data-m="" aria-pressed="${!filtroBanco.materia}">Todas</button>
-      ${porMateria.map(([m, n]) => `<button type="button" data-m="${esc(m)}" aria-pressed="${filtroBanco.materia === m}" style="--cor:${corMateria(m)}"><span class="ponto-materia"></span>${esc(m)} <small>${n}</small></button>`).join('')}</div>` : ''}
-    <button class="linha-busca-ia" id="b-buscar-web" ${temIA ? '' : 'disabled'}>
-      <span class="lbi-ic">${ic('brilho', 'p')}</span>
-      <span class="lbi-texto"><strong>Buscar questões com IA</strong><small>${temIA ? 'Na internet ou nos seus livros em PDF' : 'Ligue a criação automática em Ajustes'}</small></span>${ic('seta', 'p')}</button>
-    <div class="filtros-ativos" id="filtros-ativos"></div>
-    <div id="contador-banco" role="status" class="contador-lista"></div>
-    <ul class="lista-cartoes" id="lista-banco"></ul>
-    <div class="acoes" style="justify-content:center"><button class="botao" id="b-mais" hidden>Mostrar mais</button></div>
-    <input type="file" id="importar" accept=".json,application/json" hidden />`;
+    <button type="button" class="banner-ia" id="b-buscar-web" ${temIA ? '' : 'disabled'}>${ic('brilho')}<span class="txt"><strong>Buscar questões com IA</strong><small>${temIA ? 'Na internet e nos livros que você enviou' : 'Ligue a criação automática em Ajustes'}</small></span>${ic('seta', 'p')}</button>
+    <div class="filtros-ativos" id="filtros-ativos" style="margin:10px 16px 0"></div>
+    <div id="contador-banco" role="status" class="contagem-banco"></div>
+    <ul class="questoes-apta" id="lista-banco"></ul>
+    <div class="acoes" style="justify-content:center"><button type="button" class="btn-apta claro pequeno" id="b-mais" hidden>Mostrar mais</button></div>
+    <input type="file" id="importar" accept=".json,application/json" hidden /></div>`;
 
   const nomeOrigem = Object.fromEntries(ORIGENS);
   const desenharLista = () => {
@@ -1968,22 +1957,25 @@ function telaBanco() {
       (!nb || normalizar(`${q.tema} ${q.enunciado}`).includes(nb)));
     const ativos = [['materia', filtroBanco.materia], ['serie', filtroBanco.serie], ['origem', nomeOrigem[filtroBanco.origem]]].filter(([, v]) => v);
     main.querySelector('#filtros-ativos').innerHTML = ativos.map(([k, v]) => `<button data-limpa="${k}" aria-label="Remover filtro ${esc(v)}">${esc(v)} ${ic('fechar', 'p')}</button>`).join('');
-    main.querySelector('#contador-banco').textContent = plural(filtradas.length, 'questão', 'questões');
+    const nConf = filtradas.filter((q) => ['minha', 'revisada'].includes(q.origem)).length;
+    main.querySelector('#contador-banco').textContent = `${plural(filtradas.length, 'questão', 'questões')} · ${nConf} ${nConf === 1 ? 'conferida' : 'conferidas'}`.toUpperCase();
     main.querySelector('#lista-banco').innerHTML = filtradas.length ? filtradas.slice(0, filtroBanco.limite).map((q) => {
       const confiavel = q.origem === 'minha' || q.origem === 'revisada';
-      return `<li class="ficha-q" style="--cor:${corMateria(q.materia)}">
-      <p class="fq-enun">${md(q.enunciado)}</p>
+      const fonte = q.origem === 'ia' ? `<span class="fonte ia">${ic('brilho', 'p')} Criada com IA</span>`
+        : q.fonte?.nome ? `<span class="fonte">${ic('livro', 'p')} ${esc(q.fonte.nome)}</span>` : q.origem === 'exemplo' ? '<span class="fonte">Exemplo do app</span>' : '';
+      return `<li class="cartao-apta questao-apta">
+      <p class="enun">${md(q.enunciado)}</p>
       ${figuraHTML(q)}
-      <div class="fq-meta"><span class="ponto-materia"></span><span class="fq-onde">${esc(q.materia)} · ${esc(q.serie.replace(' (Ensino Médio)', ' EM'))}${q.tema ? ` · ${esc(q.tema)}` : ''}</span></div>
-      <div class="fq-rodape">
-        ${confiavel ? `<span class="fq-ok">${ic('certo', 'p')} Conferida</span>` : `<button class="fq-conferir" data-conferir="${q.id}">${ic('certo', 'p')} Conferir</button>`}
-        <details class="fq-resposta"><summary>Resposta</summary><div class="fq-resp-corpo">
+      <div class="meta">${icMateria(q.materia)} ${esc(q.materia)} · ${esc(q.serie.replace(' (Ensino Médio)', ' EM'))} · ${esc(DIFICULDADES[q.dificuldade] || 'Médio')} ${fonte}</div>
+      <div class="rodape">
+        ${confiavel ? `<span class="q-chip ok">${ic('certo', 'p')} Conferida</span>` : `<button type="button" class="q-chip conferir" data-conferir="${q.id}">${ic('alerta', 'p')} Conferir</button>`}
+        <button type="button" class="texto-btn resp-btn" data-resp="${q.id}" aria-expanded="false">Resposta</button>
+        <button type="button" class="btn-usar" data-usar="${q.id}">Usar</button>
+        <button type="button" class="q-icone cinza" data-menu-q="${q.id}" aria-label="Editar ou apagar a questão">${ic('pontos')}</button>
+      </div>
+      <div class="resposta" id="resp-${q.id}" hidden>
         ${q.tipo === 'multipla' || q.tipo === 'vf' ? `<ol>${q.alternativas.map((a, j) => `<li class="${j === q.correta ? 'certa' : ''}">${q.tipo === 'multipla' ? letra(j) + ') ' : '• '}${md(a)}${j === q.correta ? ' ✓' : ''}</li>`).join('')}</ol>` : ''}
-        <p class="dica" style="margin:0 0 4px"><strong>Gabarito:</strong> ${esc(textoGabarito(q))}${q.justificativa ? ` — ${esc(q.justificativa)}` : ''}</p>
-        ${!confiavel && seloOrigem(q).includes('href') ? `<p class="dica" style="margin:0">${seloOrigem(q)}</p>` : ''}</div>
-        </details>
-        <button class="fq-mais" data-menu-q="${q.id}" aria-label="Editar ou apagar a questão">${ic('pontos')}</button>
-      </div></li>`;
+        <strong>Gabarito:</strong> ${esc(textoGabarito(q))}${q.justificativa ? ` · ${esc(q.justificativa)}` : ''}</div></li>`;
     }).join('')
       : `<li class="vazio">${ic('busca')}<strong>Nenhuma questão aqui</strong>Tire algum filtro ou escreva uma questão nova.</li>`;
     main.querySelector('#b-mais').hidden = filtradas.length <= filtroBanco.limite;
@@ -2007,6 +1999,10 @@ function telaBanco() {
     const apg = e.target.closest('[data-apagar-q]')?.dataset.apagarQ;
     const edt = e.target.closest('[data-editar-q]')?.dataset.editarQ;
     const mq = e.target.closest('[data-menu-q]')?.dataset.menuQ;
+    const resp = e.target.closest('[data-resp]');
+    if (resp) { const caixa = main.querySelector(`#resp-${resp.dataset.resp}`); caixa.hidden = !caixa.hidden; resp.setAttribute('aria-expanded', String(!caixa.hidden)); return; }
+    const usar = e.target.closest('[data-usar]')?.dataset.usar;
+    if (usar) { gavetaUsar(getBanco().find((x) => x.id === usar)); return; }
     if (mq) {
       const q = getBanco().find((x) => x.id === mq);
       const confiavel = q.origem === 'minha' || q.origem === 'revisada';
@@ -2033,14 +2029,16 @@ function telaBanco() {
       aviso('Questão apagada.', { rotulo: 'Desfazer', fn: () => { const b2 = getBanco(); b2.splice(i, 0, rem); salvarBanco(b2); if (location.hash === '#/banco') desenharLista(); } });
     }
   };
-  main.querySelector('#b-banco-mais').onclick = () => abrirGaveta('Adicionar ao banco', menu([
-    { op: 'escrever', icone: 'editar', rotulo: 'Escrever uma questão', dica: 'Ela entra como confiável' },
+  main.querySelector('#b-banco-mais').onclick = () => abrirGaveta('Adicionar questões', `<div class="pilha">
+    <button type="button" class="btn-apta" data-op="escrever">Criar questão</button>
+    <ul class="lista-apta">${itemLink('#/livro', 'camera', 'Importar do livro', 'Fotografe a página: as questões entram já conferidas')}</ul>
+    <details><summary class="texto-btn" style="list-style:none;text-align:center">Mais formas de adicionar</summary><div style="margin-top:8px">${menu([
     ...(temIA ? [{ op: 'web', icone: 'brilho', rotulo: 'Buscar na internet com IA', dica: 'Traz o link de onde veio cada questão' }] : []),
     { op: 'pdf', icone: 'doc', rotulo: 'Livros e apostilas (PDF)', dica: listarMateriais().length ? plural(listarMateriais().length, 'material guardado', 'materiais guardados') : 'A IA consulta o livro para tirar questões' },
     '-',
     { op: 'importar', icone: 'baixar', rotulo: 'Importar pacote de questões', dica: 'Arquivo recebido de um colega' },
     { op: 'exportar', icone: 'enviar', rotulo: 'Exportar meu banco', dica: 'Gera um arquivo para enviar a colegas' },
-  ]), (c) => c.addEventListener('click', (e) => {
+  ])}</div></details></div>`, (c) => c.addEventListener('click', (e) => {
     const op = e.target.closest('[data-op]')?.dataset.op;
     if (!op) return;
     if (op === 'escrever') { fecharGaveta(); setTimeout(() => formQuestao(desenharLista), 220); }
@@ -2052,7 +2050,7 @@ function telaBanco() {
       baixarArquivo(`banco-apta-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify({ app: 'apta', versao: 2, questoes: getBanco(), imagens: imagensDasQuestoes(getBanco()) }));
       aviso('Arquivo do banco baixado.');
     }
-  }));
+  }), { centro: true });
   main.querySelector('.filtro-materias')?.addEventListener('click', (e) => {
     const b = e.target.closest('[data-m]'); if (!b) return;
     filtroBanco.materia = b.dataset.m; filtroBanco.limite = 25;
@@ -2403,12 +2401,12 @@ function formQuestao(depois, existente = null) {
 
 /* =================== AJUSTES (escola + IA) =================== */
 let sairDosAjustes = null;
-function telaAjustes(ancora) {
-  titulo('Ajustes');
+function telaAjustesEscola(ancora) {
+  titulo(ancora === 'ia' ? 'Criação automática' : 'Minha escola');
   const cfg = getConfig();
   const e = cfg.escola;
   const pronta = iaDisponivel(cfg);
-  main.innerHTML = `<h1>Ajustes</h1>
+  main.innerHTML = `<div class="sub-tela">${ceu({ esquerda: voltarBtn('#/ajustes', 'Ajustes'), titulo: ancora === 'ia' ? 'Criação automática' : 'Minha escola', baixo: true })}<div class="folha-branca">
     <form id="form-escola" novalidate>
     <section id="escola" class="cartao-ajuste" aria-labelledby="t-escola">
       <header class="ca-cabeca"><div><h2 id="t-escola"><span class="aj-ic">${ic('escola')}</span>Minha escola</h2><p>Aparece no topo de todas as provas.</p></div></header>
@@ -2482,7 +2480,7 @@ function telaAjustes(ancora) {
           <span class="dica">Recomendado: Claro. A tela fica parecida com a folha que os alunos recebem.</span>
           ${fichas('tema', TEMAS, temaAtual())}</fieldset>
       </div>
-    </section>`;
+    </section></div></div>`;
 
   if (ancora === 'ia' || ancora === 'escola') document.getElementById(ancora)?.scrollIntoView();
 
@@ -2596,6 +2594,759 @@ function reduzirImagem(arquivo, max) {
     img.onerror = falha;
     img.src = URL.createObjectURL(arquivo);
   });
+}
+
+/* =========================================================
+   Revisão do Figma ("Refazendo", nov/2026): peças comuns e telas novas
+   Céu azul + folha branca, etapas 1 a 5, semana de provas, versões
+   adaptadas, exportar com moldura, importar do livro e Ajustes em lista.
+   ========================================================= */
+const lerJ = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } };
+const gravarJ = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+const VISTO = (cls = 'visto') => `<svg class="${cls}" viewBox="0 0 70 58" aria-hidden="true"><path d="M8 30 L26 47 L63 7" stroke="#d2352b" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/** Topo azul: ação à esquerda, título no meio, ações à direita e, na criação, as 5 etapas. */
+function ceu({ esquerda = '', titulo: t = '', direita = '', etapa = 0, baixo = false } = {}) {
+  return `<header class="ceu ${baixo ? 'baixo' : ''}"><div class="ceu-barra"><div>${esquerda}</div><div class="ceu-titulo">${t}</div><div>${direita}</div></div>${etapa ? etapasHTML(etapa) : ''}</header>`;
+}
+const voltarBtn = (href, rotulo) => `<a class="ceu-botao" href="${href}">${ic('voltar')} ${esc(rotulo)}</a>`;
+const ETAPAS = ['Turma', 'Ajustes', 'Questões', 'Adaptadas', 'Revisão'];
+function etapasHTML(atual) {
+  return `<ol class="etapas-apta" aria-label="Etapa ${atual} de 5">${ETAPAS.map((n, i) => {
+    const k = i + 1;
+    const cls = k < atual ? 'feita' : k === atual ? 'agora' : '';
+    return `<li class="${cls}" ${k === atual ? 'aria-current="step"' : ''}><span class="bola">${k < atual ? ic('certo') : k}</span>${n}</li>`;
+  }).join('')}</ol>`;
+}
+const itemLink = (href, icone, t, sub = '', destaque = false) => `<li><a class="item-apta ${destaque ? 'destaque' : ''}" href="${href}">${ic(icone)}<span class="txt"><strong>${esc(t)}</strong>${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="chev">${ic('seta')}</span></a></li>`;
+
+/** Alerta no padrão do iOS (Cancelar à esquerda, ação à direita). Devolve true/false. */
+function alertaIOS({ titulo: t, texto, ok = 'OK', cancelar = 'Cancelar', perigo = false }) {
+  return new Promise((resolver) => {
+    const el = document.createElement('div');
+    el.className = 'alerta-ios';
+    el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'al-t');
+    el.innerHTML = `<div class="caixa"><h2 id="al-t">${esc(t)}</h2><p>${esc(texto)}</p>
+      <div class="botoes"><button type="button" data-r="0" class="forte">${esc(cancelar)}</button><button type="button" data-r="1" class="${perigo ? 'perigo' : ''}">${esc(ok)}</button></div></div>`;
+    const fim = (v) => { el.remove(); resolver(v); };
+    el.onclick = (e) => { const b = e.target.closest('[data-r]'); if (b) fim(b.dataset.r === '1'); else if (e.target === el) fim(false); };
+    el.onkeydown = (e) => { if (e.key === 'Escape') fim(false); };
+    document.body.append(el);
+    el.querySelector('[data-r="0"]').focus();
+  });
+}
+
+/* ---------- Turmas ---------- */
+function getTurmas() {
+  const salvas = lerJ('apta.turmas', null);
+  if (Array.isArray(salvas)) return salvas;
+  return turmasRecentes().map((t) => ({ id: uid(), nome: t.turma || t.serie, serie: t.serie, descricao: t.materia, alunos: 0 }));
+}
+const salvarTurmas = (l) => gravarJ('apta.turmas', l);
+const descTurma = (t) => [t.descricao, t.alunos ? `${t.alunos} alunos` : ''].filter(Boolean).join(' · ') || t.serie;
+
+function gavetaTurma(depois, existente = null) {
+  const t = existente || { nome: '', serie: '4º ano', descricao: '', alunos: '' };
+  abrirGaveta(existente ? 'Editar turma' : 'Nova turma', `<p class="gaveta-texto">A turma aparece na hora de criar a prova e no cabeçalho.</p>
+    <form id="f-turma">
+      <label class="campo-apta"><span>Nome da turma</span><input name="nome" value="${esc(t.nome)}" placeholder="Ex.: 5º ano A" required autocomplete="off" /></label>
+      <label class="campo-apta"><span>Ano</span><select name="serie">${SERIES.map((s) => `<option ${s === t.serie ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
+      <label class="campo-apta"><span>Matéria ou descrição (opcional)</span><input name="descricao" value="${esc(t.descricao || '')}" placeholder="Ex.: Multidisciplinar" autocomplete="off" /></label>
+      <label class="campo-apta"><span>Alunos (opcional)</span><input name="alunos" type="number" min="0" inputmode="numeric" value="${esc(String(t.alunos || ''))}" placeholder="Ex.: 28" /></label>
+      <button class="btn-apta">${existente ? 'Salvar turma' : 'Adicionar turma'}</button>
+      <div style="text-align:center"><button type="button" class="texto-btn" data-cancelar>Cancelar</button></div>
+    </form>`, (g) => {
+    const f = g.querySelector('form');
+    g.querySelector('[data-cancelar]').onclick = fecharGaveta;
+    f.nome.focus();
+    f.onsubmit = (ev) => {
+      ev.preventDefault();
+      const nova = { id: t.id || uid(), nome: f.nome.value.trim(), serie: f.serie.value, descricao: f.descricao.value.trim(), alunos: Number(f.alunos.value) || 0 };
+      if (!nova.nome) { f.nome.focus(); return; }
+      const lista = getTurmas().filter((x) => x.id !== nova.id);
+      salvarTurmas(existente ? getTurmas().map((x) => (x.id === nova.id ? nova : x)) : [...lista, nova]);
+      fecharGaveta();
+      depois?.(nova);
+    };
+  }, { centro: true });
+}
+
+/* ---------- Perfis de adaptação e versões ---------- */
+const AJUSTES_VERSAO = [
+  ['letraMaior', 'Letra maior', '16 pt, espaço entre linhas', 'texto'],
+  ['frasesCurtas', 'Frases curtas', '', 'lista'],
+  ['dicas', 'Dica em cada questão', '', 'lapis'],
+  ['tresAlternativas', 'Só 3 alternativas', '', 'certoCirc'],
+  ['negrito', 'Palavras-chave em negrito', '', 'negrito'],
+  ['imagens', 'Questões com imagens', 'Usa as figuras quando houver', 'imagem'],
+];
+const PERFIS_PADRAO = [
+  { nome: 'Leitura simplificada', icone: 'texto', cfg: { letraMaior: true, frasesCurtas: true, dicas: true, tresAlternativas: true, negrito: true, imagens: false } },
+  { nome: 'Sem leitura, com imagens', icone: 'imagem', cfg: { letraMaior: true, frasesCurtas: true, dicas: false, tresAlternativas: true, negrito: true, imagens: true } },
+];
+const getPerfis = () => lerJ('apta.perfis', PERFIS_PADRAO);
+const salvarPerfis = (l) => gravarJ('apta.perfis', l);
+function resumoCfg(c = {}) {
+  const partes = [];
+  if (c.imagens) partes.push('questões com imagens');
+  if (c.letraMaior) partes.push('letra maior');
+  if (c.frasesCurtas) partes.push('frases curtas');
+  if (c.dicas) partes.push('dicas');
+  if (c.imagens && !c.dicas) { const t = 'Questões com imagens · sem leitura'; return t; }
+  if (!c.imagens && c.tresAlternativas && partes.length < 3) partes.push('3 alternativas');
+  const t = partes.slice(0, 3).join(' · ');
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Igual à original';
+}
+const novaVersao = (perfil) => ({ id: uid(), nome: perfil.nome, icone: perfil.icone || (perfil.cfg?.imagens ? 'imagem' : 'texto'), cfg: { ...perfil.cfg } });
+/** Versões adaptadas de uma prova (as provas antigas tinham uma só, a "adaptada"). */
+function versoesDa(p) {
+  if (Array.isArray(p.versoes)) return p.versoes;
+  if (p.temAdaptada === false) return [];
+  const ca = cfgAdaptada(p);
+  return [{ id: 'v1', nome: 'Leitura simplificada', icone: 'texto', cfg: { letraMaior: ca.letraMaior, frasesCurtas: true, dicas: ca.dicas, tresAlternativas: true, negrito: ca.negrito, imagens: false } }];
+}
+/** A prova vista por uma versão: os ajustes ligados mudam as questões adaptadas. */
+function provaDaVersao(p, v) {
+  const c = v.cfg;
+  return {
+    ...p,
+    adaptadaCfg: { letraMaior: c.letraMaior, dicas: c.dicas, negrito: c.negrito },
+    questoes: p.questoes.map((q) => {
+      const ad = q.adaptada?.enunciado ? q.adaptada : adaptarSemIA(q);
+      return {
+        ...q,
+        adaptada: {
+          ...ad,
+          enunciado: c.frasesCurtas ? ad.enunciado : q.enunciado,
+          alternativas: c.tresAlternativas ? ad.alternativas : [...(q.alternativas || [])],
+          correta: c.tresAlternativas ? ad.correta : q.correta,
+          dica: c.dicas ? ad.dica : '',
+        },
+      };
+    }),
+  };
+}
+function gavetaAjustesVersao(v, depois, { tituloG = 'Ajustes da versão' } = {}) {
+  abrirGaveta(tituloG, `<form id="f-versao">
+    <label class="campo-apta"><span>Nome</span><input name="nome" value="${esc(v.nome)}" autocomplete="off" /></label>
+    <ul class="lista-apta">${AJUSTES_VERSAO.map(([k, rot, sub, icn]) => `<li><label class="opcao-linha">${ic(icn)}<span class="txt">${rot}${sub ? `<small>${sub}</small>` : ''}</span>
+      <input type="checkbox" class="switch-apta" name="${k}" ${v.cfg[k] ? 'checked' : ''}/></label></li>`).join('')}</ul>
+    <button class="btn-apta" style="margin-top:16px">Salvar ajustes</button></form>`, (g) => {
+    const f = g.querySelector('form');
+    f.onsubmit = (ev) => {
+      ev.preventDefault();
+      v.nome = f.nome.value.trim() || v.nome;
+      AJUSTES_VERSAO.forEach(([k]) => { v.cfg[k] = f[k].checked; });
+      v.icone = v.cfg.imagens ? 'imagem' : 'texto';
+      fecharGaveta(); depois?.(v);
+    };
+  });
+}
+/** Escolher de qual perfil nasce a versão nova. */
+function escolherPerfil(depois) {
+  const perfis = getPerfis();
+  abrirGaveta('Nova versão adaptada', `${menu([
+    ...perfis.map((p, k) => ({ op: `p${k}`, icone: p.cfg?.imagens ? 'imagem' : 'texto', rotulo: p.nome, dica: resumoCfg(p.cfg) })),
+    { op: 'branco', icone: 'mais', rotulo: 'Começar do zero', dica: 'Você escolhe cada ajuste' },
+  ])}`, (g) => g.addEventListener('click', (e) => {
+    const op = e.target.closest('[data-op]')?.dataset.op; if (!op) return;
+    fecharGaveta();
+    if (op === 'branco') {
+      const v = novaVersao({ nome: 'Nova versão', cfg: { letraMaior: true, frasesCurtas: false, dicas: false, tresAlternativas: false, negrito: false, imagens: false } });
+      setTimeout(() => gavetaAjustesVersao(v, depois, { tituloG: 'Nova versão' }), 220);
+      return;
+    }
+    depois(novaVersao(perfis[Number(op.slice(1))]));
+  }));
+}
+
+/* ---------- Folha: moldura e apresentação ---------- */
+const getFolhaCfg = () => ({ moldura: 'simples', instrucoes: true, ...lerJ('apta.folha', {}) });
+const MOLDURAS = [['nenhuma', 'Nenhuma'], ['simples', 'Simples'], ['dupla', 'Dupla'], ['escolar', 'Escolar'], ['escola', 'Da escola']];
+const molduraPicker = (atual) => `<div class="molduras" role="radiogroup" aria-label="Moldura">${MOLDURAS.map(([v, r]) => `<button type="button" class="moldura-op" data-m="${v}" role="radio" aria-checked="${v === atual}" aria-pressed="${v === atual}">
+  <span class="amostra">${v === 'escola' ? ic('mais') : v === 'nenhuma' ? '' : '<i></i>'}</span>${r}</button>`).join('')}</div>`;
+function ligarMolduras(raiz, aoEscolher) {
+  raiz.querySelectorAll('.moldura-op').forEach((b) => (b.onclick = () => {
+    raiz.querySelectorAll('.moldura-op').forEach((x) => { x.setAttribute('aria-pressed', String(x === b)); x.setAttribute('aria-checked', String(x === b)); });
+    aoEscolher(b.dataset.m); vibrar(4);
+  }));
+}
+
+/* ---------- Datas ---------- */
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const deIso = (iso) => { const [a, m, d] = String(iso).split('-').map(Number); return new Date(a, m - 1, d, 12); };
+const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const isoHoje = (k = 0) => { const d = new Date(); d.setDate(d.getDate() + k); return isoDe(d); };
+const isoParaBR = (iso) => { const [a, m, d] = iso.split('-'); return `${d}/${m}/${a}`; };
+function dataLonga(iso, comDia = false) { const d = deIso(iso); return `${comDia ? `${DIAS[d.getDay()]}, ` : ''}${d.getDate()} de ${MESES[d.getMonth()]}`; }
+function periodoTexto(s) {
+  const a = deIso(s.inicio), b = deIso(s.fim);
+  return a.getMonth() === b.getMonth() ? `${a.getDate()} a ${b.getDate()} de ${MESES[b.getMonth()]}` : `${dataLonga(s.inicio)} a ${dataLonga(s.fim)}`;
+}
+function faltamDias(s) {
+  const n = Math.round((deIso(s.entrega || s.fim) - deIso(isoHoje())) / 864e5);
+  return n > 1 ? `faltam ${n} dias` : n === 1 ? 'falta 1 dia' : n === 0 ? 'entrega hoje' : 'prazo encerrado';
+}
+
+/* ---------- Semana de provas ---------- */
+const getSemana = () => lerJ('apta.semana', null);
+const salvarSemana = (s) => gravarJ('apta.semana', s);
+/** Itens da semana: as provas planejadas (feitas ou não) e as provas com data no período. */
+function itensSemana(s) {
+  if (!s) return [];
+  const provas = getProvas();
+  const usadas = new Set();
+  const itens = (s.planejadas || []).map((pl) => {
+    const p = pl.provaId ? provas.find((x) => x.id === pl.provaId) : null;
+    if (p) usadas.add(p.id);
+    return { pl, prova: p, data: pl.data, materia: p?.materia || pl.materia, turma: p ? turmaDe(p) : pl.turma, titulo: p ? tituloCurto(p) : pl.tema };
+  });
+  provas.forEach((p) => {
+    const iso = dataParaInput(p.data);
+    if (!usadas.has(p.id) && iso && iso >= s.inicio && iso <= s.fim) itens.push({ pl: null, prova: p, data: iso, materia: p.materia, turma: turmaDe(p), titulo: tituloCurto(p) });
+  });
+  return itens.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+}
+const estadoItem = (it) => (!it.prova ? 'falta' : statusProva(it.prova).pendentes ? 'rev' : 'ok');
+function contarSemana(itens) { const c = { ok: 0, rev: 0, falta: 0 }; itens.forEach((it) => { c[estadoItem(it)]++; }); return c; }
+const barraProgresso = (c) => `<div class="barra-progresso" aria-hidden="true">${c.ok ? `<i class="ok" style="flex:${c.ok}"></i>` : ''}${c.rev ? `<i class="rev" style="flex:${c.rev}"></i>` : ''}${c.falta ? `<i style="flex:${c.falta}"></i>` : ''}</div>`;
+const legendaProgresso = (c) => `<div class="legenda-progresso"><span class="ok">${c.ok} ${c.ok === 1 ? 'pronta' : 'prontas'}</span><span class="rev">${c.rev} para revisar</span><span>${c.falta} ${c.falta === 1 ? 'falta' : 'faltam'}</span></div>`;
+
+let semanaModo = 'data';
+function telaSemana() {
+  titulo('Semana de provas');
+  const s = getSemana();
+  const itens = itensSemana(s);
+  const c = contarSemana(itens);
+  const grupos = new Map();
+  itens.forEach((it) => { const k = semanaModo === 'data' ? (it.data || '') : (it.turma || ''); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(it); });
+  const itemHTML = (it) => {
+    const e = estadoItem(it);
+    const dentro = `${icMateria(it.materia)}<span class="txt"><strong>${esc(it.titulo || it.materia)}</strong><small>${esc(it.materia)} · ${esc(it.turma || '')}</small></span>
+      <span class="estado-apta ${e}">${e === 'ok' ? `${ic('certo')} Pronta` : e === 'rev' ? `${ic('alerta')} ${statusProva(it.prova).pendentes} para revisar` : 'Falta criar'}</span>`;
+    return `<li>${it.prova ? `<a class="item-semana" href="#/prova/${it.prova.id}">${dentro}</a>` : `<button type="button" class="item-semana" data-planejada="${it.pl.id}">${dentro}</button>`}</li>`;
+  };
+  main.innerHTML = `${ceu({ esquerda: voltarBtn('#/', 'Provas'), titulo: 'Semana de provas', direita: s ? `<button type="button" class="ceu-botao icone" id="b-planejar" aria-label="Planejar uma prova">${ic('mais')}</button>` : '', baixo: true })}
+    <div class="folha-branca">
+    ${s ? `<div class="semana-resumo"><div class="num"><b>${c.ok}</b> de ${itens.length} ${itens.length === 1 ? 'prova pronta' : 'provas prontas'}</div>
+        ${barraProgresso(c)}
+        <p>Entrega na coordenação até ${dataLonga(s.entrega || s.fim)} · cada prova com a versão adaptada e o gabarito</p>
+        <button type="button" class="texto-btn" id="b-periodo" style="padding:0">Mudar o período</button></div>
+      <div class="seg-apta" role="tablist" aria-label="Agrupar" style="margin:12px 0 0">
+        <button role="tab" data-modo="data" aria-selected="${semanaModo === 'data'}">Por data</button>
+        <button role="tab" data-modo="turma" aria-selected="${semanaModo === 'turma'}">Por turma</button></div>
+      ${itens.length ? [...grupos].map(([k, lista]) => `<h2 class="dia-titulo">${semanaModo === 'data' ? (k ? dataLonga(k, true) : 'Sem data') : esc(k || 'Sem turma')}</h2>
+        <ul class="lista-apta">${lista.map(itemHTML).join('')}</ul>`).join('')
+        : '<div class="cartao-apta vazio-apta" style="margin:16px 0"><strong>Nada planejado ainda</strong>Toque em + para planejar as provas de cada turma.</div>'}`
+    : `<div class="cartao-apta vazio-apta" style="margin:0"><strong>Planeje a semana de provas</strong>Escolha o período e a data de entrega. Depois, adicione as provas de cada turma e acompanhe o que falta.
+        <div style="margin-top:16px"><button type="button" class="btn-apta" id="b-periodo">Escolher o período</button></div></div>`}
+    </div>
+    ${c.falta ? `<div class="barra-acoes"><span class="nota-barra">Cada prova sai com a versão adaptada e o gabarito.</span>
+      <button type="button" class="btn-apta" id="b-criar-faltam">${ic('brilho')} ${c.falta === 1 ? 'Criar a que falta' : `Criar as ${c.falta} que faltam`}</button></div>` : ''}`;
+  main.querySelectorAll('[data-modo]').forEach((b) => (b.onclick = () => { semanaModo = b.dataset.modo; transicao(telaSemana, 'segmento'); }));
+  main.querySelector('#b-periodo').onclick = () => gavetaPeriodo();
+  main.querySelector('#b-planejar')?.addEventListener('click', () => gavetaPlanejar());
+  main.querySelectorAll('[data-planejada]').forEach((b) => (b.onclick = () => {
+    const pl = getSemana().planejadas.find((x) => x.id === b.dataset.planejada);
+    abrirGaveta(pl.tema, menu([
+      { op: 'criar', icone: 'brilho', rotulo: 'Criar esta prova agora', dica: `${pl.materia} · ${pl.turma} · ${dataLonga(pl.data, true)}` },
+      { op: 'editar', icone: 'editar', rotulo: 'Mudar o planejamento' },
+      '-',
+      { op: 'tirar', icone: 'lixo', rotulo: 'Tirar da semana', perigo: true },
+    ]), (g) => g.addEventListener('click', (e) => {
+      const op = e.target.closest('[data-op]')?.dataset.op; if (!op) return;
+      if (op === 'criar') {
+        fecharGaveta();
+        rascunho = novoRascunho();
+        Object.assign(rascunho, { materia: pl.materia, serie: pl.serie, turma: pl.turma, tema: pl.tema, planejadaId: pl.id, passo: 2 });
+        location.hash = '#/nova';
+      }
+      if (op === 'editar') { fecharGaveta(); setTimeout(() => gavetaPlanejar(pl), 220); }
+      if (op === 'tirar') {
+        const s2 = getSemana(); s2.planejadas = s2.planejadas.filter((x) => x.id !== pl.id); salvarSemana(s2);
+        fecharGaveta(); telaSemana(); aviso('Prova tirada da semana.');
+      }
+    }));
+  }));
+  main.querySelector('#b-criar-faltam')?.addEventListener('click', () => {
+    const faltando = itens.filter((it) => !it.prova);
+    const base = novoRascunho();
+    criarLote({
+      linhas: faltando.map((it) => ({ materia: it.pl.materia, serie: it.pl.serie, turma: it.pl.turma, tema: it.pl.tema, planejadaId: it.pl.id })),
+      dificuldade: base.dificuldade, quantidade: base.quantidade, tipos: base.tipos, adaptada: true, figuras: base.figuras, modo: base.modo,
+      versoes: getPerfis().map(novaVersao),
+    });
+  });
+}
+function gavetaPeriodo() {
+  const s = getSemana() || { inicio: isoHoje(), fim: isoHoje(14), entrega: isoHoje(14), planejadas: [] };
+  abrirGaveta('Semana de provas', `<form id="f-periodo">
+    <label class="campo-apta"><span>Começa em</span><input type="date" name="inicio" value="${s.inicio}" required /></label>
+    <label class="campo-apta"><span>Termina em</span><input type="date" name="fim" value="${s.fim}" required /></label>
+    <label class="campo-apta"><span>Entrega na coordenação</span><input type="date" name="entrega" value="${s.entrega || s.fim}" /></label>
+    <button class="btn-apta">Salvar período</button></form>`, (g) => {
+    const f = g.querySelector('form');
+    f.onsubmit = (ev) => {
+      ev.preventDefault();
+      if (f.fim.value < f.inicio.value) { aviso('O fim precisa ser depois do começo.'); return; }
+      salvarSemana({ ...s, inicio: f.inicio.value, fim: f.fim.value, entrega: f.entrega.value || f.fim.value });
+      fecharGaveta(); telaSemana();
+    };
+  });
+}
+function gavetaPlanejar(existente = null) {
+  const s = getSemana();
+  const turmas = getTurmas();
+  const pl = existente || { materia: 'Matemática', turma: turmas[0]?.nome || '', serie: turmas[0]?.serie || '5º ano', tema: '', data: s.inicio };
+  abrirGaveta(existente ? 'Mudar o planejamento' : 'Planejar uma prova', `<form id="f-plan">
+    <label class="campo-apta"><span>Turma</span><select name="turma">${turmas.map((t) => `<option value="${esc(t.id)}" ${t.nome === pl.turma ? 'selected' : ''}>${esc(t.nome)}</option>`).join('')}<option value="__nova">+ Nova turma…</option></select></label>
+    <label class="campo-apta"><span>Matéria</span><select name="materia">${todasMaterias().map((m) => `<option ${m === pl.materia ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></label>
+    <label class="campo-apta"><span>Conteúdo</span><input name="tema" value="${esc(pl.tema)}" placeholder="Ex.: frações" required autocomplete="off" /></label>
+    <label class="campo-apta"><span>Dia da prova</span><input type="date" name="data" value="${pl.data}" min="${s.inicio}" max="${s.fim}" required /></label>
+    <button class="btn-apta">${existente ? 'Salvar' : 'Adicionar à semana'}</button></form>`, (g) => {
+    const f = g.querySelector('form');
+    f.turma.onchange = () => { if (f.turma.value === '__nova') { fecharGaveta(); setTimeout(() => gavetaTurma(() => setTimeout(() => gavetaPlanejar(existente), 220)), 220); } };
+    f.onsubmit = (ev) => {
+      ev.preventDefault();
+      const t = turmas.find((x) => x.id === f.turma.value);
+      if (!t || !f.tema.value.trim()) { aviso('Escolha a turma e escreva o conteúdo.'); return; }
+      const novo = { id: pl.id || uid(), materia: f.materia.value, turma: t.nome, serie: t.serie, tema: f.tema.value.trim(), data: f.data.value, provaId: pl.provaId || null };
+      const s2 = getSemana();
+      s2.planejadas = existente ? s2.planejadas.map((x) => (x.id === novo.id ? novo : x)) : [...(s2.planejadas || []), novo];
+      salvarSemana(s2); fecharGaveta(); telaSemana();
+    };
+  });
+}
+
+/* ---------- Prova: versões adaptadas, refazer, exportar ---------- */
+function painelVersaoHTML(p, v) {
+  const vs = p.versoes;
+  return `<div class="versoes-chips">${vs.map((x, k) => `<button type="button" class="chip-apta" data-ver="${k}" aria-pressed="${k === estado.versao}">${ic(x.icone === 'imagem' ? 'imagem' : 'texto')} Versão ${k + 1}</button>`).join('')}
+      <button type="button" class="chip-apta mais" id="b-nova-versao">${ic('mais')} Nova versão</button></div>
+    ${v ? `<div class="editando-cartao"><div class="rot">EDITANDO A VERSÃO ${estado.versao + 1} DE ${vs.length}</div>
+        <div class="ed-linha"><strong>${esc(v.nome)}</strong><button type="button" class="texto-btn" id="b-renomear-versao">Renomear</button></div>
+        <small>Da prova ${esc(tituloCurto(p))}${turmaDe(p) ? ` · ${esc(turmaDe(p))}` : ''}</small></div>
+      <ul class="lista-apta">${AJUSTES_VERSAO.map(([k, rot, sub, icn]) => `<li><label class="opcao-linha">${ic(icn)}<span class="txt">${rot}${sub ? `<small>${sub}</small>` : ''}</span>
+        <input type="checkbox" class="switch-apta" data-cfg="${k}" ${v.cfg[k] ? 'checked' : ''}/></label></li>`).join('')}</ul>
+      <div class="acoes" style="margin:12px 0 0;gap:8px"><button type="button" class="btn-apta suave pequeno" id="b-dup-versao">${ic('copiar', 'p')} Duplicar versão</button>
+        <button type="button" class="btn-apta claro pequeno" id="b-apagar-versao" style="color:var(--vermelho)">${ic('lixo', 'p')} Tirar esta versão</button></div>
+      <h3 class="previa-titulo">Como fica no papel</h3>`
+    : '<div class="cartao-apta vazio-apta" style="margin:0 0 12px"><strong>Nenhuma versão adaptada</strong>Toque em Nova versão para criar uma a partir dos seus perfis de adaptação.</div>'}`;
+}
+function atualizarContagemVersoes() {
+  const b = document.querySelector('.seg-apta [data-aba="adaptada"]');
+  if (b) b.textContent = `Adaptadas (${estado.prova.versoes.length})`;
+}
+function ligarPainelVersao(el) {
+  const p = estado.prova;
+  const v = p.versoes[estado.versao];
+  el.querySelectorAll('[data-ver]').forEach((b) => (b.onclick = () => { estado.versao = Number(b.dataset.ver); transicao(desenharFolha, 'segmento'); }));
+  el.querySelector('#b-nova-versao').onclick = () => escolherPerfil((nova) => {
+    p.questoes.forEach((q) => { if (!q.adaptada?.enunciado) q.adaptada = adaptarSemIA(q); });
+    p.versoes.push(nova); p.temAdaptada = true; estado.versao = p.versoes.length - 1;
+    salvarDepois(); atualizarContagemVersoes(); desenharFolha(); aviso(`Versão ${p.versoes.length} criada: ${nova.nome}.`);
+  });
+  if (!v) return;
+  el.querySelectorAll('[data-cfg]').forEach((inp) => (inp.onchange = () => {
+    v.cfg[inp.dataset.cfg] = inp.checked;
+    if (inp.dataset.cfg === 'imagens') v.icone = inp.checked ? 'imagem' : 'texto';
+    salvarDepois(); desenharFolha();
+  }));
+  el.querySelector('#b-renomear-versao').onclick = () => abrirGaveta('Nome da versão', `<form><label class="campo-apta"><span>Nome</span><input name="nome" value="${esc(v.nome)}" autocomplete="off" /></label>
+    <button class="btn-apta">Salvar nome</button></form>`, (g) => {
+    const f = g.querySelector('form'); f.nome.focus(); f.nome.select();
+    f.onsubmit = (ev) => { ev.preventDefault(); v.nome = f.nome.value.trim() || v.nome; salvarDepois(); fecharGaveta(); desenharFolha(); };
+  });
+  el.querySelector('#b-dup-versao').onclick = () => {
+    p.versoes.splice(estado.versao + 1, 0, { ...structuredClone(v), id: uid(), nome: `${v.nome} (cópia)` });
+    estado.versao++; salvarDepois(); atualizarContagemVersoes(); desenharFolha();
+  };
+  el.querySelector('#b-apagar-versao').onclick = async () => {
+    if (!(await alertaIOS({ titulo: `Tirar a versão ${estado.versao + 1}?`, texto: `“${v.nome}” deixa de sair junto com esta prova. A original não muda.`, ok: 'Tirar', perigo: true }))) return;
+    p.versoes.splice(estado.versao, 1); p.temAdaptada = p.versoes.length > 0; estado.versao = Math.max(0, estado.versao - 1);
+    salvarDepois(); atualizarContagemVersoes(); desenharFolha();
+  };
+}
+
+const MOTIVOS_REFAZER = ['Resposta errada', 'Óbvia demais', 'Muito literal', 'Fácil demais', 'Difícil demais', 'Fora do conteúdo'];
+function gavetaRefazer(i) {
+  const q = estado.prova.questoes[i];
+  const temIA = iaDisponivel(getConfig());
+  abrirGaveta(`Refazer a questão ${i + 1}`, `<p class="cartao-apta" style="margin:0 0 16px;padding:12px 14px;box-shadow:none;border:0;background:var(--cinza-fill);font-size:.9rem;color:var(--texto-2)">${md(q.enunciado.slice(0, 240))}</p>
+    <h3 class="secao-azul" style="margin-top:0">O que não ficou bom?</h3>
+    <div class="chips-apta" role="group" aria-label="O que não ficou bom">${MOTIVOS_REFAZER.map((m) => `<button type="button" class="chip-apta" data-motivo="${esc(m)}" aria-pressed="false">${esc(m)}</button>`).join('')}</div>
+    <label class="campo-apta" style="margin-top:16px"><span class="visualmente-oculto">Explique melhor</span><textarea id="refazer-txt" placeholder="Quer explicar melhor? (opcional)"></textarea></label>
+    <button type="button" class="btn-apta" id="b-refazer">${ic('brilho')} Refazer questão</button>
+    <p class="ajuda" style="text-align:center">${temIA ? 'A nova questão é conferida antes de entrar na prova.' : 'Sem a criação automática, trocamos por outra do seu banco.'}</p>`, (g) => {
+    g.querySelectorAll('[data-motivo]').forEach((b) => (b.onclick = () => { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); vibrar(4); }));
+    g.querySelector('#b-refazer').onclick = () => {
+      const motivos = [...g.querySelectorAll('[data-motivo][aria-pressed="true"]')].map((b) => b.dataset.motivo);
+      const texto = g.querySelector('#refazer-txt').value.trim();
+      fecharGaveta();
+      if (!temIA) { trocarQuestao(i); return; }
+      novaQuestaoIA(i, `Refaça esta questão, que a professora não aprovou: "${q.enunciado.slice(0, 400)}". O que não ficou bom: ${motivos.join(', ') || 'ela pediu outra versão'}.${texto ? ` Explicação dela: ${texto}` : ''} Mantenha o mesmo conteúdo e tipo de questão.`);
+    };
+  });
+}
+
+function gavetaExportar() {
+  const p = estado.prova;
+  const escola = getConfig().escola;
+  let formato = 'word';
+  let moldura = getFolhaCfg().moldura;
+  const itens = [{ k: 'normal', rot: 'Original' }, ...p.versoes.map((v, k) => ({ k: `v${k}`, rot: `V${k + 1} · ${v.nome}`, versao: true })), { k: 'gabarito', rot: 'Gabarito', sub: 'Só para você' }];
+  const marcados = new Set(itens.map((i) => i.k));
+  abrirGaveta('Exportar', `<div class="seg-apta cinza" role="tablist" aria-label="Formato"><button type="button" role="tab" data-fmt="word" aria-selected="true">Word (.docx)</button><button type="button" role="tab" data-fmt="pdf" aria-selected="false">PDF</button></div>
+    <h3 class="secao-azul">O que vai junto</h3>
+    <ul class="lista-apta">${itens.map((it) => `<li><button type="button" class="item-apta exp-item ${it.versao ? 'marcado' : ''}" data-exp="${it.k}" aria-pressed="true">
+      <span class="txt"><strong>${esc(it.rot)}</strong>${it.sub ? `<small>${it.sub}</small>` : ''}</span><span class="marca-circ">${ic('certo')}</span></button></li>`).join('')}</ul>
+    <h3 class="secao-azul">Moldura</h3>${molduraPicker(moldura)}
+    <ul class="lista-apta" style="margin-top:16px">${itemLink('#/ajustes/modelo', 'escola', 'Cabeçalho', `${escola.nome || 'Sua escola'} · ${escola.modelo ? 'trazido do seu Word' : 'padrão do app'}`)}</ul>
+    <button type="button" class="btn-apta" id="b-exp-ir" style="margin-top:16px"></button>`, (g) => {
+    const botao = g.querySelector('#b-exp-ir');
+    const rotulo = () => { const n = marcados.size; botao.textContent = formato === 'pdf' ? (n ? `Imprimir ou salvar ${plural(n, 'página', 'páginas')} em PDF` : 'Marque o que vai junto') : n ? `Exportar ${plural(n, 'arquivo', 'arquivos')}` : 'Marque o que vai junto'; botao.disabled = !n; };
+    rotulo();
+    g.querySelectorAll('[data-fmt]').forEach((b) => (b.onclick = () => { formato = b.dataset.fmt; g.querySelectorAll('[data-fmt]').forEach((x) => x.setAttribute('aria-selected', String(x === b))); rotulo(); }));
+    g.querySelectorAll('[data-exp]').forEach((b) => (b.onclick = () => {
+      const k = b.dataset.exp; if (marcados.has(k)) marcados.delete(k); else marcados.add(k);
+      b.setAttribute('aria-pressed', String(marcados.has(k))); if (b.dataset.exp.startsWith('v')) b.classList.toggle('marcado', marcados.has(k));
+      rotulo(); vibrar(4);
+    }));
+    ligarMolduras(g, (m) => { moldura = m; if (m === 'escola' && !escola.modelo) { fecharGaveta(); location.hash = '#/ajustes/modelo'; } });
+    botao.onclick = async () => {
+      const sel = itens.filter((i) => marcados.has(i.k));
+      gravarJ('apta.folha', { ...getFolhaCfg(), moldura });
+      fecharGaveta();
+      if (formato === 'pdf') { imprimirLote(sel.map((i) => i.k)); return; }
+      let ok = 0;
+      for (const it of sel) {
+        try {
+          if (it.k === 'normal' || it.k === 'gabarito') await baixarWord(p, escola, it.k, { moldura });
+          else { const v = p.versoes[Number(it.k.slice(1))]; await baixarWord({ ...provaDaVersao(p, v), titulo: `${p.titulo} - ${v.nome}` }, escola, 'adaptada', { moldura }); }
+          ok++;
+        } catch (e) { console.error(e); }
+      }
+      aviso(ok === sel.length ? `${plural(ok, 'arquivo baixado', 'arquivos baixados')}. Abra no Word para editar.` : `Baixei ${ok} de ${sel.length}. Tente de novo os que faltaram.`);
+    };
+  });
+}
+/** PDF: monta as folhas escolhidas uma depois da outra e abre a impressão (Salvar como PDF). */
+function imprimirLote(chaves) {
+  const p = estado.prova;
+  const escola = getConfig().escola;
+  const m = getFolhaCfg().moldura;
+  let cont = document.getElementById('lote-impressao');
+  if (!cont) { cont = document.createElement('div'); cont.id = 'lote-impressao'; document.body.append(cont); }
+  cont.innerHTML = chaves.map((k) => {
+    if (k === 'gabarito') return `<div class="folha moldura-${m}">${cabecalhoHTML(p, escola, false)}${gabaritoHTML(p)}</div>`;
+    const v = k === 'normal' ? null : p.versoes[Number(k.slice(1))];
+    const vista = v ? provaDaVersao(p, v) : p;
+    const versao = v ? 'adaptada' : 'normal';
+    const c = v?.cfg || {};
+    return `<div class="folha moldura-${m} ${v ? `adaptada ${c.letraMaior ? '' : 'sem-letra-maior'} ${c.dicas ? '' : 'sem-dicas'} ${c.negrito ? '' : 'sem-negrito'}` : ''}">${cabecalhoHTML(vista, escola, false)}
+      <div class="titulo-prova">${esc(p.titulo)}</div>${p.instrucoes ? `<div class="instrucoes"><strong>Instruções:</strong><div>${md(p.instrucoes)}</div></div>` : ''}
+      ${vista.questoes.map((q, i) => questaoHTML(q, i, versao)).join('')}</div>`;
+  }).join('').replace(/contenteditable="true"/g, '');
+  document.body.classList.add('imprimindo-lote');
+  const fim = () => { document.body.classList.remove('imprimindo-lote'); removeEventListener('afterprint', fim); };
+  addEventListener('afterprint', fim);
+  setTimeout(() => window.print(), 60);
+}
+
+/** "Usar" no Banco: põe a questão numa prova existente ou começa uma prova com ela. */
+function gavetaUsar(q) {
+  const provas = getProvas().sort((a, b) => (b.materia === q.materia) - (a.materia === q.materia)).slice(0, 6);
+  abrirGaveta('Usar esta questão', `${menu([
+    { op: 'nova', icone: 'mais', rotulo: 'Começar uma prova com ela', dica: `${q.materia} · ${q.serie}` },
+    ...(provas.length ? ['-'] : []),
+    ...provas.map((p) => ({ op: `p:${p.id}`, icone: 'doc', rotulo: `Pôr em “${tituloCurto(p)}”`, dica: `${p.materia} · ${turmaDe(p)} · ${plural(p.questoes.length, 'questão', 'questões')}` })),
+  ])}`, (g) => g.addEventListener('click', (e) => {
+    const op = e.target.closest('[data-op]')?.dataset.op; if (!op) return;
+    fecharGaveta();
+    if (op === 'nova') {
+      const cfg = getConfig();
+      const pedido = { materia: q.materia, serie: q.serie, turma: '', tema: q.tema || q.materia, dificuldade: q.dificuldade || 'medio', quantidade: 1, tipos: [q.tipo], adaptada: true, modo: 'banco' };
+      const prova = { id: uid(), titulo: `Avaliação de ${q.materia} — ${(q.tema || q.materia).slice(0, 60)}`, materia: q.materia, serie: q.serie, turma: '', tema: q.tema, dificuldade: pedido.dificuldade,
+        data: new Date().toLocaleDateString('pt-BR'), instrucoes: getFolhaCfg().instrucoes ? cfg.escola.instrucoes || '' : '', temAdaptada: true, versoes: getPerfis().map(novaVersao), pedido, questoes: [prepararParaProva(q, pedido)], criadaEm: Date.now() };
+      salvarProva(prova); location.hash = `#/prova/${prova.id}`; aviso('Prova começada com esta questão. Use + Questão para completar.');
+      return;
+    }
+    const p = getProva(op.slice(2));
+    p.questoes.push(prepararParaProva(q, p)); salvarProva(p);
+    aviso(`Questão posta no fim de “${tituloCurto(p)}”.`, { rotulo: 'Abrir', fn: () => { location.hash = `#/prova/${p.id}`; } });
+  }));
+}
+
+/* ---------- Importar do livro (câmera) ---------- */
+function reduzirFoto(arquivo, max = 1600) {
+  return new Promise((ok, falha) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = Object.assign(document.createElement('canvas'), { width: Math.round(img.width * k), height: Math.round(img.height * k) });
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      ok({ src: c.toDataURL('image/jpeg', 0.85), w: c.width, h: c.height });
+    };
+    img.onerror = falha;
+    img.src = URL.createObjectURL(arquivo);
+  });
+}
+function telaLivro() {
+  titulo('Importar do livro');
+  const cfg = getConfig();
+  const temIA = iaDisponivel(cfg);
+  const info = { livro: lerJ('apta.ultimoLivro', ''), materia: filtroBanco.materia || lerJ('apta.ultimaMateriaLivro', 'Matemática'), serie: lerJ('apta.ultimaSerieLivro', '4º ano'), pagina: '' };
+  let foto = null;
+  let achadas = [];
+  const marcadas = new Set();
+  let ctrl = null;
+  main.innerHTML = `<div class="livro-apta">
+    <div class="ceu-barra"><a class="ceu-botao" href="#/banco">Cancelar</a><div class="ceu-titulo" id="livro-titulo">Página do livro</div>
+      <div><label class="ceu-botao icone" for="livro-galeria" aria-label="Escolher uma foto da galeria">${ic('imagem')}</label></div></div>
+    <div class="livro-foto" id="livro-foto"><div class="livro-vazio">${ic('camera')}<strong>Fotografe a página com as questões</strong>
+      <span style="opacity:.8;font-size:.9rem">A IA encontra cada questão e a resposta. Você escolhe quais entram no banco.</span>
+      <label class="btn-apta" for="livro-camera" style="width:auto;margin-top:6px">${ic('camera')} Tirar foto</label></div></div>
+    <input type="file" id="livro-camera" accept="image/*" capture="environment" class="sr" />
+    <input type="file" id="livro-galeria" accept="image/*" class="sr" />
+    <div class="livro-folha" id="livro-folha">
+      <form id="f-livro" class="pilha" style="gap:0">
+        <label class="campo-apta"><span>Livro</span><input name="livro" value="${esc(info.livro)}" placeholder="Ex.: Livro Ápis" autocomplete="off" /></label>
+        <div class="duas-colunas" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label class="campo-apta"><span>Matéria</span><select name="materia">${todasMaterias().map((m) => `<option ${m === info.materia ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></label>
+          <label class="campo-apta"><span>Ano</span><select name="serie">${SERIES.map((s) => `<option ${s === info.serie ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></label></div>
+      </form>
+      ${temIA ? '' : '<p class="ajuda">Para ler a foto, a criação automática precisa estar ligada em Ajustes.</p>'}
+    </div></div>`;
+  const folha = main.querySelector('#livro-folha');
+  const area = main.querySelector('#livro-foto');
+  const form = main.querySelector('#f-livro');
+  const lerInfo = () => { info.livro = form.livro.value.trim(); info.materia = form.materia.value; info.serie = form.serie.value; };
+  const desenharCaixas = () => {
+    if (!foto) return;
+    const W = area.clientWidth, H = area.clientHeight;
+    const k = Math.min(W / foto.w, H / foto.h);
+    const w = foto.w * k, h = foto.h * k;
+    area.innerHTML = `<div class="quadro" style="position:relative;width:${w}px;height:${h}px"><img src="${foto.src}" alt="Foto da página" style="width:100%;height:100%" />
+      ${achadas.map((q, j) => q.caixa ? `<div class="caixa-q" style="left:${q.caixa.x}%;top:${q.caixa.y}%;width:${q.caixa.w}%;height:${q.caixa.h}%"><span>${marcadas.has(j) ? ic('certo') : ''} Questão ${q.numero || j + 1}</span></div>` : '').join('')}</div>`;
+  };
+  const desenharLista = () => {
+    lerInfo();
+    const n = marcadas.size;
+    folha.innerHTML = `<h2>${plural(achadas.length, 'questão nesta página', 'questões nesta página')}</h2>
+      <p class="meta-livro">${esc(info.livro || 'Livro')} · ${esc(info.materia)} ${esc(info.serie)}</p>
+      <ul class="lista-apta">${achadas.map((q, j) => `<li><button type="button" class="item-apta" data-q="${j}" aria-pressed="${marcadas.has(j)}">
+        <span class="txt"><strong>${q.numero ? `${q.numero}. ` : ''}${esc(q.enunciado.replace(/\*\*/g, '').slice(0, 70))}</strong><small>${q.precisaFigura ? 'Conferida · com imagem' : `Conferida · resposta ${esc(textoGabarito(q).replace(/^[a-e]\)\s*/, '').slice(0, 30))}`}</small></span>
+        <span class="marca-circ">${ic('certo')}</span></button></li>`).join('')}</ul>
+      <button type="button" class="btn-apta" id="b-livro-add" style="margin-top:14px" ${n ? '' : 'disabled'}>${n ? `Adicionar ${n} ao banco` : 'Marque as questões'}</button>
+      <div style="text-align:center"><label class="texto-btn" for="livro-camera" style="display:inline-flex;align-items:center">Fotografar outra página</label></div>`;
+    folha.querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => { const j = Number(b.dataset.q); if (marcadas.has(j)) marcadas.delete(j); else marcadas.add(j); desenharLista(); desenharCaixas(); vibrar(4); }));
+    folha.querySelector('#b-livro-add').onclick = () => {
+      const fonte = { nome: `${info.livro || 'Livro'}${info.pagina ? `, p. ${info.pagina}` : ''}`, pagina: Number(info.pagina) || 0, material: info.livro };
+      const sel = [...marcadas].map((j) => achadas[j]).map(({ caixa, numero, precisaFigura, ...q }) => ({ ...q, materia: info.materia, serie: info.serie, tema: q.tema || info.livro || info.materia, dificuldade: 'medio', fonte }));
+      const n2 = adicionarAoBanco(sel, 'revisada');
+      gravarJ('apta.ultimoLivro', info.livro); gravarJ('apta.ultimaMateriaLivro', info.materia); gravarJ('apta.ultimaSerieLivro', info.serie);
+      location.hash = '#/banco';
+      setTimeout(() => aviso(`${plural(n2, 'questão entrou', 'questões entraram')} no banco como conferidas.`), 300);
+    };
+  };
+  const ler = async (arq) => {
+    if (!arq) return;
+    if (!temIA) { aviso('Ligue a criação automática em Ajustes para ler a foto.'); return; }
+    lerInfo();
+    foto = await reduzirFoto(arq);
+    achadas = []; marcadas.clear();
+    desenharCaixas();
+    const formHTML = form.outerHTML;
+    folha.innerHTML = `${formHTML}<div class="carregando" role="status">Lendo a página e conferindo as respostas…</div>`;
+    ctrl?.abort(); ctrl = new AbortController();
+    try {
+      const r = await questoesDaFoto(cfg, foto.src, info, ctrl.signal);
+      achadas = r.questoes;
+      info.pagina = r.pagina || '';
+      main.querySelector('#livro-titulo').textContent = info.pagina ? `Página ${info.pagina}` : 'Página do livro';
+      achadas.forEach((_, j) => marcadas.add(j));
+      if (!achadas.length) { folha.innerHTML = `${formHTML}<p class="ajuda">Não achei questões nesta foto. Tente com a página inteira e boa luz.</p>`; return; }
+      desenharLista(); desenharCaixas();
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      console.error(e);
+      folha.innerHTML = `${formHTML}<p class="erro-apta">${ic('alerta', 'p')} ${esc(e instanceof ErroIA ? e.message : 'Não consegui ler a foto agora. Tente de novo.')}</p>`;
+    }
+  };
+  main.querySelector('#livro-camera').onchange = (e) => { ler(e.target.files[0]); e.target.value = ''; };
+  main.querySelector('#livro-galeria').onchange = (e) => { ler(e.target.files[0]); e.target.value = ''; };
+  addEventListener('resize', desenharCaixas);
+}
+
+/* ---------- Ajustes em lista (como os Ajustes do iPhone) ---------- */
+function telaAjustes(sub) {
+  if (sub === 'escola' || sub === 'ia') return telaAjustesEscola(sub);
+  if (sub === 'modelo') return telaModelo();
+  if (sub === 'turmas') return telaTurmas();
+  if (sub === 'perfis') return telaPerfis();
+  titulo('Ajustes');
+  const cfg = getConfig();
+  const e = cfg.escola;
+  const turmas = getTurmas();
+  const nomeMold = (Object.fromEntries(MOLDURAS)[getFolhaCfg().moldura] || 'Simples').toLowerCase();
+  const instr = (e.instrucoes || '').split('\n')[0];
+  main.innerHTML = `<div class="ajustes-apta"><header class="ceu">
+      <div class="ceu-grande"><div><h1>Apta do seu jeito</h1><p>Escola, turmas e preferências de criação.</p></div>${VISTO()}</div>
+      <h2 class="grupo-titulo">${ic('escola')} Escola</h2>
+      <div class="pilha-cartao"><ul class="lista-apta">
+        ${itemLink('#/ajustes/escola', 'escola', 'Minha escola', [e.nome, e.cidade].filter(Boolean).join(' · ') || 'Nome, cidade e logotipo')}
+        ${itemLink('#/ajustes/modelo', 'doc', 'Modelo da prova', `${e.modelo ? 'Cabeçalho do seu Word' : 'Cabeçalho padrão'} · Moldura ${nomeMold}`)}
+        ${itemLink('#/ajustes/turmas', 'turma', 'Turmas', turmas.map((t) => t.nome).join(' · ') || 'Cadastre suas turmas')}
+      </ul></div>
+      <h2 class="grupo-titulo">${ic('brilho')} Criação</h2>
+      <div class="pilha-cartao"><ul class="lista-apta">
+        ${itemLink('#/ajustes/perfis', 'inclusao', 'Perfis de adaptação', getPerfis().map((p) => p.nome).join(' · ') || 'Nenhum perfil', true)}
+        <li><label class="item-apta">${ic('certoCirc')}<span class="txt"><strong>Conferência automática</strong><small>Revisa cada resposta antes de você ver</small></span>
+          <input type="checkbox" class="switch-apta" id="sw-revisora" ${cfg.ia.revisora ? 'checked' : ''} /></label></li>
+        ${itemLink('#/ajustes/escola', 'lista', 'Instruções padrão', instr ? `${instr.slice(0, 38)}${instr.length > 38 ? '…' : ''}` : 'Saem abaixo do cabeçalho')}
+      </ul></div>
+    </header>
+    <div class="depois-ceu">
+      <h2 class="grupo-titulo">${ic('aparencia')} Aplicativo</h2>
+      <ul class="lista-apta">
+        <li><div class="item-apta">${ic('aparencia')}<span class="txt"><strong>Aparência</strong></span></div>
+          <div style="padding:0 16px 14px"><div class="seg-apta cinza" role="radiogroup" aria-label="Tema">${TEMAS.map(([v, r]) => `<button type="button" role="radio" data-tema="${v}" aria-selected="${temaAtual() === v}" aria-checked="${temaAtual() === v}">${r}</button>`).join('')}</div></div></li>
+        ${itemLink('#/ajustes/ia', 'brilho', 'Criação automática', iaDisponivel(cfg) ? 'Ligada' : 'Desligada')}
+        <li><button type="button" class="item-apta" id="b-exemplo">${ic('doc')}<span class="txt"><strong>Preencher com um exemplo</strong><small>Turmas, semana de provas e provas prontas para ver o app funcionando</small></span></button></li>
+      </ul>
+      <p class="ajuda" style="text-align:center;margin:20px 0">Apta · desenhado seguindo as Human Interface Guidelines da Apple</p>
+    </div></div>`;
+  main.querySelector('#sw-revisora').onchange = (ev) => { const c = getConfig(); salvarConfig({ ...c, ia: { ...c.ia, revisora: ev.target.checked } }); aviso(ev.target.checked ? 'Conferência automática ligada.' : 'Conferência automática desligada.'); };
+  main.querySelectorAll('[data-tema]').forEach((b) => (b.onclick = () => {
+    try { localStorage.setItem('pf.tema', b.dataset.tema); } catch {}
+    main.querySelectorAll('[data-tema]').forEach((x) => { x.setAttribute('aria-selected', String(x === b)); x.setAttribute('aria-checked', String(x === b)); });
+    transicao(() => aplicarTema(b.dataset.tema), 'segmento');
+  }));
+  main.querySelector('#b-exemplo').onclick = preencherExemplo;
+}
+function telaTurmas() {
+  titulo('Turmas');
+  const turmas = getTurmas();
+  main.innerHTML = `<div class="sub-tela">${ceu({ esquerda: voltarBtn('#/ajustes', 'Ajustes'), titulo: 'Turmas', baixo: true })}
+    <div class="folha-branca"><div class="cabeca-folha"><h1>Suas turmas</h1><p>Aparecem na hora de criar a prova.</p></div>
+    ${turmas.length ? `<ul class="lista-apta">${turmas.map((t) => `<li><button type="button" class="item-apta" data-turma="${t.id}">${ic('turma')}<span class="txt"><strong>${esc(t.nome)}</strong><small>${esc(descTurma(t))}</small></span><span class="chev">${ic('seta')}</span></button></li>`).join('')}</ul>`
+      : '<div class="cartao-apta vazio-apta" style="margin:0"><strong>Nenhuma turma ainda</strong>Adicione as turmas em que você dá aula.</div>'}
+    <button type="button" class="link-apta" id="b-nova-turma" style="margin-top:8px">${ic('mais')} Nova turma</button></div></div>`;
+  main.querySelector('#b-nova-turma').onclick = () => gavetaTurma(() => telaTurmas());
+  main.querySelectorAll('[data-turma]').forEach((b) => (b.onclick = () => {
+    const t = turmas.find((x) => x.id === b.dataset.turma);
+    abrirGaveta(t.nome, menu([{ op: 'editar', icone: 'editar', rotulo: 'Editar turma' }, '-', { op: 'apagar', icone: 'lixo', rotulo: 'Apagar turma', perigo: true }]), (g) => g.addEventListener('click', (e) => {
+      const op = e.target.closest('[data-op]')?.dataset.op; if (!op) return;
+      fecharGaveta();
+      if (op === 'editar') setTimeout(() => gavetaTurma(() => telaTurmas(), t), 220);
+      if (op === 'apagar') { salvarTurmas(getTurmas().filter((x) => x.id !== t.id)); telaTurmas(); aviso('Turma apagada.', { rotulo: 'Desfazer', fn: () => { salvarTurmas([...getTurmas(), t]); telaTurmas(); } }); }
+    }));
+  }));
+}
+function telaPerfis() {
+  titulo('Perfis de adaptação');
+  const perfis = getPerfis();
+  main.innerHTML = `<div class="sub-tela">${ceu({ esquerda: voltarBtn('#/ajustes', 'Ajustes'), titulo: 'Perfis de adaptação', baixo: true })}
+    <div class="folha-branca"><div class="cabeca-folha"><h1>Uma prova, vários jeitos</h1><p>Cada perfil vira uma versão adaptada nas provas novas.</p></div>
+    ${perfis.map((p, k) => `<div class="cartao-apta versao-cartao" style="box-shadow:none"><div class="topo-v"><span class="tag-v">V${k + 1}</span><strong>${esc(p.nome)}</strong></div>
+      <p>${esc(resumoCfg(p.cfg))}</p><div class="duas"><button type="button" class="btn-apta suave pequeno" style="width:100%" data-editar="${k}">Editar ajustes</button>
+      <button type="button" class="btn-apta claro pequeno" style="width:100%;color:var(--vermelho)" data-apagar="${k}">Apagar</button></div></div>`).join('')}
+    <button type="button" class="link-apta" id="b-novo-perfil">${ic('mais')} Novo perfil</button>
+    <p class="ajuda">Sem rótulos no papel: nada na folha identifica o aluno que recebe a versão adaptada.</p></div></div>`;
+  main.querySelectorAll('[data-editar]').forEach((b) => (b.onclick = () => {
+    const k = Number(b.dataset.editar); const v = structuredClone(perfis[k]);
+    gavetaAjustesVersao(v, (nv) => { perfis[k] = { nome: nv.nome, icone: nv.icone, cfg: nv.cfg }; salvarPerfis(perfis); telaPerfis(); }, { tituloG: 'Editar perfil' });
+  }));
+  main.querySelectorAll('[data-apagar]').forEach((b) => (b.onclick = () => { perfis.splice(Number(b.dataset.apagar), 1); salvarPerfis(perfis); telaPerfis(); }));
+  main.querySelector('#b-novo-perfil').onclick = () => gavetaAjustesVersao({ nome: 'Novo perfil', cfg: { letraMaior: true, frasesCurtas: true, dicas: false, tresAlternativas: false, negrito: false, imagens: false } },
+    (nv) => { perfis.push({ nome: nv.nome, icone: nv.icone, cfg: nv.cfg }); salvarPerfis(perfis); telaPerfis(); }, { tituloG: 'Novo perfil' });
+}
+function telaModelo() {
+  titulo('Modelo da prova');
+  const cfg = getConfig();
+  const e = cfg.escola;
+  const fcfg = getFolhaCfg();
+  let moldura = fcfg.moldura;
+  main.innerHTML = `<div class="sub-tela">${ceu({ esquerda: voltarBtn('#/ajustes', 'Ajustes'), titulo: 'Modelo da prova', baixo: true })}
+    <div class="folha-branca"><div class="cabeca-folha"><h1>A prova com a sua escola</h1><p>Personalize o cabeçalho e a apresentação.</p></div>
+    <div class="previa-modelo" id="previa-modelo"></div>
+    <p class="status-ok" id="modelo-status"></p>
+    <label class="btn-apta claro" for="m-word">${e.modelo ? 'Trocar arquivo do cabeçalho' : 'Trazer o cabeçalho do seu Word'}</label>
+    <input type="file" id="m-word" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr" />
+    ${e.modelo ? '<div style="text-align:center"><button type="button" class="texto-btn" id="b-modelo-padrao">Voltar ao cabeçalho padrão do app</button></div>' : ''}
+    <h2 class="secao-azul">${ic('moldura')} Moldura</h2>${molduraPicker(moldura)}
+    <h2 class="secao-azul">${ic('doc')} Na folha</h2>
+    <ul class="lista-apta">
+      <li><label class="opcao-linha">${ic('lista')}<span class="txt">Instruções padrão no topo<small>${esc((e.instrucoes || 'Nenhuma ainda').split('\n')[0].slice(0, 48))}</small></span><input type="checkbox" class="switch-apta" id="m-instr" ${fcfg.instrucoes ? 'checked' : ''} /></label></li>
+      ${itemLink('#/ajustes/escola', 'escola', 'Nome, cidade e logotipo', e.nome || 'Minha escola')}
+    </ul></div>
+    <div class="barra-acoes"><button type="button" class="btn-apta" id="b-salvar-modelo">Salvar modelo</button></div></div>`;
+  const previa = () => {
+    const e2 = getConfig().escola;
+    main.querySelector('#previa-modelo').innerHTML = cabecalhoHTML({ materia: 'Matemática', serie: '4º ano', turma: getTurmas()[0]?.nome || '', data: '' }, e2, false);
+    main.querySelector('#modelo-status').innerHTML = e2.modelo ? `${ic('certoCirc')} Trazido de “${esc(e2.modelo.nome)}.docx”, igual ao original.` : `${ic('certoCirc')} Cabeçalho padrão do app, com os dados da sua escola.`;
+  };
+  previa();
+  ligarMolduras(main, (m) => { moldura = m; if (m === 'escola' && !getConfig().escola.modelo) main.querySelector('#m-word').click(); });
+  main.querySelector('#b-modelo-padrao')?.addEventListener('click', () => { const c = getConfig(); salvarConfig({ ...c, escola: { ...c.escola, modelo: null, campos: [] } }); telaModelo(); aviso('O cabeçalho voltou ao padrão do app.'); });
+  main.querySelector('#m-word').onchange = async (ev) => {
+    const arq = ev.target.files[0]; ev.target.value = '';
+    if (!arq) return;
+    try {
+      const r = await lerCabecalhoWord(arq);
+      if (!r.modelo && !r.achou) { aviso('Não achei um cabeçalho nesse arquivo.'); return; }
+      const c = getConfig();
+      const esc2 = { ...c.escola };
+      if (r.modelo) { const id = uid(); await guardarArquivo({ id, nome: arq.name, bytes: r.modelo, criadoEm: Date.now() }); esc2.modelo = { id, nome: arq.name.replace(/\.docx$/i, '') }; esc2.campos = []; }
+      if (r.nome) esc2.nome = r.nome;
+      if (r.cidade) esc2.cidade = r.cidade;
+      if (r.professora) esc2.professora = r.professora;
+      if (r.instrucoes) esc2.instrucoes = r.instrucoes;
+      if (r.logo) esc2.logo = await reduzirImagem(r.logo, 240);
+      if (!r.modelo && r.campos?.length) esc2.campos = r.campos;
+      salvarConfig({ ...c, escola: esc2 });
+      previa(); aviso('Cabeçalho trazido do seu Word.');
+    } catch (err) { console.error(err); aviso(err.message || 'Não consegui ler esse arquivo.'); }
+  };
+  main.querySelector('#b-salvar-modelo').onclick = () => {
+    gravarJ('apta.folha', { ...getFolhaCfg(), moldura, instrucoes: main.querySelector('#m-instr').checked });
+    aviso('Modelo salvo. Vale para as próximas provas e exportações.');
+    location.hash = '#/ajustes';
+  };
+}
+
+/** Dados de exemplo para ver o app como no protótipo (turmas, semana e provas). */
+async function preencherExemplo() {
+  if (!(await alertaIOS({ titulo: 'Preencher com um exemplo?', texto: 'Cria duas turmas, uma semana de provas e algumas provas com as questões de exemplo. Nada do que você já tem é apagado.', ok: 'Preencher' }))) return;
+  const cfg = getConfig();
+  salvarConfig({ ...cfg, escola: { ...cfg.escola, nome: cfg.escola.nome || 'E.M. Vila Velha', professora: cfg.escola.professora || 'Caroline', cidade: cfg.escola.cidade || 'Vila Velha, ES' } });
+  const atuais = lerJ('apta.turmas', []) || [];
+  const novas = [{ id: uid(), nome: '4º ano B', serie: '4º ano', descricao: 'Multidisciplinar', alunos: 28 }, { id: uid(), nome: '5º ano A', serie: '5º ano', descricao: 'Matemática', alunos: 31 }]
+    .filter((t) => !atuais.some((a) => a.nome === t.nome));
+  salvarTurmas([...novas, ...atuais]);
+  const hoje = deIso(isoHoje());
+  const seg = new Date(hoje); seg.setDate(hoje.getDate() + ((8 - hoje.getDay()) % 7 || 7));
+  const dia = (k) => { const d = new Date(seg); d.setDate(seg.getDate() + k); return isoDe(d); };
+  const plano = [
+    ['Matemática', '4º ano B', '4º ano', 'Frações', 0], ['Matemática', '5º ano A', '5º ano', 'Frações e decimais', 0],
+    ['Português', '4º ano B', '4º ano', 'Fábulas', 1], ['Ciências', '4º ano B', '4º ano', 'Seres vivos', 1],
+    ['História', '4º ano B', '4º ano', 'Povos indígenas', 2], ['Geografia', '5º ano A', '5º ano', 'Regiões do Brasil', 3],
+    ['Português', '5º ano A', '5º ano', 'Interpretação de texto', 4], ['Ciências', '5º ano A', '5º ano', 'Ciclo da água', 7],
+  ].map(([materia, turma, serie, tema, k]) => ({ id: uid(), materia, turma, serie, tema, data: dia(k), provaId: null }));
+  salvarSemana({ inicio: dia(0), fim: dia(11), entrega: dia(11), planejadas: plano });
+  const base = novoRascunho();
+  for (const [k, pl] of plano.slice(0, 4).entries()) {
+    try {
+      const r = await montarProva({ ...base, materia: pl.materia, serie: pl.serie, turma: pl.turma, tema: pl.tema, modo: 'banco', quantidade: 5, tipos: Object.keys(TIPOS), adaptada: true, versoes: getPerfis().map(novaVersao), planejadaId: pl.id });
+      if (r.prova && k < 3) { r.prova.questoes.forEach((q) => { q.revisada = true; }); salvarProva(r.prova); }
+    } catch (e) { console.warn(e); }
+  }
+  location.hash = '#/';
+  rotear();
+  setTimeout(() => aviso('Exemplo pronto: turmas, semana de provas e provas.'), 300);
 }
 
 Promise.allSettled([carregarImagens(), carregarMateriais()]).finally(rotear);

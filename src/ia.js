@@ -713,3 +713,54 @@ Responda apenas com o JSON pedido.`,
     };
   });
 }
+
+/**
+ * Importar do livro: lê a foto de uma página e devolve as questões como estão no livro,
+ * com o gabarito resolvido e a caixa (em %) de onde cada uma está na foto.
+ */
+export async function questoesDaFoto(config, dataURL, { materia, serie, livro }, signal) {
+  if (config.ia.provedor === 'claude') throw new ErroIA('A leitura de fotos usa a OpenAI. Troque o serviço em Ajustes > Criação automática.');
+  const dados = await chamarOpenAI({
+    chave: config.ia.chaveOpenAI || CHAVE_OPENAI_APP,
+    sistema: 'Você lê fotos de páginas de livros didáticos brasileiros e transcreve as questões exatamente como estão no livro. Não invente questões nem mude o texto. Resolva cada questão para dar o gabarito correto.',
+    usuario: [
+      { type: 'text', text: `Livro: ${livro || 'não informado'}. Matéria: ${materia}, ${serie}.
+Encontre cada questão desta página. Para cada uma devolva: o número dela no livro; o enunciado sem o número; o tipo (multipla, vf, completar ou aberta); as alternativas sem as letras (vazio se não houver); o índice da correta (0 = a) ou -1; a resposta esperada; se ela depende de uma figura da página; e a caixa onde ela aparece na foto, em porcentagem da largura e da altura (x e y do canto de cima à esquerda, w e h). Se a página mostrar o número da página, devolva em "pagina"; senão, "".` },
+      { type: 'image_url', image_url: { url: dataURL } },
+    ],
+    esquema: {
+      type: 'object', additionalProperties: false, required: ['pagina', 'questoes'],
+      properties: {
+        pagina: { type: 'string' },
+        questoes: { type: 'array', items: {
+          type: 'object', additionalProperties: false,
+          required: ['numero', 'enunciado', 'tipo', 'alternativas', 'correta', 'resposta', 'precisa_figura', 'caixa'],
+          properties: {
+            numero: { type: 'integer' },
+            enunciado: { type: 'string' },
+            tipo: { type: 'string', enum: ['multipla', 'vf', 'completar', 'aberta'] },
+            alternativas: { type: 'array', items: { type: 'string' } },
+            correta: { type: 'integer' },
+            resposta: { type: 'string' },
+            precisa_figura: { type: 'boolean' },
+            caixa: { type: 'object', additionalProperties: false, required: ['x', 'y', 'w', 'h'],
+              properties: { x: { type: 'number' }, y: { type: 'number' }, w: { type: 'number' }, h: { type: 'number' } } },
+          },
+        } },
+      },
+    },
+    nome: 'questoes_foto',
+    signal,
+  });
+  const limitar = (n) => Math.max(0, Math.min(100, Number(n) || 0));
+  return {
+    pagina: String(dados.pagina || '').replace(/\D/g, ''),
+    questoes: (dados.questoes || []).map((q) => {
+      const { adaptada, figura, origem, ...base } = sanear({ ...q, adaptada: {}, figura: null });
+      void adaptada; void figura; void origem;
+      const c = q.caixa || {};
+      return { ...base, numero: Number(q.numero) || 0, precisaFigura: Boolean(q.precisa_figura),
+        caixa: c.w > 0 && c.h > 0 ? { x: limitar(c.x), y: limitar(c.y), w: limitar(c.w), h: limitar(c.h) } : null };
+    }).filter((q) => q.enunciado),
+  };
+}

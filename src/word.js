@@ -123,7 +123,15 @@ function questao(q, i, versao, tam, ca = cfgAdaptada()) {
   return ps;
 }
 
-export async function baixarWord(prova, escola, versao) {
+/** Moldura da folha no Word: borda da página (simples, dupla ou pontilhada "escolar"). */
+function bordasDaPagina(moldura) {
+  const estilo = { simples: BorderStyle.SINGLE, dupla: BorderStyle.DOUBLE, escolar: BorderStyle.DOTTED }[moldura];
+  if (!estilo) return undefined;
+  const b = { style: estilo, size: moldura === 'dupla' ? 6 : 12, color: '000000', space: 18 };
+  return { pageBorderTop: b, pageBorderRight: b, pageBorderBottom: b, pageBorderLeft: b };
+}
+
+export async function baixarWord(prova, escola, versao, { moldura = '' } = {}) {
   const ca = cfgAdaptada(prova);
   const tam = versao === 'adaptada' && ca.letraMaior ? 30 : 24; // meios-pontos: 30 = 15pt, 24 = 12pt
   // Com o modelo da escola, o cabeçalho original entra no lugar do nosso
@@ -153,7 +161,7 @@ export async function baixarWord(prova, escola, versao) {
 
   const doc = new Document({
     styles: { default: { document: { run: { font: 'Arial' } } } },
-    sections: [{ properties: { page: { margin: { top: 900, bottom: 900, left: 1000, right: 1000 } } }, children: filhos }],
+    sections: [{ properties: { page: { margin: { top: 900, bottom: 900, left: 1000, right: 1000 }, borders: bordasDaPagina(moldura) } }, children: filhos }],
   });
   let blob = await Packer.toBlob(doc);
   if (modelo) {
