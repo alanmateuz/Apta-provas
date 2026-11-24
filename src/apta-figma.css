@@ -576,3 +576,33 @@ body.figma .prova-apta .q-ferramentas .certa { flex: none; font-size: .82rem; }
 .caderno-apta::after { transform: rotate(-1.6deg) translate(-2px, 4px); }
 .caderno-folha { transform: rotate(-1.2deg); padding: 24px 16px 18px 34px; }
 .caderno-visto { right: -6px; top: -26px; width: 68px; height: 58px; }
+
+/* ---------- Barra de abas como no Figma, sempre por cima ---------- */
+/* O topo guarda a barra de abas; com view-transition-name ele virava uma camada desenhada
+   antes dos cartões, e os cartões passavam por cima da barra ao rolar. */
+body.figma .topo { position: relative; z-index: 60; view-transition-name: none; }
+body.figma .nav {
+  z-index: 60; pointer-events: auto;
+  padding: 14px 24px calc(10px + var(--seguro-baixo));
+  background: var(--folha-fundo); border-radius: 28px 28px 0 0;
+  box-shadow: 0 -1px 0 rgba(17,19,24,.04), 0 -8px 28px rgba(17,19,24,.10);
+}
+body.figma .nav .abas { background: var(--cartao); box-shadow: 0 0 0 1px var(--cartao-borda), 0 4px 14px rgba(17,19,24,.06); -webkit-backdrop-filter: none; backdrop-filter: none; }
+html.escuro body.figma .nav .abas { background: #1b1d23; }
+body.figma .nav::after { content: ''; display: block; width: 134px; height: 5px; margin: 9px auto 0; border-radius: 99px; background: var(--texto); opacity: .85; }
+@media (display-mode: standalone) { body.figma .nav::after { display: none; } }
+body.figma main { padding-bottom: calc(130px + var(--seguro-baixo)); }
+
+/* Ajustes como no Figma: cartões a 24 px da borda e, atrás, uma folha de caderno (pauta e margem) mais aparente */
+.ajustes-apta .ceu { padding-left: 24px; padding-right: 24px; }
+.ajustes-apta .pilha-cartao { margin-bottom: 14px; }
+.ajustes-apta .pilha-cartao::before {
+  inset: 10px -7px -12px 5px; transform: rotate(1.8deg); border-radius: 18px;
+  background-color: #e3eafb;
+  background-image: linear-gradient(90deg, transparent 19px, rgba(227,72,74,.55) 19px 21px, transparent 21px), repeating-linear-gradient(transparent 0 35px, #c9d6f3 35px 36px);
+  box-shadow: 0 8px 22px rgba(10,30,90,.22);
+}
+html.escuro .ajustes-apta .pilha-cartao::before { background-color: #23314f; background-image: linear-gradient(90deg, transparent 19px, rgba(227,72,74,.5) 19px 21px, transparent 21px), repeating-linear-gradient(transparent 0 35px, #2f3f63 35px 36px); }
+/* Margem de 16 px: cartão a 16 px da esquerda; a folha de trás (que passa 7 px para a direita) termina a 16 px da borda direita */
+.ajustes-apta .ceu { padding-left: 16px; padding-right: 23px; }
+.ajustes-apta .ceu-grande, .ajustes-apta .grupo-titulo, .ajustes-apta .ajuda-ceu { margin-right: -7px; }
