@@ -1,0 +1,1429 @@
+{
+  "rotulo": "antes",
+  "linhas": [
+    {
+      "materia": "Matemática 5º ano",
+      "facil": {
+        "nivelMedio": 2.5,
+        "etapas": 1.7,
+        "noAlvo": "3/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 2.5,
+        "etapas": 1.5,
+        "noAlvo": "3/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 2.83,
+        "etapas": 2.3,
+        "noAlvo": "0/6",
+        "gabaritoErrado": 0
+      }
+    },
+    {
+      "materia": "Português 8º ano",
+      "facil": {
+        "nivelMedio": 1.5,
+        "etapas": 1.3,
+        "noAlvo": "6/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 2,
+        "etapas": 1.5,
+        "noAlvo": "1/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 2.17,
+        "etapas": 1.7,
+        "noAlvo": "0/6",
+        "gabaritoErrado": 0
+      }
+    },
+    {
+      "materia": "Física 1º ano (Ensino Médio)",
+      "facil": {
+        "nivelMedio": 1.83,
+        "etapas": 2.3,
+        "noAlvo": "5/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 2.67,
+        "etapas": 3.3,
+        "noAlvo": "2/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 3.83,
+        "etapas": 5.3,
+        "noAlvo": "5/6",
+        "gabaritoErrado": 0
+      }
+    }
+  ],
+  "geral": {
+    "facil": {
+      "nivelMedio": 1.94,
+      "noAlvo": "14/18",
+      "gabaritoErrado": 0
+    },
+    "medio": {
+      "nivelMedio": 2.39,
+      "noAlvo": "6/18",
+      "gabaritoErrado": 0
+    },
+    "dificil": {
+      "nivelMedio": 2.94,
+      "noAlvo": "5/18",
+      "gabaritoErrado": 0
+    }
+  },
+  "uso": [
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1189,
+      "saida": 902,
+      "cache": 1090,
+      "em": 1795017469297
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1194,
+      "saida": 967,
+      "cache": 1090,
+      "em": 1795017471844
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1197,
+      "saida": 1245,
+      "cache": 1090,
+      "em": 1795017472565
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1194,
+      "saida": 1043,
+      "cache": 1090,
+      "em": 1795017472574
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1197,
+      "saida": 1251,
+      "cache": 0,
+      "em": 1795017474444
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1189,
+      "saida": 1305,
+      "cache": 1090,
+      "em": 1795017476065
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1196,
+      "saida": 1263,
+      "cache": 1090,
+      "em": 1795017477220
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1199,
+      "saida": 1707,
+      "cache": 1090,
+      "em": 1795017481531
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 1191,
+      "saida": 1875,
+      "cache": 1090,
+      "em": 1795017487664
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 2136,
+      "saida": 1246
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 1839,
+      "saida": 1375
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 2047,
+      "saida": 1824
+    }
+  ],
+  "questoes": [
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Caio calculou 3/8 + 2/8 e disse que o resultado é 5/16. Explique o erro de Caio e escreva o resultado correto.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Caio somou os denominadores. Como os denominadores são iguais, somamos os numeradores e mantemos o denominador: 3/8 + 2/8 = 5/8.",
+      "justificativa": "3/8 + 2/8 = 5/8.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": "O item é equivalente ao 12, com apenas a ordem das parcelas invertida."
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Dois canteiros têm o mesmo tamanho. No primeiro, foram plantados 3/10 de canteiro com alface e 4/10 com cenoura. No segundo, havia 9/10 de canteiro plantados, mas as plantas de 1/10 do canteiro foram retiradas. Qual canteiro ficou com a maior parte plantada? Qual é a diferença entre as partes plantadas? Mostre os cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O primeiro ficou com 7/10 plantados e o segundo, com 8/10. O segundo canteiro ficou com a maior parte plantada, com diferença de 1/10.",
+      "justificativa": "3/10 + 4/10 = 7/10; 9/10 − 1/10 = 8/10; 8/10 − 7/10 = 1/10.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 3,
+        "etapas": 4,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Três barbantes têm o mesmo comprimento inicial. Após alguns cortes, restaram 3/8 do primeiro, 6/8 do segundo e 7/8 − 2/8 do terceiro. Em que ordem ficam as frações que representam os pedaços restantes, da menor para a maior?",
+      "alternativas": [
+        "3/8, 5/8, 6/8",
+        "3/8, 6/8, 5/8",
+        "5/8, 3/8, 6/8",
+        "6/8, 5/8, 3/8"
+      ],
+      "correta": 0,
+      "resposta": "3/8, 5/8, 6/8",
+      "justificativa": "7/8 − 2/8 = 5/8; 3/8 < 5/8 < 6/8.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Uma jarra continha 9/12 de litro de suco. Depois que foram servidos 4/12 de litro, acrescentaram-se 2/12 de litro à jarra. Que fração de litro de suco ficou na jarra?",
+      "alternativas": [
+        "3/12 de litro",
+        "5/12 de litro",
+        "7/12 de litro",
+        "11/12 de litro"
+      ],
+      "correta": 2,
+      "resposta": "7/12 de litro",
+      "justificativa": "9/12 − 4/12 + 2/12 = 7/12.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Para fazer uma receita, Júlia precisa de 11/12 de litro de leite. Ela já colocou 3/12 de litro e depois acrescentou mais 2/12 de litro. Que fração de litro ainda falta para completar a quantidade da receita?",
+      "alternativas": [
+        "5/12 de litro",
+        "6/12 de litro",
+        "8/12 de litro",
+        "10/12 de litro"
+      ],
+      "correta": 1,
+      "resposta": "6/12 de litro",
+      "justificativa": "11/12 − 3/12 − 2/12 = 6/12.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Quatro amigos registraram a parte de um mesmo livro que cada um leu. As partes foram 2/8, 5/8, 3/8 e 7/8 do livro. Qual é a maior dessas frações?",
+      "alternativas": [
+        "2/8",
+        "5/8",
+        "3/8",
+        "7/8"
+      ],
+      "correta": 3,
+      "resposta": "7/8",
+      "justificativa": "Com denominadores iguais, a fração de maior numerador é a maior.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Lia leu 4/6 de um livro, e Beto leu 5/6 de outro livro com a mesma quantidade de páginas. Quem leu a maior fração do livro? Explique como você comparou as frações.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Beto, pois 5/6 é maior que 4/6. Os denominadores são iguais e 5 é maior que 4.",
+      "justificativa": "Com denominadores iguais, a fração de maior numerador é a maior.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Em uma caminhada, Júlia percorreu 2/9 do trajeto pela manhã e 4/9 à tarde. Que fração do trajeto ela percorreu ao todo?",
+      "alternativas": [
+        "6/9",
+        "6/18",
+        "2/9",
+        "4/18"
+      ],
+      "correta": 0,
+      "resposta": "6/9",
+      "justificativa": "2/9 + 4/9 = 6/9.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Uma pizza inteira foi dividida em 8 fatias iguais. Ana comeu 2/8 da pizza, e Pedro comeu 3/8. Que fração da pizza sobrou?",
+      "alternativas": [
+        "2/8",
+        "3/8",
+        "5/8",
+        "6/8"
+      ],
+      "correta": 1,
+      "resposta": "3/8",
+      "justificativa": "2/8 + 3/8 = 5/8; 8/8 − 5/8 = 3/8.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Em uma campanha, uma turma arrecadou 4/9 da meta de livros, e outra arrecadou 7/9 da mesma meta. Qual turma arrecadou uma parte maior da meta? Quanto essa parte é maior que a arrecadada pela outra turma?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A turma que arrecadou 7/9 da meta. Ela arrecadou 3/9 da meta a mais.",
+      "justificativa": "7/9 > 4/9; 7/9 − 4/9 = 3/9.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Uma garrafa tinha 9/10 de litro de suco. No almoço, foram consumidos 2/10 de litro e, no lanche, mais 3/10 de litro. Que fração de litro de suco sobrou? Mostre os cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Sobraram 4/10 de litro. 9/10 − 2/10 − 3/10 = 4/10.",
+      "justificativa": "9/10 − 2/10 = 7/10; 7/10 − 3/10 = 4/10.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Ao calcular 2/8 + 3/8, Caio escreveu 5/16. Explique o erro de Caio e escreva o resultado correto.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Caio somou os denominadores, mas deveria manter o denominador 8 e somar os numeradores. O resultado correto é 5/8.",
+      "justificativa": "2/8 + 3/8 = 5/8.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": "O item é equivalente ao 1, com apenas a ordem das parcelas invertida."
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Uma fita media 9/10 de metro. Dela, foram cortados 4/10 de metro. Que fração de metro restou da fita?",
+      "alternativas": [
+        "13/10 de metro",
+        "5/10 de metro",
+        "5/20 de metro",
+        "4/10 de metro"
+      ],
+      "correta": 1,
+      "resposta": "5/10 de metro",
+      "justificativa": "9/10 − 4/10 = 5/10.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Ao somar 2/7 e 3/7, Pedro encontrou 5/14. Explique o erro de Pedro e escreva o resultado correto.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Pedro somou os denominadores. O resultado correto é 5/7, pois se somam os numeradores e se mantém o denominador.",
+      "justificativa": "2/7 + 3/7 = 5/7.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Duas fitas tinham o mesmo comprimento. Ana usou 7/10 de sua fita e Bia usou 9/10 da sua. Quem usou a maior parte da fita e qual é a diferença entre as partes usadas?",
+      "alternativas": [
+        "Ana usou mais, com diferença de 2/10.",
+        "Bia usou mais, com diferença de 2/10.",
+        "Ana usou mais, com diferença de 7/10.",
+        "Bia usou mais, com diferença de 7/10."
+      ],
+      "correta": 1,
+      "resposta": "Bia usou mais, com diferença de 2/10.",
+      "justificativa": "9/10 > 7/10; 9/10 − 7/10 = 2/10.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Uma jarra estava vazia. Lia colocou 3/12 de litro de suco e, depois, mais 5/12 de litro. Que fração de litro de suco Lia colocou na jarra ao todo?",
+      "alternativas": [
+        "8/12 de litro",
+        "8/24 de litro",
+        "15/12 de litro",
+        "2/12 de litro"
+      ],
+      "correta": 0,
+      "resposta": "8/12 de litro",
+      "justificativa": "3/12 + 5/12 = 8/12.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Qual é a maior das frações 3/8, 5/8, 7/8 e 6/8?",
+      "alternativas": [
+        "3/8",
+        "5/8",
+        "7/8",
+        "6/8"
+      ],
+      "correta": 2,
+      "resposta": "7/8",
+      "justificativa": "Como os denominadores são iguais, a maior fração é a que tem o maior numerador.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Marina tinha 7/8 de metro de barbante. Ela usou 2/8 de metro em um cartaz e 3/8 de metro em outro. Que fração de metro de barbante restou?",
+      "alternativas": [
+        "5/8 de metro",
+        "4/8 de metro",
+        "3/8 de metro",
+        "2/8 de metro"
+      ],
+      "correta": 3,
+      "resposta": "2/8 de metro",
+      "justificativa": "7/8 − 2/8 − 3/8 = 2/8.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Em um conto, lê-se: “O vento sussurrava na janela”. Que característica torna essa frase um exemplo de personificação?",
+      "alternativas": [
+        "O vento recebe uma ação associada às pessoas.",
+        "O vento é comparado a uma janela aberta.",
+        "O vento é descrito com intensidade exagerada.",
+        "O vento recebe o nome de outro elemento."
+      ],
+      "correta": 0,
+      "resposta": "O vento recebe uma ação associada às pessoas.",
+      "justificativa": "Sussurrar é uma ação humana atribuída ao vento.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Ao sair de uma reunião difícil, Marina comentou: “Aquela conversa foi uma tempestade.” O que a metáfora sugere sobre a conversa?",
+      "alternativas": [
+        "Que foi marcada por tensão e conflito.",
+        "Que aconteceu durante uma chuva forte.",
+        "Que terminou sem nenhuma mudança.",
+        "Que tratou de fenômenos da natureza."
+      ],
+      "correta": 0,
+      "resposta": "Que foi marcada por tensão e conflito.",
+      "justificativa": "A metáfora associa a conversa à intensidade e à agitação de uma tempestade.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Durante uma partida, um torcedor disse: “Na defesa, Pedro era um leão.” Qual figura de linguagem aparece nessa frase?",
+      "alternativas": [
+        "Metáfora.",
+        "Comparação.",
+        "Personificação.",
+        "Hipérbole."
+      ],
+      "correta": 0,
+      "resposta": "Metáfora.",
+      "justificativa": "Pedro é associado a um leão sem uma palavra que indique comparação.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Leia a frase: “O vento sussurrava na janela.” Um colega afirmou que ela apresenta uma hipérbole. Explique por que a figura de linguagem é uma personificação.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Porque a frase atribui ao vento a ação humana de sussurrar.",
+      "justificativa": "A personificação atribui uma ação humana a um elemento da natureza.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Depois de carregar uma mochila cheia de livros até a escola, Caio disse: “Minha mochila pesa uma tonelada!” Que efeito a hipérbole produz nessa fala?",
+      "alternativas": [
+        "Destaca o peso da mochila por meio de um exagero.",
+        "Indica o peso exato da mochila por meio de uma medida.",
+        "Atribui à mochila a capacidade humana de sentir peso.",
+        "Compara o peso da mochila ao de uma tonelada de livros."
+      ],
+      "correta": 0,
+      "resposta": "Destaca o peso da mochila por meio de um exagero.",
+      "justificativa": "A expressão exagera o peso para enfatizar que a mochila estava muito pesada.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Ao arrumar suas coisas, Lara disse: “Esta mala está leve como uma pena.” O que essa comparação indica sobre a mala?",
+      "alternativas": [
+        "Ela tem pouco peso.",
+        "Ela tem muitas penas.",
+        "Ela tem uma cor clara.",
+        "Ela tem um tamanho pequeno."
+      ],
+      "correta": 0,
+      "resposta": "Ela tem pouco peso.",
+      "justificativa": "A comparação destaca a leveza da mala.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "A frase “A vida é uma viagem” apresenta uma metáfora. Qual reescrita transforma essa metáfora em uma comparação explícita, mantendo a associação entre vida e viagem?",
+      "alternativas": [
+        "A vida é como uma viagem.",
+        "A vida é uma longa viagem.",
+        "A vida segue por novos caminhos.",
+        "A vida atravessa o mundo inteiro."
+      ],
+      "correta": 0,
+      "resposta": "A vida é como uma viagem.",
+      "justificativa": "A palavra “como” explicita a comparação entre a vida e uma viagem.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Na frase “A rua estava movimentada como um formigueiro”, há uma comparação. Reescreva a frase usando uma metáfora, sem mudar a ideia de que a rua estava muito movimentada.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Espera-se uma frase como: “A rua era um formigueiro.”",
+      "justificativa": "A metáfora associa diretamente a rua a um formigueiro.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Leia a frase: “O goleiro é corajoso como um leão.” Reescreva-a como uma metáfora, mantendo a associação entre o goleiro e o leão.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O goleiro é um leão.",
+      "justificativa": "A metáfora associa o goleiro ao leão sem usar a palavra “como”.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Em qual frase há uma metáfora para caracterizar a menina?",
+      "alternativas": [
+        "A menina é uma estrela no palco.",
+        "A menina brilha como uma estrela.",
+        "A menina observou uma estrela.",
+        "A menina acenou para a estrela."
+      ],
+      "correta": 0,
+      "resposta": "A menina é uma estrela no palco.",
+      "justificativa": "A frase associa a menina a uma estrela, sem usar uma palavra comparativa.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Em um texto sobre uma noite de vento, qual frase apresenta uma personificação?",
+      "alternativas": [
+        "O vento era um chicote na varanda.",
+        "O vento soprava como um apito na varanda.",
+        "O vento sussurrava segredos à janela.",
+        "O vento durou uma eternidade naquela noite."
+      ],
+      "correta": 2,
+      "resposta": "O vento sussurrava segredos à janela.",
+      "justificativa": "A frase atribui ao vento uma ação humana: sussurrar segredos.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Ao ler a frase “A cidade acordou cedo”, Lara afirmou que a cidade realmente dormiu durante a noite. Explique o sentido da frase e identifique a figura de linguagem usada.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A frase indica que as atividades na cidade começaram cedo. Há personificação, pois a ação humana de acordar é atribuída à cidade.",
+      "justificativa": "A cidade recebe uma ação associada às pessoas.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": "A frase também admite leitura metonímica, tomando a cidade por seus habitantes, o que torna inadequado exigir exclusivamente a classificação como personificação."
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Em qual frase um elemento da natureza recebe uma ação humana, formando uma personificação?",
+      "alternativas": [
+        "O vento conversava com as árvores.",
+        "O vento balançava as árvores.",
+        "A menina observava as árvores.",
+        "A menina desenhava as árvores."
+      ],
+      "correta": 0,
+      "resposta": "O vento conversava com as árvores.",
+      "justificativa": "Conversar é uma ação humana atribuída ao vento.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Depois de esperar o ônibus por algum tempo, Caio disse: “Esperei uma eternidade!” Que efeito a hipérbole produz nessa fala?",
+      "alternativas": [
+        "Exagera a duração da espera.",
+        "Compara a espera a uma viagem.",
+        "Atribui uma ação humana ao ônibus.",
+        "Indica a duração exata da espera."
+      ],
+      "correta": 0,
+      "resposta": "Exagera a duração da espera.",
+      "justificativa": "A expressão “uma eternidade” exagera o tempo de espera.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Em uma conversa, Caio diz: “Estou morrendo de fome!”. Explique o efeito do exagero e reescreva a frase sem exagero, mantendo a ideia principal.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O exagero destaca que Caio está com muita fome. Uma reescrita possível é: “Estou com muita fome”.",
+      "justificativa": "A hipérbole intensifica a ideia de fome.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia as frases: I. “Naquela tarde, a praça era um forno.” II. “Naquela tarde, a praça estava quente como um forno.” Quais figuras de linguagem aparecem, respectivamente, nas frases I e II?",
+      "alternativas": [
+        "Comparação e metáfora.",
+        "Metáfora e comparação.",
+        "Personificação e hipérbole.",
+        "Hipérbole e personificação."
+      ],
+      "correta": 1,
+      "resposta": "Metáfora e comparação.",
+      "justificativa": "Em I, a associação é direta; em II, é explicitada pela palavra “como”.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Após esperar 30 minutos pelo ônibus, Júlia disse: “Esperei um século!” Um colega afirmou que ela usou uma metáfora para informar o tempo exato da espera. Explique o erro do colega e identifique a figura de linguagem usada por Júlia.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Júlia usou uma hipérbole: “um século” exagera a duração da espera, em vez de informar seu tempo exato.",
+      "justificativa": "O exagero enfatiza a sensação de demora.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Ao sair de uma fila, Pedro disse: “Esperei uma eternidade!”. O que a hipérbole expressa nessa fala?",
+      "alternativas": [
+        "A sensação de que a espera foi muito longa.",
+        "A certeza de que a espera durou vários anos.",
+        "A impressão de que a espera terminou depressa.",
+        "A informação de que a espera não terminou."
+      ],
+      "correta": 0,
+      "resposta": "A sensação de que a espera foi muito longa.",
+      "justificativa": "O exagero destaca a sensação de demora.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "A posição de um ciclista em movimento uniforme é dada por x = 20 + 5t, em que x é medida em metros e t, em segundos. Qual é a posição do ciclista no instante t = 4 s?",
+      "alternativas": [
+        "25 m",
+        "29 m",
+        "40 m",
+        "100 m"
+      ],
+      "correta": 2,
+      "resposta": "40 m",
+      "justificativa": "x = 20 + 5 × 4 = 40 m.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 1,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Uma pessoa saiu de casa às 8h e chegou a outra cidade às 10h, após percorrer 90 km. Durante a viagem, ela fez uma parada de 20 minutos. Um colega calculou a velocidade média da viagem dividindo 90 km apenas pelo tempo em que o carro estava em movimento. Explique o erro do colega e calcule a velocidade média da viagem inteira.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O colega deveria incluir o tempo da parada no tempo total da viagem. A velocidade média foi de 45 km/h.",
+      "justificativa": "90 ÷ 2 = 45 km/h.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 2,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Um ônibus percorre uma estrada reta em movimento uniforme. Às 9h, ele passa pelo km 40 e, às 10h30, passa pelo km 100, seguindo no sentido crescente da quilometragem. Em qual quilômetro ele estará às 11h15? Apresente seus cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Às 11h15, o ônibus estará no km 130.",
+      "justificativa": "(100 − 40) ÷ 1,5 = 40 km/h; 100 + 40 × 0,75 = 130 km.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 3,
+        "etapas": 6,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Um ônibus percorre uma estrada em movimento uniforme, no sentido dos marcos quilométricos decrescentes. Após 1 hora de viagem, ele passa pelo marco km 100; após 4 horas de viagem, passa pelo marco km 40. Quanto tempo após o início da viagem ele passará pelo marco km 10?",
+      "alternativas": [
+        "4,5 horas",
+        "5,0 horas",
+        "5,5 horas",
+        "6,5 horas"
+      ],
+      "correta": 2,
+      "resposta": "5,5 horas",
+      "justificativa": "(100 − 40) ÷ (4 − 1) = 20 km/h. 4 + (40 − 10) ÷ 20 = 5,5 h.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 4,
+        "etapas": 6,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Um ônibus mantém velocidade constante de 60 km/h durante 30 minutos. Qual distância ele percorre nesse intervalo?",
+      "alternativas": [
+        "30 km",
+        "60 km",
+        "90 km",
+        "180 km"
+      ],
+      "correta": 0,
+      "resposta": "30 km",
+      "justificativa": "30 min = 0,5 h; 60 × 0,5 = 30 km.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Um ônibus percorre uma estrada reta em movimento uniforme. No instante inicial, ele está no km 120 e sua velocidade é −20 km/h. Em qual quilômetro da estrada o ônibus estará após 3 horas?",
+      "alternativas": [
+        "No km 40",
+        "No km 60",
+        "No km 100",
+        "No km 180"
+      ],
+      "correta": 1,
+      "resposta": "No km 60",
+      "justificativa": "120 + (−20) × 3 = 60 km.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Uma pessoa caminha em linha reta com velocidade constante. No instante inicial, ela está na posição 10 m e, após 3 segundos, está na posição 70 m. Qual será sua posição após 5 segundos? Apresente os cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A posição será 110 m.",
+      "justificativa": "(70 − 10) ÷ 3 = 20 m/s; 10 + 20 × 5 = 110 m.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 3,
+        "etapas": 4,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Um carro mantém velocidade constante de 72 km/h em uma avenida. Qual é essa velocidade em metros por segundo?",
+      "alternativas": [
+        "18 m/s",
+        "20 m/s",
+        "24 m/s",
+        "26 m/s"
+      ],
+      "correta": 1,
+      "resposta": "20 m/s",
+      "justificativa": "72 ÷ 3,6 = 20 m/s.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Dois ciclistas seguem pela mesma estrada reta e no mesmo sentido, em movimento uniforme. No instante em que começa a observação, o ciclista A está 40 km atrás do ciclista B. A mantém 80 km/h e B mantém 60 km/h. Um aluno afirma: «Quando A alcançar B, os dois terão a mesma velocidade». Calcule quanto tempo A levará para alcançar B e explique o erro do aluno.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A alcançará B após 2 horas. Nesse instante, eles estarão na mesma posição, mas suas velocidades continuarão diferentes: 80 km/h e 60 km/h.",
+      "justificativa": "40 ÷ (80 − 60) = 2 h. O encontro ocorre na mesma posição, sem exigir velocidades iguais.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Uma ciclista percorre uma estrada reta em movimento uniforme. Quatro minutos após o início da observação, ela está no marco km 2,4. Doze minutos após o início da observação, ela está no marco km 4,0. Em que instante, contado a partir do início da observação, ela chegará ao marco km 7,6? Apresente seus cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Ela chegará ao marco km 7,6 após 30 minutos do início da observação.",
+      "justificativa": "(4,0 − 2,4) ÷ 8 = 0,2 km/min. 12 + (7,6 − 4,0) ÷ 0,2 = 30 min.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 4,
+        "etapas": 6,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Um carro percorre 150 km em 3 horas. Qual é a velocidade média escalar do carro nesse percurso?",
+      "alternativas": [
+        "30 km/h",
+        "50 km/h",
+        "75 km/h",
+        "450 km/h"
+      ],
+      "correta": 1,
+      "resposta": "50 km/h",
+      "justificativa": "150 ÷ 3 = 50 km/h.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Um carro percorre 120 km a 60 km/h e, em seguida, outros 120 km a 90 km/h. Desconsidere o tempo gasto para mudar de velocidade. Qual é a velocidade média do carro no percurso completo?",
+      "alternativas": [
+        "70 km/h",
+        "72 km/h",
+        "75 km/h",
+        "80 km/h"
+      ],
+      "correta": 1,
+      "resposta": "72 km/h",
+      "justificativa": "120 ÷ 60 = 2 h; 120 ÷ 90 = 4/3 h. 240 ÷ (2 + 4/3) = 72 km/h.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 4,
+        "etapas": 5,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Duas cidades estão a 150 km de distância pela mesma estrada reta. Um carro parte da primeira cidade em direção à segunda, a 60 km/h. Meia hora depois, outro carro parte da segunda cidade em direção à primeira, a 40 km/h. Ambos mantêm movimento uniforme até se encontrarem. Quanto tempo após a partida do primeiro carro ocorre o encontro?",
+      "alternativas": [
+        "1 h e 12 min",
+        "1 h e 30 min",
+        "1 h e 42 min",
+        "2 h e 00 min"
+      ],
+      "correta": 2,
+      "resposta": "1 h e 42 min",
+      "justificativa": "60 × 0,5 = 30 km; (150 − 30) ÷ (60 + 40) = 1,2 h. 0,5 + 1,2 = 1,7 h = 1 h e 42 min.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 4,
+        "etapas": 6,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Uma motorista percorre 40 km de uma viagem a 40 km/h e, em seguida, mais 40 km a 60 km/h. Qual é a velocidade média da motorista no percurso completo?",
+      "alternativas": [
+        "40 km/h",
+        "48 km/h",
+        "50 km/h",
+        "60 km/h"
+      ],
+      "correta": 1,
+      "resposta": "48 km/h",
+      "justificativa": "40 ÷ 40 + 40 ÷ 60 = 5/3 h; 80 ÷ (5/3) = 48 km/h.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 4,
+        "etapas": 5,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Em uma viagem, um carro percorre 60 km em 1 hora e depois mais 60 km em 1 hora e meia. Qual é a velocidade média escalar do carro durante toda a viagem?",
+      "alternativas": [
+        "40 km/h",
+        "48 km/h",
+        "50 km/h",
+        "60 km/h"
+      ],
+      "correta": 1,
+      "resposta": "48 km/h",
+      "justificativa": "120 ÷ 2,5 = 48 km/h.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 2,
+        "etapas": 3,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Uma pessoa caminha 8 km até um parque a 4 km/h. Após descansar por 40 minutos, retorna pelo mesmo caminho a 6 km/h. Calcule a velocidade média considerando toda a distância percorrida e todo o tempo, inclusive o descanso. Apresente seus cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A velocidade média é 4 km/h. O tempo total é de 4 horas e a distância total é de 16 km.",
+      "justificativa": "8 ÷ 4 + 40/60 + 8 ÷ 6 = 4 h. 16 ÷ 4 = 4 km/h.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 4,
+        "etapas": 6,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": "O cálculo solicitado e o gabarito correspondem à rapidez média, mas a expressão genérica 'velocidade média' pode gerar confusão com a velocidade vetorial média, que é nula na ida e volta."
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Dois carros seguem no mesmo sentido por uma estrada reta, com velocidades constantes. No instante inicial, o primeiro está no km 10, a 60 km/h, e o segundo está no km 40, a 40 km/h. Quanto tempo após esse instante o primeiro carro alcança o segundo?",
+      "alternativas": [
+        "0,5 h",
+        "1,0 h",
+        "1,5 h",
+        "2,0 h"
+      ],
+      "correta": 2,
+      "resposta": "1,5 h",
+      "justificativa": "(40 − 10) ÷ (60 − 40) = 1,5 h.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Um colega afirmou que 72 km/h é igual a 72 m/s. Qual é o valor correto em metros por segundo? Explique como corrigir o erro.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O valor correto é 20 m/s. Para converter de km/h para m/s, deve-se dividir o valor por 3,6.",
+      "justificativa": "72 ÷ 3,6 = 20 m/s.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    }
+  ]
+}

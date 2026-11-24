@@ -1,0 +1,492 @@
+{
+  "rotulo": "pt-interp3",
+  "linhas": [
+    {
+      "materia": "Português 5º ano",
+      "facil": {
+        "nivelMedio": 1,
+        "etapas": 1,
+        "noAlvo": "6/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 2.33,
+        "etapas": 2.3,
+        "noAlvo": "2/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 3,
+        "etapas": 2.5,
+        "noAlvo": "0/6",
+        "gabaritoErrado": 0
+      }
+    }
+  ],
+  "geral": {
+    "facil": {
+      "nivelMedio": 1,
+      "noAlvo": "6/6",
+      "gabaritoErrado": 0
+    },
+    "medio": {
+      "nivelMedio": 2.33,
+      "noAlvo": "2/6",
+      "gabaritoErrado": 0
+    },
+    "dificil": {
+      "nivelMedio": 3,
+      "noAlvo": "0/6",
+      "gabaritoErrado": 0
+    }
+  },
+  "uso": [
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2384,
+      "saida": 975,
+      "cache": 2263,
+      "em": 1795018320747
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2383,
+      "saida": 1446,
+      "cache": 2263,
+      "em": 1795018333163
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2385,
+      "saida": 1943,
+      "cache": 2263,
+      "em": 1795018345917
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 2831,
+      "saida": 1385
+    }
+  ],
+  "questoes": [
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Leia: “Ao ouvir os trovões, Marina pegou o guarda-chuva antes de sair.” Por que Marina pegou o guarda-chuva?",
+      "alternativas": [
+        "Porque esperava uma chuva.",
+        "Porque queria procurar abrigo do sol.",
+        "Porque precisava guardar o objeto.",
+        "Porque pretendia caminhar mais rápido."
+      ],
+      "correta": 0,
+      "resposta": "Porque esperava uma chuva.",
+      "justificativa": "Os trovões indicam que pode chover.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Leia o texto.\n\nO campinho do bairro amanheceu cheio de folhas.\nNo sábado, os moradores chegaram com rastelos.\nAs crianças juntaram as folhas em montes.\nDepois, todos recolheram o lixo perto das traves.\nÀ tarde, uma bola voltou a rolar pelo campo.\n\nQual é o assunto principal do texto? Use duas informações para explicar sua resposta.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O assunto principal é a limpeza do campinho pelos moradores. Eles juntaram as folhas e recolheram o lixo, deixando o espaço pronto para ser usado novamente.",
+      "justificativa": "As ações dos moradores mostram como o campinho foi preparado para voltar a ser usado.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nQuando a chuva começou, Nina recolheu as roupas do varal.\nAo voltar ao quintal, viu um passarinho junto ao muro.\nEle tentava abrir as asas, mas não saía do lugar.\nNina chamou o avô, que observou o animal de perto.\nOs dois prepararam uma caixa com um pano no fundo.\nDepois, ligaram para um centro de atendimento a animais silvestres.\nEnquanto esperavam orientação, deixaram a caixa em lugar tranquilo.\nNaquela tarde, as roupas demoraram mais para ser dobradas.\n\nO que a última frase contribui para mostrar na história?",
+      "alternativas": [
+        "Nina e o avô interromperam outra tarefa para cuidar do passarinho.",
+        "Nina e o avô precisaram lavar as roupas novamente por causa da chuva.",
+        "Nina e o avô usaram todas as roupas para preparar a caixa.",
+        "Nina e o avô esperaram a chuva passar para recolher as roupas."
+      ],
+      "correta": 0,
+      "resposta": "Nina e o avô interromperam outra tarefa para cuidar do passarinho.",
+      "justificativa": "As roupas foram recolhidas antes de Nina encontrar o passarinho, mas a tarefa de dobrá-las ficou para depois.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": "A alternativa correta expressa a ideia central, mas atribui também ao avô a interrupção de outra tarefa, embora o texto só apresente Nina cuidando das roupas."
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Leia: “Na horta da escola, os alunos plantam sementes, regam as mudas e colhem verduras.” Qual é o assunto principal desse trecho?",
+      "alternativas": [
+        "A preparação de refeições na escola.",
+        "O cuidado dos alunos com a horta.",
+        "A venda de verduras na feira.",
+        "O desperdício de água na escola."
+      ],
+      "correta": 1,
+      "resposta": "O cuidado dos alunos com a horta.",
+      "justificativa": "O trecho apresenta atividades realizadas pelos alunos na horta.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Leia o trecho.\n\nNa segunda-feira, a turma decidiu fazer um mural sobre o bairro.\nLara ficou responsável por fotografar a praça.\nNa terça, ela levou a câmera, mas esqueceu o cartão de memória.\nNa quarta, choveu, e a turma pesquisou nomes de ruas antigas.\nNa quinta, Lara voltou à praça e conseguiu tirar as fotos.\nNa sexta, os colegas escolheram as imagens para o mural.\nUma foto mostrava a fonte; outra, as árvores ao redor dela.\nNa semana seguinte, o mural foi colocado no corredor da escola.\n\nEm que dia Lara conseguiu fazer as fotografias da praça? Explique como as informações sobre os outros dias ajudam a localizar essa resposta.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Na quinta-feira. Na terça, Lara esqueceu o cartão de memória; na quarta, a turma pesquisou ruas; e, na sexta, os colegas já escolheram as imagens.",
+      "justificativa": "A sequência mostra que as fotos foram tiradas depois da tentativa de terça e antes da escolha das imagens.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Leia o texto.\n\nAo chegar da feira, o avô de Caio deixou um saco na mesa.\nDe dentro dele saíam folhas verdes e compridas.\nCaio abriu o saco e viu cenouras com terra.\nO avô separou algumas para o almoço.\nAs outras foram para a gaveta da geladeira.\n\nO que indica que as cenouras ainda não tinham sido lavadas? Localize essa informação e explique sua conclusão.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O texto diz que as cenouras estavam com terra. Isso indica que elas provavelmente ainda não tinham sido lavadas.",
+      "justificativa": "A terra nas cenouras é uma pista de que elas ainda não haviam sido lavadas.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nNa rua de Lia havia um terreno cercado por muros baixos.\nDurante anos, ele ficou coberto de mato e embalagens vazias.\nUm sábado, a vizinha apareceu com uma enxada.\nLogo chegaram crianças com garrafas para regar a terra.\nSeu Pedro trouxe sementes guardadas em casa.\nNas semanas seguintes, cada família cuidou de um canteiro.\nQuem passava pela rua parava para conversar junto ao portão.\nQuando as primeiras flores apareceram, já havia bancos à sombra.\n\nQual é o assunto principal do trecho?",
+      "alternativas": [
+        "O trabalho coletivo que transformou um terreno em espaço de convivência.",
+        "A escolha das sementes que Seu Pedro guardava em sua casa.",
+        "A construção de bancos para as pessoas descansarem na rua.",
+        "A retirada de embalagens vazias de um terreno abandonado."
+      ],
+      "correta": 0,
+      "resposta": "O trabalho coletivo que transformou um terreno em espaço de convivência.",
+      "justificativa": "O texto reúne ações dos moradores que transformam o terreno e aproximam as pessoas.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho do diário de Caio.\n\nNa segunda-feira, procurei o livro de poemas na biblioteca.\nA bibliotecária disse que ele estava emprestado até quarta.\nNa terça, encontrei Júlia lendo um livro no pátio.\nEla me mostrou a capa: era o livro que eu procurava.\nNa quarta, não fui à escola porque estava com febre.\nNa quinta, passei primeiro pela biblioteca, mas ela estava fechada.\nNo recreio, Júlia me contou que devolvera o livro no dia anterior.\nNa sexta, enfim consegui pegá-lo emprestado.\n\nDe acordo com o diário, em que dia Júlia devolveu o livro?",
+      "alternativas": [
+        "Na terça-feira, quando mostrou a capa a Caio.",
+        "Na quarta-feira, quando Caio ficou em casa.",
+        "Na quinta-feira, quando conversou com Caio.",
+        "Na sexta-feira, quando Caio pegou o livro."
+      ],
+      "correta": 1,
+      "resposta": "Na quarta-feira, quando Caio ficou em casa.",
+      "justificativa": "Na quinta-feira, Júlia disse que havia devolvido o livro no dia anterior.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Leia: “No sábado, moradores recolheram papéis da praça e colocaram o lixo em sacos. Depois, varreram os caminhos.” Qual é o assunto principal desse trecho?",
+      "alternativas": [
+        "A limpeza de uma praça pelos moradores.",
+        "A construção de caminhos em uma praça.",
+        "A separação de papéis para uma feira.",
+        "A compra de sacos para os moradores."
+      ],
+      "correta": 0,
+      "resposta": "A limpeza de uma praça pelos moradores.",
+      "justificativa": "As ações descritas fazem parte da limpeza da praça.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o texto.\n\nNa sexta-feira, Pedro foi à biblioteca do bairro.\nO livro que procurava já estava emprestado.\nA bibliotecária anotou o nome dele numa lista.\nNa terça-feira, ela telefonou para a casa de Pedro.\nNa quarta-feira, ele voltou e retirou o livro.\n\nO que provavelmente aconteceu antes do telefonema?",
+      "alternativas": [
+        "Pedro terminou de ler o livro em casa.",
+        "A biblioteca recebeu a devolução do livro.",
+        "A bibliotecária preparou uma lista de compras.",
+        "Pedro mudou de ideia sobre o empréstimo."
+      ],
+      "correta": 1,
+      "resposta": "A biblioteca recebeu a devolução do livro.",
+      "justificativa": "O livro estava emprestado na sexta-feira e pôde ser retirado por Pedro depois do telefonema.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Leia o aviso: “A biblioteca da escola abrirá no sábado, das 9 às 12 horas.” Em que dia a biblioteca abrirá?",
+      "alternativas": [
+        "Na sexta-feira.",
+        "No sábado.",
+        "No domingo.",
+        "Na segunda-feira."
+      ],
+      "correta": 1,
+      "resposta": "No sábado.",
+      "justificativa": "O aviso informa que a biblioteca abrirá no sábado.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "lembrar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nNa véspera da mudança, Bia encontrou uma caixa no armário.\nDentro havia um ingresso de cinema e um carrinho sem roda.\nEla colocou o carrinho na mochila, mas deixou o ingresso na caixa.\nAo fechar a tampa, ouviu o pai chamá-la para ajudar.\nMais tarde, ele a viu procurando algo no meio das roupas.\nBia tirou o carrinho da mochila e olhou para a caixa fechada.\nEm vez de guardar o brinquedo de novo, colocou-o na estante.\nNa manhã seguinte, levou-o nas mãos até a casa nova.\n\nO que as ações de Bia sugerem sobre o carrinho?",
+      "alternativas": [
+        "Ela pretende trocar o carrinho por um brinquedo novo.",
+        "Ela quer encontrar a roda perdida antes da mudança.",
+        "Ela considera o carrinho importante, mesmo estando quebrado.",
+        "Ela prefere deixar o carrinho na casa onde morava."
+      ],
+      "correta": 2,
+      "resposta": "Ela considera o carrinho importante, mesmo estando quebrado.",
+      "justificativa": "Bia mantém o carrinho por perto e o leva consigo, embora falte uma roda.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Leia: “Ao saber que sua amiga viria brincar, Lia sorriu e deu pulinhos.” Como Lia provavelmente se sentiu com a notícia?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Lia ficou feliz ou animada.",
+      "justificativa": "O sorriso e os pulinhos indicam alegria.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Leia o trecho.\n\nNa biblioteca da escola, uma prateleira ficou vazia.\nOs livros dali tinham sido levados para conserto.\nNo recreio, Marina passou por ela e diminuiu o passo.\nNo dia seguinte, trouxe de casa um livro de aventuras.\nDeixou-o sobre a mesa da bibliotecária, com um bilhete.\nNa semana seguinte, outros livros apareceram na mesa.\nAlguns tinham nomes escritos na primeira página.\nQuando a prateleira voltou a receber livros, Marina sorriu.\n\nO que o sorriso de Marina sugere sobre o que aconteceu na biblioteca? Use pistas do texto para explicar.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Espera-se que o aluno infira que Marina ficou contente por ver a prateleira com livros novamente, possivelmente com a contribuição de outras pessoas. Pode citar o livro que ela levou, os outros livros que apareceram e a prateleira que voltou a receber livros.",
+      "justificativa": "As ações de Marina e o aparecimento de outros livros indicam que ela se importava com a prateleira.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Leia: “Pedro deixou sua garrafa de água sobre a mesa da cozinha.” Onde Pedro deixou a garrafa?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Sobre a mesa da cozinha.",
+      "justificativa": "Essa informação está no trecho.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "lembrar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o texto.\n\nBia esperava o ônibus na saída da escola.\nO céu escureceu e as primeiras gotas caíram.\nEla procurou o guarda-chuva na mochila, sem sucesso.\nAo lado, uma senhora abriu um guarda-chuva bem largo.\nBia se aproximou, e as duas esperaram juntas.\n\nO que se pode concluir sobre a atitude da senhora?",
+      "alternativas": [
+        "Ela queria guardar a mochila de Bia.",
+        "Ela permitiu que Bia se abrigasse da chuva.",
+        "Ela pediu que Bia procurasse outro ônibus.",
+        "Ela mostrou a Bia onde ficava a escola."
+      ],
+      "correta": 1,
+      "resposta": "Ela permitiu que Bia se abrigasse da chuva.",
+      "justificativa": "A senhora abriu o guarda-chuva, e Bia se aproximou para esperar com ela.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o texto.\n\nNo começo, a estante ficava vazia na praça.\nDona Lúcia colocou nela três livros de casa.\nNa semana seguinte, apareceram revistas e gibis.\nQuem pegava uma história deixava outra no lugar.\nLogo havia gente lendo até debaixo da árvore.\n\nQual é o assunto principal do texto?",
+      "alternativas": [
+        "A troca de leituras entre pessoas da comunidade.",
+        "A escolha de uma árvore para enfeitar a praça.",
+        "A compra de livros novos para Dona Lúcia.",
+        "A organização de revistas antigas em casa."
+      ],
+      "correta": 0,
+      "resposta": "A troca de leituras entre pessoas da comunidade.",
+      "justificativa": "A estante recebe materiais de várias pessoas, que também os pegam para ler.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Leia o texto.\n\nNa véspera da apresentação, Lia ensaiou no quintal.\nEla parava várias vezes e recomeçava a fala.\nNo dia seguinte, apertou o papel entre os dedos.\nQuando viu a turma sorrindo, respirou fundo.\nEntão levantou a cabeça e começou a contar a história.\n\nComo Lia provavelmente se sentia antes de começar a apresentação? Cite duas pistas do texto que ajudam a perceber isso.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Lia provavelmente estava nervosa ou insegura. Ela interrompia o ensaio e recomeçava a fala; antes de se apresentar, apertou o papel entre os dedos.",
+      "justificativa": "As interrupções no ensaio e o gesto com o papel indicam nervosismo ou insegurança.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    }
+  ]
+}

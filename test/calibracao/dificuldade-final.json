@@ -1,0 +1,1429 @@
+{
+  "rotulo": "final",
+  "linhas": [
+    {
+      "materia": "Matemática 5º ano",
+      "facil": {
+        "nivelMedio": 1.67,
+        "etapas": 1,
+        "noAlvo": "6/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 3,
+        "etapas": 2,
+        "noAlvo": "6/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 3.67,
+        "etapas": 3.3,
+        "noAlvo": "4/6",
+        "gabaritoErrado": 1
+      }
+    },
+    {
+      "materia": "Português 8º ano",
+      "facil": {
+        "nivelMedio": 1.33,
+        "etapas": 1,
+        "noAlvo": "6/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 1.5,
+        "etapas": 1.5,
+        "noAlvo": "0/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 1.83,
+        "etapas": 2.2,
+        "noAlvo": "0/6",
+        "gabaritoErrado": 0
+      }
+    },
+    {
+      "materia": "Física 1º ano (Ensino Médio)",
+      "facil": {
+        "nivelMedio": 1.5,
+        "etapas": 1.2,
+        "noAlvo": "6/6",
+        "gabaritoErrado": 0
+      },
+      "medio": {
+        "nivelMedio": 2.67,
+        "etapas": 2.2,
+        "noAlvo": "4/6",
+        "gabaritoErrado": 0
+      },
+      "dificil": {
+        "nivelMedio": 4.17,
+        "etapas": 6.5,
+        "noAlvo": "5/6",
+        "gabaritoErrado": 0
+      }
+    }
+  ],
+  "geral": {
+    "facil": {
+      "nivelMedio": 1.5,
+      "noAlvo": "18/18",
+      "gabaritoErrado": 0
+    },
+    "medio": {
+      "nivelMedio": 2.39,
+      "noAlvo": "10/18",
+      "gabaritoErrado": 0
+    },
+    "dificil": {
+      "nivelMedio": 3.22,
+      "noAlvo": "9/18",
+      "gabaritoErrado": 1
+    }
+  },
+  "uso": [
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2378,
+      "saida": 839,
+      "cache": 2263,
+      "em": 1795018318192
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2386,
+      "saida": 998,
+      "cache": 2263,
+      "em": 1795018320315
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2383,
+      "saida": 1098,
+      "cache": 2263,
+      "em": 1795018323302
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2377,
+      "saida": 1343,
+      "cache": 2263,
+      "em": 1795018325232
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2385,
+      "saida": 1812,
+      "cache": 2263,
+      "em": 1795018334134
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2382,
+      "saida": 1430,
+      "cache": 2263,
+      "em": 1795018334527
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2379,
+      "saida": 2213,
+      "cache": 2263,
+      "em": 1795018342036
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2384,
+      "saida": 1994,
+      "cache": 0,
+      "em": 1795018345198
+    },
+    {
+      "papel": "criar",
+      "model": "gpt-6.1-terra",
+      "entrada": 2387,
+      "saida": 2859,
+      "cache": 2263,
+      "em": 1795018355185
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 2273,
+      "saida": 1267
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 1984,
+      "saida": 1416
+    },
+    {
+      "papel": "juiz",
+      "model": "gpt-6.1-sol",
+      "entrada": 2573,
+      "saida": 1523
+    }
+  ],
+  "questoes": [
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Uma escola separou 12 caixas de alimentos para uma campanha. Dessas caixas, 2 estavam danificadas e não puderam ser doadas. A escola já doou 3/12 das caixas pela manhã e 4/12 à tarde. A meta era doar 10/12 das 12 caixas separadas. Após doar todas as caixas que restaram em bom estado, que fração das 12 caixas ainda faltará para atingir a meta?",
+      "alternativas": [
+        "1/12 das caixas",
+        "2/12 das caixas",
+        "3/12 das caixas",
+        "5/12 das caixas"
+      ],
+      "correta": 1,
+      "resposta": "2/12 das caixas",
+      "justificativa": "12/12 − 2/12 = 10/12; 10/12 − 3/12 − 4/12 = 3/12; 3/12 − 3/12 = 0/12.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 4,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": false,
+        "problema": "As 10 caixas em bom estado atingem exatamente a meta de 10/12, portanto não faltará nenhuma caixa e não há alternativa correta."
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Qual é a menor fração: 3/7 ou 5/7?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "3/7.",
+      "justificativa": "Com denominadores iguais, a fração de menor numerador é a menor.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Em uma gincana, cada turma recebeu a mesma quantidade de tarefas. A turma A fez 5/8 das suas tarefas pela manhã e 2/8 à tarde. A turma B fez 3/8 das suas tarefas pela manhã e 3/8 à tarde. Que fração das tarefas faltou para cada turma e qual delas deixou menos tarefas por fazer?",
+      "alternativas": [
+        "Faltou 1/8 para A e 2/8 para B; A deixou menos.",
+        "Faltou 2/8 para A e 1/8 para B; B deixou menos.",
+        "Faltou 3/8 para A e 2/8 para B; B deixou menos.",
+        "Faltou 1/8 para A e 2/8 para B; B deixou menos."
+      ],
+      "correta": 0,
+      "resposta": "Faltou 1/8 para A e 2/8 para B; A deixou menos.",
+      "justificativa": "8/8 − 5/8 − 2/8 = 1/8; 8/8 − 3/8 − 3/8 = 2/8; 1/8 < 2/8.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 4,
+        "etapas": 5,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Em uma horta, a turma A plantou 2/9 da área pela manhã e 4/9 à tarde. A turma B plantou 7/9 da mesma área. Qual turma plantou a maior fração da área? Mostre como você descobriu.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A turma B, pois a turma A plantou 2/9 + 4/9 = 6/9 da área, e 7/9 é maior que 6/9.",
+      "justificativa": "2/9 + 4/9 = 6/9; 7/9 > 6/9.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Uma fita tinha 7/10 de metro. Pedro cortou 3/10 de metro dessa fita. Que fração de metro restou?",
+      "alternativas": [
+        "3/10 de metro",
+        "4/10 de metro",
+        "4/20 de metro",
+        "10/10 de metro"
+      ],
+      "correta": 1,
+      "resposta": "4/10 de metro",
+      "justificativa": "7/10 − 3/10 = 4/10.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Uma barra de chocolate foi dividida em 12 pedaços iguais. No lanche, foram comidos 3/12 da barra e, depois do jantar, 4/12. Dos pedaços restantes, 2/12 da barra serão guardados para o dia seguinte. Que fração da barra poderá ser distribuída agora?",
+      "alternativas": [
+        "3/12 da barra",
+        "5/12 da barra",
+        "7/12 da barra",
+        "2/12 da barra"
+      ],
+      "correta": 0,
+      "resposta": "3/12 da barra",
+      "justificativa": "3/12 + 4/12 = 7/12; 12/12 − 7/12 = 5/12; 5/12 − 2/12 = 3/12.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Quatro estudantes leram exemplares iguais de um livro. Ana leu 9/12 do livro, Bia leu 3/12, Caio leu 5/12 e Davi leu 7/12. Comparando a fração lida por Ana com a soma das frações lidas por Bia e Caio, qual é a diferença?",
+      "alternativas": [
+        "Ana leu 1/12 a mais que a soma de Bia e Caio.",
+        "Ana leu 2/12 a mais que a soma de Bia e Caio.",
+        "Ana leu 1/12 a menos que a soma de Bia e Caio.",
+        "Ana leu a mesma fração que a soma de Bia e Caio."
+      ],
+      "correta": 0,
+      "resposta": "Ana leu 1/12 a mais que a soma de Bia e Caio.",
+      "justificativa": "3/12 + 5/12 = 8/12; 9/12 − 8/12 = 1/12.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Ana bebeu 2/8 de litro de suco pela manhã e 3/8 de litro à tarde. Que fração de litro ela bebeu ao todo?",
+      "alternativas": [
+        "5/8 de litro",
+        "5/16 de litro",
+        "6/8 de litro",
+        "1/8 de litro"
+      ],
+      "correta": 0,
+      "resposta": "5/8 de litro",
+      "justificativa": "2/8 + 3/8 = 5/8.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Para uma campanha, uma turma recolheu 3/10 da meta na segunda-feira e 4/10 da mesma meta na terça-feira. Que fração da meta a turma recolheu e quanto ainda falta para atingir a meta completa?",
+      "alternativas": [
+        "Recolheu 7/10 e faltam 3/10.",
+        "Recolheu 7/10 e faltam 4/10.",
+        "Recolheu 7/20 e faltam 3/20.",
+        "Recolheu 1/10 e faltam 9/10."
+      ],
+      "correta": 0,
+      "resposta": "Recolheu 7/10 e faltam 3/10.",
+      "justificativa": "3/10 + 4/10 = 7/10; 10/10 − 7/10 = 3/10.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Paula e Rui estão preenchendo um álbum de 12 páginas. Paula já preencheu 5/12 das páginas, e Rui preencheu outras 3/12. Eles querem dividir as páginas vazias de modo que, ao final, cada um tenha preenchido a mesma quantidade de páginas. Que fração do álbum cada um deve preencher a partir de agora? Explique.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Paula deve preencher mais 1/12 do álbum, e Rui, mais 3/12. Assim, cada um terá preenchido 6/12 do álbum.",
+      "justificativa": "12/12 − 5/12 − 3/12 = 4/12; 5/12 + 1/12 = 6/12; 3/12 + 3/12 = 6/12.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 4,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Uma fita media 11/12 de metro. Para fazer dois laços, foram cortados 3/12 de metro e depois 5/12 de metro. Quantos metros de fita sobraram?",
+      "alternativas": [
+        "3/12 de metro.",
+        "5/12 de metro.",
+        "8/12 de metro.",
+        "3/24 de metro."
+      ],
+      "correta": 0,
+      "resposta": "3/12 de metro.",
+      "justificativa": "11/12 − 3/12 = 8/12; 8/12 − 5/12 = 3/12.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Qual destas frações é a maior?",
+      "alternativas": [
+        "2/9",
+        "5/9",
+        "7/9",
+        "4/9"
+      ],
+      "correta": 2,
+      "resposta": "7/9",
+      "justificativa": "Com denominadores iguais, a fração de maior numerador é a maior.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Um reservatório estava com 9/10 de sua capacidade. Após o uso de 4/10 de sua capacidade, foram acrescentados 2/10. Que fração da capacidade do reservatório está ocupada agora?",
+      "alternativas": [
+        "3/10 da capacidade.",
+        "5/10 da capacidade.",
+        "7/10 da capacidade.",
+        "7/20 da capacidade."
+      ],
+      "correta": 2,
+      "resposta": "7/10 da capacidade.",
+      "justificativa": "9/10 − 4/10 = 5/10; 5/10 + 2/10 = 7/10.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Ana leu 5/8 de um livro, Bia leu 7/8 e Caio leu 6/8 do mesmo livro. Quem leu mais e quanto leu a mais que a pessoa que ficou em segundo lugar?",
+      "alternativas": [
+        "Ana leu mais: 1/8 a mais.",
+        "Bia leu mais: 1/8 a mais.",
+        "Bia leu mais: 2/8 a mais.",
+        "Caio leu mais: 1/8 a mais."
+      ],
+      "correta": 1,
+      "resposta": "Bia leu mais: 1/8 a mais.",
+      "justificativa": "7/8 > 6/8 > 5/8; 7/8 − 6/8 = 1/8.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Luan calculou 2/7 + 3/7 e escreveu 5/14. Explique o erro de Luan e apresente o resultado correto.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Luan somou os denominadores. Como eles são iguais, deve somar os numeradores e manter o denominador: 2/7 + 3/7 = 5/7.",
+      "justificativa": "2/7 + 3/7 = 5/7.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Calcule: 1/6 + 3/6.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "4/6, ou 2/3.",
+      "justificativa": "1/6 + 3/6 = 4/6.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Uma jarra estava cheia. Pela manhã, uma família bebeu 3/8 da água da jarra e, à tarde, bebeu mais 2/8. Pedro calculou: “3/8 + 2/8 = 5/16, então sobraram 3/16 da água”. Explique o erro de Pedro e determine a fração da água que sobrou.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Pedro somou os denominadores, mas deveria manter o denominador 8 e somar os numeradores. A família bebeu 5/8 da água, e sobraram 3/8.",
+      "justificativa": "3/8 + 2/8 = 5/8; 8/8 − 5/8 = 3/8.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 4,
+        "etapas": 4,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": "O gabarito apresenta o resultado correto, mas não explica o segundo erro de Pedro: mesmo admitindo o consumo de 5/16, o complemento seria 11/16, não 3/16."
+      }
+    },
+    {
+      "materia": "Matemática",
+      "serie": "5º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "De uma barra de chocolate, restavam 6/9. Júlia comeu 2/9 da barra. Que fração da barra restou?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "4/9 da barra.",
+      "justificativa": "6/9 − 2/9 = 4/9.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nA chuva começou na saída da escola.\nNa marquise, Davi esperava o avô.\nOlhou o relógio pela terceira vez.\nQuando o carro apareceu, correu até ele.\n— Esperei mil anos! — reclamou.\nO avô apontou para o relógio:\nentre a saída e o encontro,\nhaviam passado vinte minutos.\n\nO que o exagero na fala de Davi revela sobre a espera?",
+      "alternativas": [
+        "A espera durou exatamente o tempo indicado pelo relógio.",
+        "A espera terminou quando o avô apontou para o relógio.",
+        "A espera pareceu muito longa para Davi, embora fosse breve.",
+        "A espera foi longa porque Davi saiu mais cedo da escola."
+      ],
+      "correta": 2,
+      "resposta": "A espera pareceu muito longa para Davi, embora fosse breve.",
+      "justificativa": "A hipérbole expressa a sensação de demora, em contraste com os vinte minutos registrados.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 1,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": "Há erro de concordância em “haviam passado vinte minutos”, cuja forma correta é “havia passado vinte minutos”."
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Leia o trecho.\n\nNa primeira semana no bairro,\nRosa saía com um papel dobrado no bolso.\nVirava à direita na padaria,\ndepois parava diante de outra esquina.\nAs casas tinham muros parecidos.\nPara ela, o bairro era um labirinto.\nÀ noite, no papel, surgiam novos traços:\na praça, a banca e o caminho de volta.\n\nExplique o sentido da metáfora do labirinto nesse trecho. Use uma pista do texto para justificar sua resposta.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Espera-se que o aluno explique que Rosa tinha dificuldade para se orientar no bairro e que justifique com uma pista, como as casas com muros parecidos ou o registro dos caminhos no papel.",
+      "justificativa": "A metáfora associa o bairro à dificuldade de encontrar caminhos, sugerida pelas pistas do trecho.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Depois de esperar por alguns minutos, Ana disse: “Esperei uma eternidade!” Qual figura de linguagem Ana usou?",
+      "alternativas": [
+        "Metáfora.",
+        "Comparação.",
+        "Personificação.",
+        "Hipérbole."
+      ],
+      "correta": 3,
+      "resposta": "Hipérbole.",
+      "justificativa": "Ana exagerou o tempo de espera.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia os dois trechos sobre uma rua movimentada.\n\nTexto 1\nDa janela do ônibus,\nvi a rua como um rio:\nas pessoas seguiam adiante,\nlevadas pela pressa da manhã.\n\nTexto 2\nAo sair de casa,\na rua esticou os braços para mim.\nSegui entre bancas e passos,\naté me perder no movimento.\n\nComo as figuras de linguagem contribuem para representar a rua nos dois textos?",
+      "alternativas": [
+        "No primeiro, destacam a pressa das pessoas; no segundo, a falta de bancas.",
+        "No primeiro, mostram o percurso do ônibus; no segundo, a saída de casa.",
+        "No primeiro, sugerem o silêncio da manhã; no segundo, a solidão do narrador.",
+        "No primeiro, sugerem um fluxo contínuo; no segundo, uma rua que acolhe."
+      ],
+      "correta": 3,
+      "resposta": "No primeiro, sugerem um fluxo contínuo; no segundo, uma rua que acolhe.",
+      "justificativa": "A comparação com o rio sugere fluxo; os braços atribuídos à rua sugerem acolhimento.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 2,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nNando chegou à biblioteca antes dos colegas.\nSentou-se perto da porta e olhou para o relógio.\nLeu a mesma página mais de uma vez.\nQuando o grupo apareceu, ele disse:\n“Esperei vocês por uma eternidade!”\n\nO que a hipérbole na fala de Nando expressa nessa situação?",
+      "alternativas": [
+        "A vontade de Nando de terminar a leitura.",
+        "A surpresa de Nando com a chegada do grupo.",
+        "O cuidado de Nando ao marcar o tempo.",
+        "A sensação de Nando de que a espera foi longa."
+      ],
+      "correta": 3,
+      "resposta": "A sensação de Nando de que a espera foi longa.",
+      "justificativa": "O exagero de “uma eternidade” expressa a sensação de demora durante a espera.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Leia o trecho.\n\nNa véspera da viagem,\nNina tentava fechar a mala.\nA tampa teimava em subir\na cada vez que ela se afastava.\n— Já tentei um milhão de vezes! — disse.\nEntão tirou dois casacos,\napertou as roupas com cuidado\ne conseguiu puxar o zíper.\n\nExplique o efeito de atribuir teimosia à tampa e o efeito do exagero na fala de Nina.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Espera-se que o aluno explique que a personificação apresenta a tampa como se resistisse a Nina e que a hipérbole expressa a sensação de ter tentado muitas vezes.",
+      "justificativa": "A teimosia é uma característica humana atribuída à tampa; o milhão de tentativas exagera a dificuldade vivida por Nina.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Leia o trecho.\n\nO bairro acordou antes do sol.\nAs portas das padarias se abriram,\nas primeiras bicicletas passaram pela rua\ne uma fila se formou no ponto de ônibus.\nDa janela, Joana acompanhava o movimento.\n\nO que a personificação “O bairro acordou” sugere sobre o início do dia? Explique com base em uma pista do trecho.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Sugere que o bairro começou a ficar movimentado. Uma pista é a abertura das padarias, a passagem das bicicletas ou a formação da fila no ponto de ônibus.",
+      "justificativa": "A personificação apresenta o início das atividades do bairro como um despertar.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nA casa estava silenciosa naquela noite.\nAna tentava dormir, mas a janela não parava de bater.\nLá fora, o vento chamava Ana pelo nome.\nEla puxou o cobertor até o queixo\ne esperou o barulho diminuir.\n\nQue efeito a personificação do vento ajuda a criar no trecho?",
+      "alternativas": [
+        "A impressão de que Ana reconheceu alguém na rua.",
+        "A sensação de tranquilidade durante a noite.",
+        "A impressão de que o vento se dirigia a Ana.",
+        "A sensação de alívio com o fim do barulho."
+      ],
+      "correta": 2,
+      "resposta": "A impressão de que o vento se dirigia a Ana.",
+      "justificativa": "Ao atribuir ao vento a ação de chamar, o trecho sugere que ele se dirige à personagem.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nNo primeiro dia na escola nova, Lia ficou perto do portão.\nNão conhecia ninguém e apertava as alças da mochila.\nSua prima Bia chegou, apresentou-lhe duas colegas\ne mostrou onde ficava a sala.\nNaquela manhã, Bia foi o farol de Lia.\n\nO que a metáfora “Bia foi o farol de Lia” sugere sobre a atuação de Bia?",
+      "alternativas": [
+        "Ela orientou Lia em uma situação desconhecida.",
+        "Ela procurou Lia pelos corredores da escola.",
+        "Ela contou a Lia histórias sobre a escola.",
+        "Ela esperou Lia junto ao portão da escola."
+      ],
+      "correta": 0,
+      "resposta": "Ela orientou Lia em uma situação desconhecida.",
+      "justificativa": "Como um farol, Bia ajudou Lia a encontrar um caminho em um lugar desconhecido.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nDepois da chuva, o time voltou à quadra.\nFaltavam poucos minutos para o jogo começar.\nCaio correu como uma flecha até o banco,\napanhou a bola esquecida\ne voltou antes de o juiz chamar as equipes.\n\nQue característica da ação de Caio a comparação com uma flecha destaca?",
+      "alternativas": [
+        "A força com que Caio lançou a bola.",
+        "A rapidez com que Caio se deslocou.",
+        "A atenção com que Caio ouviu o juiz.",
+        "A dificuldade com que Caio voltou à quadra."
+      ],
+      "correta": 1,
+      "resposta": "A rapidez com que Caio se deslocou.",
+      "justificativa": "A comparação destaca a velocidade de Caio ao buscar a bola.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Leia: “O menino corre como um raio.” Qual figura de linguagem aparece nessa frase?",
+      "alternativas": [
+        "Metáfora.",
+        "Comparação.",
+        "Personificação.",
+        "Hipérbole."
+      ],
+      "correta": 1,
+      "resposta": "Comparação.",
+      "justificativa": "A palavra “como” estabelece uma comparação entre o menino e um raio.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Leia: “A lua sorriu para mim.” Qual ação humana é atribuída à lua?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A ação de sorrir.",
+      "justificativa": "A frase atribui à lua a ação humana de sorrir.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "lembrar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Leia: “O vento sussurrou na janela.” Qual é o efeito da personificação nessa frase?",
+      "alternativas": [
+        "Mostrar que o vento ficou mais forte.",
+        "Indicar que alguém fechou a janela.",
+        "Atribuir ao vento uma ação humana.",
+        "Comparar o vento a uma pessoa."
+      ],
+      "correta": 2,
+      "resposta": "Atribuir ao vento uma ação humana.",
+      "justificativa": "Sussurrar é uma ação humana atribuída ao vento.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": "O enunciado solicita um efeito de sentido, mas o gabarito apenas define personificação, e a alternativa d apresenta sobreposição conceitual com ele."
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Ao chegar para o almoço, Caio disse: “Estou morrendo de fome!” O que esse exagero indica?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Caio está com muita fome.",
+      "justificativa": "A hipérbole intensifica a sensação de fome.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nA cortina se abriu devagar.\nNo fundo do palco, Beto procurou\ncom os olhos o rosto da irmã.\nA plateia já havia se acomodado.\nO silêncio prendeu a respiração.\nBeto encostou os dedos no violão,\nlembrou a primeira nota\ne começou a tocar.\n\nQue efeito a personificação do silêncio produz nesse momento da narrativa?",
+      "alternativas": [
+        "Sugere a expectativa da plateia antes de a música começar.",
+        "Mostra que Beto esqueceu a primeira nota diante da plateia.",
+        "Descreve o movimento da cortina durante a apresentação.",
+        "Indica que a irmã de Beto também toca violão no palco."
+      ],
+      "correta": 0,
+      "resposta": "Sugere a expectativa da plateia antes de a música começar.",
+      "justificativa": "A ação humana atribuída ao silêncio intensifica a sensação de expectativa antes da primeira nota.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Leia o trecho.\n\nNa primeira manhã de aula,\nLia parou diante do portão.\nAtrás dela, a rua conhecida\nficava pequena como uma fotografia.\nÀ frente, o pátio estava cheio de vozes.\nO portão era uma fronteira.\nEla apertou as alças da mochila\ne deu um passo para dentro.\n\nQue sentido a metáfora do portão acrescenta à cena?",
+      "alternativas": [
+        "O portão separa a rua do pátio por causa de sua estrutura.",
+        "O portão marca a passagem de Lia para um ambiente desconhecido.",
+        "O portão impede que Lia veja as pessoas reunidas no pátio.",
+        "O portão faz a rua parecer menor do que uma fotografia."
+      ],
+      "correta": 1,
+      "resposta": "O portão marca a passagem de Lia para um ambiente desconhecido.",
+      "justificativa": "A metáfora sugere uma passagem entre o espaço conhecido e a experiência nova, indicada pelas vozes e pelo gesto de Lia.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Leia o trecho.\n\nQuando recebeu a notícia, Davi ficou em silêncio.\nDepois guardou a carta na mochila\ne caminhou devagar até em casa.\nNa mesa do jantar, falou pouco.\nA notícia era uma pedra em seu peito.\n\nO que a metáfora “uma pedra em seu peito” sugere sobre o sentimento de Davi? Relacione sua resposta a uma atitude dele no trecho.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Sugere que Davi sentiu tristeza ou preocupação. Isso aparece, por exemplo, quando ele fica em silêncio, caminha devagar ou fala pouco no jantar.",
+      "justificativa": "A metáfora associa a notícia a um peso, em sintonia com as atitudes de Davi.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Português",
+      "serie": "8º ano",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Em uma apresentação, Pedro disse: “Lia é uma estrela no palco.” O que Pedro quis dizer sobre Lia?",
+      "alternativas": [
+        "Ela se destaca ao se apresentar.",
+        "Ela brilha como um astro no céu.",
+        "Ela observa as estrelas do palco.",
+        "Ela se apresenta apenas à noite."
+      ],
+      "correta": 0,
+      "resposta": "Ela se destaca ao se apresentar.",
+      "justificativa": "A metáfora indica que Lia se destaca no palco.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Um carro percorre 100 km em movimento uniforme, com velocidade de 50 km/h. Quanto tempo ele leva para fazer o percurso?",
+      "alternativas": [
+        "1 hora",
+        "2 horas",
+        "3 horas",
+        "5 horas"
+      ],
+      "correta": 1,
+      "resposta": "2 horas",
+      "justificativa": "100 ÷ 50 = 2 horas.",
+      "id": 1,
+      "aval": {
+        "id": 1,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Uma pessoa caminha 800 m para leste por uma rua reta e depois retorna 300 m para oeste pela mesma rua. O percurso inteiro dura 5 minutos. Qual é a velocidade média vetorial da pessoa nesse intervalo?",
+      "alternativas": [
+        "1,67 m/s para leste.",
+        "1,67 m/s para oeste.",
+        "2,67 m/s para leste.",
+        "3,67 m/s para leste."
+      ],
+      "correta": 0,
+      "resposta": "1,67 m/s para leste.",
+      "justificativa": "(800 − 300)/(5 × 60) ≈ 1,67 m/s para leste.",
+      "id": 2,
+      "aval": {
+        "id": 2,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Uma moto viaja em movimento uniforme a 40 km/h durante 3 horas. Qual distância ela percorre nesse tempo?",
+      "alternativas": [
+        "40 km",
+        "80 km",
+        "120 km",
+        "160 km"
+      ],
+      "correta": 2,
+      "resposta": "120 km",
+      "justificativa": "40 × 3 = 120 km.",
+      "id": 3,
+      "aval": {
+        "id": 3,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Um motorista percorre 20 km a 40 km/h e, em seguida, outros 20 km a 60 km/h, sempre no mesmo sentido em uma estrada reta. Uma colega afirma que a velocidade média no percurso completo é 50 km/h, pois esse é o valor médio entre 40 e 60. Calcule a velocidade média e explique o erro da colega.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A velocidade média é 48 km/h. A colega não considerou que o motorista permaneceu tempos diferentes em cada velocidade.",
+      "justificativa": "20/40 + 20/60 = 5/6 h; 40/(5/6) = 48 km/h.",
+      "id": 4,
+      "aval": {
+        "id": 4,
+        "nivel": 4,
+        "etapas": 6,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Uma ciclista percorreu 18 km em 0,5 hora. A velocidade média dela ficou quantos quilômetros por hora acima de 30 km/h?",
+      "alternativas": [
+        "6 km/h",
+        "9 km/h",
+        "18 km/h",
+        "36 km/h"
+      ],
+      "correta": 0,
+      "resposta": "6 km/h",
+      "justificativa": "18 ÷ 0,5 = 36; 36 − 30 = 6.",
+      "id": 5,
+      "aval": {
+        "id": 5,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Uma pessoa percorreu 80 metros em 10 segundos. Qual foi sua velocidade média em metros por segundo?",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "8 m/s.",
+      "justificativa": "80 ÷ 10 = 8 m/s.",
+      "id": 6,
+      "aval": {
+        "id": 6,
+        "nivel": 2,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Em uma viagem, um carro percorreu 90 km em 1,5 hora e depois ficou parado por 0,5 hora. Qual foi sua velocidade média considerando todo esse intervalo, incluindo a parada?",
+      "alternativas": [
+        "45 km/h",
+        "60 km/h",
+        "90 km/h",
+        "120 km/h"
+      ],
+      "correta": 0,
+      "resposta": "45 km/h",
+      "justificativa": "1,5 + 0,5 = 2 h; 90 ÷ 2 = 45 km/h.",
+      "id": 7,
+      "aval": {
+        "id": 7,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Um ônibus mantém velocidade constante de 72 km/h durante 25 minutos. Qual distância ele percorre nesse intervalo?",
+      "alternativas": [
+        "18 km",
+        "25 km",
+        "30 km",
+        "72 km"
+      ],
+      "correta": 2,
+      "resposta": "30 km",
+      "justificativa": "25 min = 5/12 h; 72 × 5/12 = 30 km.",
+      "id": 8,
+      "aval": {
+        "id": 8,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "multipla",
+      "enunciado": "Uma pessoa caminha em uma estrada reta, sempre no mesmo sentido e com velocidade constante de 8 km/h. No início da observação, ela está na marca de 12 km da estrada. Em qual marca estará após 3 horas?",
+      "alternativas": [
+        "24 km",
+        "27 km",
+        "32 km",
+        "36 km"
+      ],
+      "correta": 3,
+      "resposta": "36 km",
+      "justificativa": "8 × 3 = 24 km; 12 + 24 = 36 km.",
+      "id": 9,
+      "aval": {
+        "id": 9,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": "O gabarito pressupõe movimento no sentido das marcas crescentes, mas o enunciado informa apenas que não há mudança de sentido."
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "aberta",
+      "enunciado": "Uma viagem teve velocidade média de 60 km/h. Essa informação garante que o veículo manteve 60 km/h durante toda a viagem? Explique.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "Não. A velocidade pode ter variado durante a viagem, mesmo que a média tenha sido 60 km/h.",
+      "justificativa": "A velocidade média não indica necessariamente a velocidade em cada instante.",
+      "id": 10,
+      "aval": {
+        "id": 10,
+        "nivel": 2,
+        "etapas": 2,
+        "habilidade": "compreender",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Um ônibus percorre uma avenida reta sempre no mesmo sentido. Ele anda 3,6 km a 12 m/s, para por 4 minutos e depois percorre mais 2,4 km a 8 m/s. Calcule sua velocidade média em km/h, incluindo a parada. O movimento foi uniforme durante todo o intervalo? Justifique.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A velocidade média foi de aproximadamente 25,7 km/h. O movimento não foi uniforme durante todo o intervalo, pois o ônibus teve velocidades diferentes e ficou parado por 4 minutos.",
+      "justificativa": "3600/12 = 300 s; 2400/8 = 300 s; 300 + 240 + 300 = 840 s; (6000/840) × 3,6 ≈ 25,7 km/h.",
+      "id": 11,
+      "aval": {
+        "id": 11,
+        "nivel": 4,
+        "etapas": 10,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Um carro parte da marca de 4 km de uma estrada e segue no sentido das marcas crescentes, com velocidade constante de 10 km/h. Um colega calculou que ele leva 3,4 horas para chegar à marca de 34 km, dividindo 34 por 10. Calcule o tempo correto e explique o erro do colega.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O tempo correto é 3 horas. O colega usou a marca final como distância percorrida, sem descontar a marca inicial.",
+      "justificativa": "34 − 4 = 30 km; 30 ÷ 10 = 3 h.",
+      "id": 12,
+      "aval": {
+        "id": 12,
+        "nivel": 3,
+        "etapas": 3,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Uma van percorre 12 km em linha reta. Na primeira metade do percurso, mantém velocidade de 30 km/h; na segunda, mantém velocidade de 20 km/h. Entre as duas partes, fica parada por 6 minutos. Qual é a velocidade média da van no percurso completo, incluindo a parada?",
+      "alternativas": [
+        "20 km/h",
+        "24 km/h",
+        "25 km/h",
+        "30 km/h"
+      ],
+      "correta": 0,
+      "resposta": "20 km/h",
+      "justificativa": "6/30 + 6/20 + 6/60 = 0,6 h; 12/0,6 = 20 km/h.",
+      "id": 13,
+      "aval": {
+        "id": 13,
+        "nivel": 4,
+        "etapas": 6,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Um ônibus percorreu 120 km em 2 horas. Qual foi sua velocidade média?",
+      "alternativas": [
+        "40 km/h",
+        "60 km/h",
+        "120 km/h",
+        "240 km/h"
+      ],
+      "correta": 1,
+      "resposta": "60 km/h",
+      "justificativa": "120 ÷ 2 = 60 km/h.",
+      "id": 14,
+      "aval": {
+        "id": 14,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "facil",
+      "tipo": "multipla",
+      "enunciado": "Uma bicicleta percorre uma rua reta em movimento uniforme. Como sua velocidade varia durante esse movimento?",
+      "alternativas": [
+        "A velocidade permanece constante.",
+        "A velocidade aumenta com o tempo.",
+        "A velocidade diminui com o tempo.",
+        "A velocidade alterna entre aumentar e diminuir."
+      ],
+      "correta": 0,
+      "resposta": "A velocidade permanece constante.",
+      "justificativa": "No movimento uniforme, a velocidade permanece constante.",
+      "id": 15,
+      "aval": {
+        "id": 15,
+        "nivel": 1,
+        "etapas": 1,
+        "habilidade": "lembrar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "aberta",
+      "enunciado": "Dois caminhões seguem no mesmo sentido por uma rodovia reta, ambos em movimento uniforme. Às 7h, o caminhão A está no marco do km 18 e o caminhão B está no marco do km 48. Às 7h20, A passa pelo marco do km 42. A velocidade de B é de 48 km/h. Determine o horário e o marco quilométrico em que A alcançará B. Apresente seus cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "A alcançará B às 8h15, no marco do km 108. A velocidade de A é 72 km/h, e o tempo necessário para diminuir a distância inicial de 30 km é 1 h 15 min.",
+      "justificativa": "(42 − 18)/(20/60) = 72 km/h; (48 − 18)/(72 − 48) = 1,25 h; 18 + 72 × 1,25 = 108 km.",
+      "id": 16,
+      "aval": {
+        "id": 16,
+        "nivel": 5,
+        "etapas": 7,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "dificil",
+      "tipo": "multipla",
+      "enunciado": "Duas cidades, A e B, estão separadas por 180 km de estrada reta. Às 8h, um carro parte de A em direção a B, com velocidade constante de 60 km/h. Às 8h30, outro carro parte de B em direção a A, com velocidade constante de 30 km/h. Em que horário e a que distância de A os carros se encontram?",
+      "alternativas": [
+        "Às 10h, a 120 km de A.",
+        "Às 10h10, a 130 km de A.",
+        "Às 10h30, a 150 km de A.",
+        "Às 11h, a 180 km de A."
+      ],
+      "correta": 1,
+      "resposta": "Às 10h10, a 130 km de A.",
+      "justificativa": "180 − 60 × 0,5 = 150 km; 150/(60 + 30) = 1 h 40 min; 60 × (13/6) = 130 km.",
+      "id": 17,
+      "aval": {
+        "id": 17,
+        "nivel": 5,
+        "etapas": 7,
+        "habilidade": "analisar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    },
+    {
+      "materia": "Física",
+      "serie": "1º ano (Ensino Médio)",
+      "nivel": "medio",
+      "tipo": "aberta",
+      "enunciado": "Um veículo se move em linha reta a uma velocidade constante de 54 km/h. Calcule, em metros, a distância que ele percorre em 20 segundos. Apresente seus cálculos.",
+      "alternativas": [],
+      "correta": -1,
+      "resposta": "O veículo percorre 300 m.",
+      "justificativa": "54 ÷ 3,6 = 15 m/s; 15 × 20 = 300 m.",
+      "id": 18,
+      "aval": {
+        "id": 18,
+        "nivel": 3,
+        "etapas": 2,
+        "habilidade": "aplicar",
+        "gabarito_correto": true,
+        "problema": ""
+      }
+    }
+  ]
+}

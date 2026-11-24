@@ -68,9 +68,10 @@ const ESQ_FIGURA = {
 const ESQ_QUESTAO = {
   type: 'object',
   additionalProperties: false,
-  required: ['tipo', 'enunciado', 'alternativas', 'correta', 'resposta', 'justificativa', 'adaptada', 'figura'],
+  required: ['tipo', 'etapas', 'enunciado', 'alternativas', 'correta', 'resposta', 'justificativa', 'adaptada', 'figura'],
   properties: {
     tipo: { type: 'string', enum: ['multipla', 'vf', 'completar', 'aberta'] },
+    etapas: { type: 'integer' }, // passos de raciocínio: força a IA a medir o nível de cada questão
     enunciado: { type: 'string' },
     alternativas: { type: 'array', items: { type: 'string' } },
     correta: { type: 'integer' },
@@ -86,6 +87,14 @@ const ESQ_GERAR = {
   required: ['questoes'],
   properties: { questoes: { type: 'array', items: ESQ_QUESTAO } },
 };
+/** Só pede à IA o que vai ser usado: cada campo a menos é texto que não se paga. */
+function esquemaGerar({ adaptada = true, figuras = true } = {}) {
+  const props = { ...ESQ_QUESTAO.properties };
+  if (!adaptada) delete props.adaptada;
+  if (!figuras) delete props.figura;
+  const item = { ...ESQ_QUESTAO, properties: props, required: Object.keys(props) };
+  return { ...ESQ_GERAR, properties: { questoes: { type: 'array', items: item } } };
+}
 const ESQ_REVISAR = {
   type: 'object',
   additionalProperties: false,
@@ -119,13 +128,31 @@ REGRAS DE QUALIDADE (obrigatórias):
 3. O enunciado é completo: o aluno entende o que fazer sem ler as alternativas.
 4. Múltipla escolha: exatamente 4 alternativas, UMA correta e sem ambiguidade. Distratores plausíveis, baseados em erros comuns dos alunos. Alternativas com tamanho e estrutura parecidos. Proibido "todas/nenhuma das anteriores". Evite perguntas negativas; se usar, escreva NÃO em maiúsculas.
 5. Sem pegadinhas e sem informação falsa. Só use fatos, datas e nomes de que você tem certeza. Se não tiver certeza, troque por outro fato.
-6. Em cálculos, resolva passo a passo na "justificativa" e confira o resultado antes de responder.
+6. Antes de responder, resolva a questão e confira o resultado. Na "justificativa", seja curto: no máximo 2 frases; em cálculos, só as contas (ex.: "36 ÷ 4 = 9"). O resultado final da justificativa tem que ser exatamente a "resposta" e estar entre as alternativas; se não bater, refaça a questão.
 7. V/F: 3 ou 4 afirmações em "alternativas"; "resposta" no formato "V, F, V" (mesma quantidade); misture V e F.
 8. Completar: use ____ para cada lacuna; "resposta" traz as palavras que preenchem.
 9. Dissertativa: "alternativas" vazia; "resposta" traz o que se espera na resposta do aluno.
+11. Varie as habilidades dentro do nível pedido (comparar, calcular, interpretar uma situação, achar e explicar o erro de um colega, justificar). Nada de questões quase iguais trocando só nomes e números.
+12. Distratores vêm de erros reais de raciocínio (ex.: somar numeradores e denominadores), nunca de frases que contradizem o próprio enunciado.
 10. "correta" é o índice (começando em 0) da alternativa certa; use -1 quando não for múltipla escolha. Em múltipla, "resposta" repete o texto da alternativa correta.
 
-VERSÃO ADAPTADA (para alunos com TDAH, autismo, dislexia ou deficiência intelectual):
+NÍVEIS DE DIFICULDADE (obrigatório: TODAS as questões da prova ficam no nível pedido). A régua é um aluno típico da série, em escola pública, que estudou o conteúdo. Acerto esperado na turma: FÁCIL ≈ 80%; MÉDIO ≈ 50%; DIFÍCIL ≈ 25%. Difícil NÃO é conteúdo de série acima; é exigir mais raciocínio com o conteúdo da série.
+- FÁCIL: 1 etapa. Reconhecer, identificar ou aplicar o conceito de forma direta, como no exemplo do livro. Enunciado curto, números pequenos e redondos, contexto simples. Distratores claramente diferentes. Ex.: "Quanto é 2/7 + 3/7?"; "Qual figura de linguagem há em 'branco como a neve'?"; "Um carro anda 100 km em 2 h. Qual a velocidade média?".
+- MÉDIO: exatamente 2 etapas obrigatórias (ex.: calcular e depois comparar; achar um dado e depois usá-lo; converter uma unidade e depois calcular), OU ler e interpretar uma situação ou trecho de 3 a 5 linhas antes de aplicar o conceito. Nunca uma identificação ou conta direta. O aluno escolhe a estratégia. Distratores vêm de erros comuns (ex.: somar os denominadores, confundir comparação com metáfora, esquecer de converter unidade). Ex.: problema com uma soma e depois uma comparação; identificar a figura num verso e dizer o efeito que ela cria.
+- DIFÍCIL: 3 ou mais etapas, ou combinar duas ideias do conteúdo, ou analisar, justificar ou generalizar. Use pelo menos dois destes recursos: dado intermediário que precisa ser calculado antes; um dado numérico a mais, plausível, que deve ser ignorado (nunca enfeites como a cor de um objeto); conversão de unidade ou de representação (texto → fração → comparação); situação nova, diferente do exemplo clássico; justificar por que uma resposta está errada; distinguir casos parecidos (ex.: metáfora × comparação × personificação no mesmo trecho). Distratores muito plausíveis: resultados de etapas intermediárias ou do erro mais comum. Ex.: "uma jarra tem 9/12 L, servem 4/12 L e depois 1/3 da jarra cheia; quanto sobrou?"; "num trecho com duas figuras parecidas, qual cria o efeito X e por quê?"; "um ônibus faz metade do trajeto a 60 km/h e a outra metade a 40 km/h; qual a velocidade média?".
+MATÉRIAS DE LEITURA (Português, Inglês, História, Geografia, Arte, Ensino Religioso e a parte de leitura de Ciências):
+- FÁCIL: identificar o conceito numa frase curta e clara.
+- MÉDIO: a questão traz um texto de 5 a 8 linhas (crônica, verso, notícia, propaganda, carta, documento) e pede uma INFERÊNCIA: algo que o texto não diz com todas as letras, mas que se conclui juntando duas partes dele (intenção, efeito de sentido, sentimento de um personagem, relação de causa). A resposta não está copiada em nenhuma frase do texto.
+- DIFÍCIL: texto de 8 a 12 linhas, ou dois textos para comparar, exigindo inferência global: tema, ponto de vista, ironia ou humor, intenção do autor, ou distinguir ocorrências parecidas. As alternativas erradas são parcialmente verdadeiras (servem para uma parte do texto, mas não para o todo) e NUNCA contradizem o texto de forma direta.
+- Em MÉDIO e DIFÍCIL, o texto é literário ou jornalístico de verdade, não "didático": ele não explica a própria lição, e nenhum personagem diz a conclusão em voz alta. O aluno precisa juntar pistas.
+- Em MÉDIO e DIFÍCIL, não pergunte só o nome do conceito (que figura é, que período é); pergunte o sentido, o efeito, a intenção ou a relação entre partes do texto. As alternativas não trazem "pois…" com justificativas que se contradizem: são afirmações sobre o texto, todas do mesmo tamanho e tom.
+- Distratores de leitura seguem os 4 erros clássicos de quem lê: (1) leitura literal da figura ou da palavra; (2) extrapolação, que vai além do que o texto diz; (3) inversão do sentido; (4) um detalhe verdadeiro do texto que não responde à pergunta. Exemplo de MÉDIO bem feito: "Meu pai é um livro aberto: conta para a gente tudo o que sente." — O que a expressão revela sobre o pai? a) Ele gosta muito de ler livros. (literal) b) Ele é sincero e mostra o que sente. (correta) c) Ele escreve histórias sobre a família. (extrapolação) d) Ele guarda os sentimentos para si. (inversão)
+- Se o enunciado falar em "expressão destacada", destaque-a com **negrito** no trecho.
+- Em todos os níveis, os distratores são LEITURAS POSSÍVEIS do trecho (erros que um aluno de verdade cometeria), nunca opções absurdas ou que citam palavras que não estão no texto.
+Em "etapas", escreva quantos passos de raciocínio a questão exige: deve combinar com o nível (fácil = 1; médio = 2; difícil = 3 ou mais).
+Antes de responder, confira cada questão contra a definição do nível. Se uma questão de "difícil" puder ser resolvida em uma conta direta, reescreva.
+
+VERSÃO ADAPTADA (só quando o esquema pedir o campo "adaptada"; para alunos com TDAH, autismo, dislexia ou deficiência intelectual):
 - Avalia o MESMO conhecimento, sem infantilizar.
 - Frases curtas (até 12 palavras), uma instrução por vez, ordem direta, vocabulário concreto.
 - Destaque as palavras-chave com **negrito**.
@@ -134,7 +161,7 @@ VERSÃO ADAPTADA (para alunos com TDAH, autismo, dislexia ou deficiência intele
 - "dica": uma frase curta de apoio que ajude a pensar, SEM dar a resposta.
 - V/F: as mesmas afirmações, reescritas de forma mais curta e direta.
 
-FIGURAS ("figura"):
+FIGURAS (só quando o esquema pedir o campo "figura"):
 - Use "tipo": "nenhuma" (descricao e svg vazios) quando a questão não precisa de imagem.
 - Quando o pedido permitir figuras, coloque figura SÓ onde ela ajuda de verdade (no máximo 1 a cada 3 questões): frações, formas geométricas, gráficos, tabelas, retas numéricas, relógios, mapas simples, animais, plantas, objetos.
 - "diagrama": figuras exatas e matemáticas. Escreva em "svg" um SVG completo e válido com viewBox="0 0 400 300", fundo branco, traço preto (stroke-width 2 a 3), cores lisas e suaves, texto em Arial com font-size de pelo menos 16. Sem <script>, sem imagens externas, sem links. Conte e confira cada elemento (ex.: 8 fatias, 3 pintadas).
@@ -150,14 +177,15 @@ function pedidoGerar(p, quantidade, evitar = []) {
 Matéria: ${p.materia}
 Ano/série: ${p.serie}
 Conteúdo: ${p.tema}
-Dificuldade: ${DIFICULDADES[p.dificuldade]}
+Dificuldade: ${DIFICULDADES[p.dificuldade]} (siga a definição de ${String(DIFICULDADES[p.dificuldade]).toUpperCase()}; todas as questões neste nível)
 Tipos permitidos (distribua entre eles): ${tipos}
-Figuras: ${p.figuras ? 'pode usar figuras quando ajudarem' : 'NÃO use figuras ("tipo": "nenhuma" em todas)'}
+Figuras: ${p.figuras ? 'pode usar figuras quando ajudarem' : 'não'}
+Versão adaptada: ${p.adaptada === false ? 'não' : 'sim'}
 ${p.observacoes ? `Pedido da professora: ${p.observacoes}\n` : ''}${p.contexto?.trechos?.length ? `\nMATERIAL DE BASE ("${p.contexto.nome}"): use estes trechos como fonte principal. As questões devem cobrar o que está no material, com o mesmo vocabulário e exemplos parecidos. Na "justificativa", cite a página (ex.: "Material, p. 12"). Não copie questões prontas do material; crie novas a partir do conteúdo.\n${p.contexto.trechos.map((t) => `--- página ${t.pagina} ---\n${t.texto}`).join('\n')}\n--- fim do material ---\n` : ''}${evitar.length ? `\nNÃO repita estas questões que já estão na prova:\n${evitar.map((e) => `- ${e}`).join('\n')}\n` : ''}
 Responda apenas com o JSON pedido.`;
 }
 
-const SISTEMA_REVISAR = `Você é um revisor rigoroso de provas escolares. Você recebe questões SEM o gabarito. Resolva cada uma de forma independente, mostrando o raciocínio curto em "resolucao". Em "minha_resposta" escreva: para múltipla escolha, apenas a LETRA (a, b, c ou d); para V/F, no formato "V, F, V"; para as outras, a resposta curta. Marque "ambigua" se houver mais de uma resposta possível ou o enunciado não for claro. Marque "erro_de_conteudo" se houver informação falsa ou cálculo errado. Em "problemas", descreva em uma frase o que está errado (ou deixe vazio).`;
+const SISTEMA_REVISAR = `Você é um revisor rigoroso de provas escolares. Você recebe questões SEM o gabarito. Resolva cada uma de forma independente. Em "resolucao", no máximo 20 palavras (só o essencial ou as contas). Em "minha_resposta" escreva: para múltipla escolha, apenas a LETRA (a, b, c ou d); para V/F, no formato "V, F, V"; para as outras, a resposta curta. Marque "ambigua" se houver mais de uma resposta possível ou o enunciado não for claro. Marque "erro_de_conteudo" se houver informação falsa ou cálculo errado. Em "problemas", descreva em uma frase o que está errado (ou deixe vazio).`;
 
 function pedidoRevisar(questoes) {
   const linhas = questoes.map((q, i) => {
@@ -173,24 +201,33 @@ function pedidoRevisar(questoes) {
 
 /* ---------------- Chamadas aos provedores ---------------- */
 
-/** Escolhe automaticamente um bom modelo GPT disponível na conta. */
-async function modeloOpenAI(chave, signal) {
+/**
+ * Modelo por papel (custo x qualidade):
+ *  - criar: modelo equilibrado, bom em elaborar itens (padrão gpt-6.1-terra);
+ *  - conferir: modelo barato e rápido; resolver uma questão pronta é tarefa mais simples
+ *    (padrão gpt-6-luna). Ele não decide nada sozinho: só levanta a bandeira para a professora.
+ * No app publicado, quem decide é o servidor (api/openai.js).
+ */
+const MODELOS = {
+  criar: MODELO_OPENAI_APP || 'gpt-6.1-terra',
+  conferir: import.meta.env.VITE_OPENAI_MODEL_REVISAO || 'gpt-6-luna',
+};
+async function modeloOpenAI(chave, signal, papel = 'criar') {
   if (!chave && USAR_PROXY) return 'definido-no-servidor'; // o servidor escolhe o modelo
-  if (MODELO_OPENAI_APP) return MODELO_OPENAI_APP;
+  return MODELOS[papel] || MODELOS.criar;
+}
+
+/** Guarda quanto cada chamada gastou (tokens), para acompanhar o custo por prova. */
+function registrarUso(papel, model, uso) {
+  if (!uso) return;
+  const reg = { papel, model, entrada: uso.prompt_tokens ?? uso.input_tokens ?? 0, saida: uso.completion_tokens ?? uso.output_tokens ?? 0,
+    cache: uso.prompt_tokens_details?.cached_tokens ?? uso.input_tokens_details?.cached_tokens ?? 0, em: Date.now() };
+  console.info('[IA] uso', reg);
   try {
-    const salvo = localStorage.getItem('pf.modeloOpenAI');
-    if (salvo) return salvo;
+    const lista = JSON.parse(localStorage.getItem('pf.usoIA') || '[]');
+    lista.push(reg);
+    localStorage.setItem('pf.usoIA', JSON.stringify(lista.slice(-200)));
   } catch {}
-  const r = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${chave}` }, signal });
-  if (!r.ok) throw await erroOpenAI(r);
-  const ids = (await r.json()).data.map((m) => m.id)
-    .filter((id) => /^gpt-\d/.test(id) && !/(audio|realtime|search|transcribe|tts|image|codex|instruct|nano|chat-latest|pro\b|-pro|astra)/.test(id));
-  const versao = (id) => parseFloat(id.match(/^gpt-(\d+(\.\d+)?)/)?.[1] || '0');
-  ids.sort((a, b) => versao(b) - versao(a) || /mini/.test(a) - /mini/.test(b) || a.length - b.length);
-  const escolhido = ids[0];
-  if (!escolhido) throw new ErroIA('Não encontrei um modelo GPT disponível nesta conta da OpenAI.');
-  try { localStorage.setItem('pf.modeloOpenAI', escolhido); } catch {}
-  return escolhido;
 }
 
 async function erroOpenAI(r) {
@@ -201,8 +238,8 @@ async function erroOpenAI(r) {
   return new ErroIA(`A IA respondeu com erro (${r.status}). ${detalhe}`);
 }
 
-async function chamarOpenAI({ chave, sistema, usuario, esquema, nome, signal }) {
-  const model = await modeloOpenAI(chave, signal);
+async function chamarOpenAI({ chave, sistema, usuario, esquema, nome, signal, papel = 'criar' }) {
+  const model = await modeloOpenAI(chave, signal, papel);
   const destino = destinoOpenAI('v1/chat/completions', chave);
   const r = await fetch(destino.url, {
     method: 'POST',
@@ -215,13 +252,12 @@ async function chamarOpenAI({ chave, sistema, usuario, esquema, nome, signal }) 
         { role: 'user', content: usuario },
       ],
       response_format: { type: 'json_schema', json_schema: { name: nome, strict: true, schema: esquema } },
+      ...(model === 'definido-no-servidor' ? { papel } : {}),
     }),
   });
-  if (!r.ok) {
-    if (r.status === 404 || r.status === 400) { try { localStorage.removeItem('pf.modeloOpenAI'); } catch {} }
-    throw await erroOpenAI(r);
-  }
+  if (!r.ok) throw await erroOpenAI(r);
   const dados = await r.json();
+  registrarUso(papel, dados.model || model, dados.usage);
   const msg = dados.choices?.[0]?.message;
   if (msg?.refusal) throw new ErroIA('A IA recusou este pedido. Tente reescrever o conteúdo.');
   if (dados.choices?.[0]?.finish_reason === 'length') throw new ErroIA('A resposta da IA ficou grande demais. Peça menos questões por vez.');
@@ -294,7 +330,7 @@ export async function gerarQuestoes(config, pedido, quantidade, evitar, signal) 
   const dados = await chamar(config, {
     sistema: SISTEMA_GERAR,
     usuario: pedidoGerar(pedido, quantidade, evitar),
-    esquema: ESQ_GERAR,
+    esquema: esquemaGerar({ adaptada: pedido.adaptada !== false, figuras: Boolean(pedido.figuras) }),
     nome: 'questoes',
     signal,
   });
@@ -314,6 +350,7 @@ export async function revisarQuestoes(config, questoes, signal) {
     usuario: pedidoRevisar(questoes),
     esquema: ESQ_REVISAR,
     nome: 'revisao',
+    papel: 'conferir',
     signal,
   });
   return questoes.map((q, i) => {
@@ -584,6 +621,7 @@ export async function conferirFigura(config, dataURL, descricao, signal) {
       properties: { confere: { type: 'boolean' }, problema: { type: 'string' } },
     },
     nome: 'conferencia_figura',
+    papel: 'conferir',
     signal,
   });
   return { confere: dados.confere === true, problema: String(dados.problema || ''), conferida: true };

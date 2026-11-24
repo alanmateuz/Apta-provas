@@ -1,5 +1,5 @@
 // =========================================================
-// Apta — telas do app (mobile primeiro). Evolução do MVP Prova Izi.
+// Apta — telas do app (mobile primeiro).
 // Rotas: #/  #/nova  #/prova/ID  #/provas  #/banco  #/ajustes
 // =========================================================
 import '@fontsource-variable/nunito';
@@ -11,7 +11,7 @@ import {
 } from './store.js';
 import {
   MATERIAS, SERIES, DIFICULDADES, TIPOS, escolherDoBanco, prepararParaProva,
-  embaralharAlternativas, textoGabarito,
+  embaralharAlternativas, textoGabarito, adaptarSemIA,
 } from './montador.js';
 import { validarQuestao, validarProva } from './validador.js';
 import { gerarQuestoes, revisarQuestoes, iaDisponivel, testarConexao, buscarNaInternet, gerarIlustracao, conferirFigura, baixarImagemInternet, ErroIA, questoesDoMaterial } from './ia.js';
@@ -49,7 +49,9 @@ const vibrar = (padrao = 10) => { try { navigator.vibrate?.(padrao); } catch {} 
 /* =================== Tema (claro por padrão; escolhido em Ajustes) ===================
    App de professor abre claro: a tela fica parecida com a folha impressa. */
 const TEMAS = [['claro', 'Claro'], ['escuro', 'Escuro'], ['auto', 'Automático']];
-function temaAtual() { try { return localStorage.getItem('pf.tema') || 'claro'; } catch { return 'claro'; } }
+function temaAtual() {
+  try { const t = localStorage.getItem('pf.tema'); return TEMAS.some(([v]) => v === t) ? t : 'claro'; } catch { return 'claro'; }
+}
 function aplicarTema(t = temaAtual()) {
   const escuro = t === 'escuro' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('escuro', escuro);
@@ -58,12 +60,13 @@ function aplicarTema(t = temaAtual()) {
 /** Cor da barra do sistema: a cor do papel (claro) ou do grafite (escuro). */
 function corDaBarra() {
   const escuro = document.documentElement.classList.contains('escuro');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#121110' : '#FAF8F3');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', escuro ? '#111318' : '#FCFCFD');
 }
 aplicarTema();
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => aplicarTema());
 document.addEventListener('change', (e) => {
-  if (e.target.name !== 'tema') return;
+  // Só o seletor de tema em Ajustes (rádios). O campo do conteúdo da prova também se chama "tema".
+  if (e.target.name !== 'tema' || e.target.type !== 'radio' || !TEMAS.some(([v]) => v === e.target.value)) return;
   try { localStorage.setItem('pf.tema', e.target.value); } catch {}
   transicao(() => aplicarTema(e.target.value), 'segmento');
 });
@@ -108,6 +111,7 @@ const ICONES = {
   menos: '<path d="M5 12h14"/>',
   updown: '<path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4"/>',
   relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  aparencia: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
   calendario: '<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
 };
 /** Um ícone por matéria: a professora reconhece a prova de relance. */
@@ -273,6 +277,7 @@ function rotear() {
   const direcao = direcaoEntre(rotaAnterior, rota);
   rotaAnterior = rota;
   fecharGaveta();
+  if (sairDosAjustes) { const f = sairDosAjustes; sairDosAjustes = null; f(); }
   const desenhar = () => {
     document.querySelectorAll('.nav a').forEach((a) => {
       if (a.dataset.rota === ativa) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
@@ -337,14 +342,17 @@ addEventListener('resize', () => escalarMiniaturas());
 
 function cartaoProva(p, escola) {
   const st = statusProva(p);
-  return `<a class="cartao-folha" href="#/prova/${p.id}">
-    ${miniaturaFolha(p, escola)}
-    <span class="cf-texto">
-      <strong>${esc(tituloCurto(p))}</strong>
-      <span class="cf-meta"><span class="ponto-materia" style="--cor:${corMateria(p.materia)}"></span>${esc(p.materia || 'Prova')} · ${esc(turmaDe(p))}</span>
-      <span class="cf-estado ${st.pendentes ? 'conferir' : 'pronta'}">${st.pendentes ? `${ic('alerta', 'p')} ${st.pendentes} para conferir` : `${ic('certo', 'p')} Pronta`}</span>
-    </span>
-  </a>`;
+  return `<div class="cartao-folha">
+    <a class="cf-link" href="#/prova/${p.id}">
+      ${miniaturaFolha(p, escola)}
+      <span class="cf-texto">
+        <strong>${esc(tituloCurto(p))}</strong>
+        <span class="cf-meta"><span class="ponto-materia" style="--cor:${corMateria(p.materia)}"></span><span class="cf-meta-txt">${esc(p.materia || 'Prova')} · ${esc(turmaDe(p))}</span></span>
+        <span class="cf-estado ${st.pendentes ? 'conferir' : 'pronta'}">${st.pendentes ? `<mark>${st.pendentes} para conferir</mark>` : `${ic('certo', 'p')} Pronta`}</span>
+      </span>
+    </a>
+    <button type="button" class="cf-baixar" data-baixar="${p.id}" aria-label="Baixar ${esc(tituloCurto(p))}">${ic('baixar', 'p')}</button>
+  </div>`;
 }
 
 let filtroProvas = '';
@@ -359,25 +367,29 @@ function telaInicio() {
   if (filtroProvas && !materias.includes(filtroProvas)) filtroProvas = '';
   const lista = provas.filter((p) => !filtroProvas || p.materia === filtroProvas);
 
-  // Blocos: 1) saudação  2) criar (uma ou várias)  3) as provas, como folhas de verdade
+  const recentes = turmasRecentes();
+  let turmaRapida = -1; // nenhuma turma vem marcada: a professora escolhe
+
+  // Blocos: 1) saudação  2) o caderno onde a prova começa  3) as provas, como folhas de verdade
   main.innerHTML = `
     <header class="saudacao">
       <h1>${saudacao}${primeiroNome ? `, <span class="cor-nome">${esc(primeiroNome)}</span>` : ''}</h1>
-      ${cfg.escola.nome ? `<p class="saudacao-escola">${esc(cfg.escola.nome)}</p>` : ''}
+      ${cfg.escola.nome ? `<p class="saudacao-escola">${ic('escola', 'p')} ${esc(cfg.escola.nome)}</p>` : ''}
     </header>
 
-    <div class="funcoes">
-      <a class="funcao principal" href="#/nova">
-        <span class="funcao-icone">${ic('mais')}</span>
-        <strong>Nova prova</strong>
-        <span class="funcao-sub">Com adaptada e gabarito</span>
-      </a>
-      <a class="funcao" href="#/lote">
-        <span class="funcao-icone neutro">${ic('copiar')}</span>
-        <strong>Várias provas</strong>
-        <span class="funcao-sub">Para várias turmas de uma vez</span>
-      </a>
-    </div>
+    <section class="caderno" aria-labelledby="t-caderno">
+      <h2 class="caderno-titulo" id="t-caderno">O que vamos avaliar?</h2>
+      <form class="pilula-campo" id="form-rapido" role="search" aria-label="Começar uma prova">
+        <label for="rapido-tema" class="visualmente-oculto">Conteúdo da prova</label>
+        <input type="text" id="rapido-tema" name="tema" placeholder="Ex.: frações" autocomplete="off" enterkeyhint="go" />
+        <button class="pilula-ir" type="submit">${ic('mais', 'p')} Criar</button>
+      </form>
+      ${recentes.length ? `<div class="caderno-turmas" role="radiogroup" aria-label="Para qual turma">
+        <span class="caderno-para">Para</span>
+        ${recentes.map((t, k) => `<button type="button" role="radio" class="pilula-turma" data-rapida="${k}" aria-checked="${k === turmaRapida}" style="--cor:${corMateria(t.materia)}">
+          ${icMateria(t.materia)}<span>${esc(t.turma || t.serie)}</span><small>${esc(t.materia)}</small></button>`).join('')}
+      </div>` : ''}
+    </section>
 
     <h2 class="titulo-secao">Suas provas</h2>
     ${materias.length > 1 ? `<div class="filtro-materias" role="group" aria-label="Filtrar por matéria">
@@ -387,13 +399,44 @@ function telaInicio() {
       ? `<div class="grade-folhas" role="list">${lista.map((p) => `<div role="listitem">${cartaoProva(p, cfg.escola)}</div>`).join('')}</div>`
       : `<div class="vazio-provas">
           <span class="mini-quadro vazio" aria-hidden="true"></span>
-          <div><strong>Nenhuma prova ainda</strong><p>Toque em <em>Nova prova</em>. Em cerca de um minuto ela fica pronta, com a versão adaptada e o gabarito.</p></div>
+          <div><strong>Nenhuma prova ainda</strong><p>Escreva o conteúdo no caderno acima e toque em <em>Criar</em>. Em cerca de um minuto ela fica pronta, com a versão adaptada e o gabarito.</p></div>
         </div>`}`;
   escalarMiniaturas(main);
+  main.querySelectorAll('[data-baixar]').forEach((b) => (b.onclick = () => menuBaixar(getProva(b.dataset.baixar))));
+  main.querySelectorAll('[data-rapida]').forEach((b) => (b.onclick = () => {
+    turmaRapida = Number(b.dataset.rapida) === turmaRapida ? -1 : Number(b.dataset.rapida);
+    main.querySelectorAll('[data-rapida]').forEach((x) => x.setAttribute('aria-checked', String(Number(x.dataset.rapida) === turmaRapida)));
+    vibrar(6);
+  }));
+  // Com o conteúdo e a turma, vai direto para o formato da prova
+  main.querySelector('#form-rapido').onsubmit = (ev) => {
+    ev.preventDefault();
+    const tema = ev.target.tema.value.trim();
+    rascunho = novoRascunho();
+    if (turmaRapida >= 0) Object.assign(rascunho, recentes[turmaRapida]);
+    rascunho.tema = tema;
+    if (tema && turmaRapida >= 0) rascunho.passo = 2;
+    location.hash = '#/nova';
+  };
   main.querySelector('.filtro-materias')?.addEventListener('click', (e) => {
     const b = e.target.closest('[data-m]'); if (!b) return;
     filtroProvas = b.dataset.m; transicao(telaInicio, 'segmento');
   });
+}
+
+/** Baixar direto do Início: as três versões, um toque cada. */
+function menuBaixar(p) {
+  if (!p) return;
+  abrirGaveta('Baixar em Word', menu([
+    { op: 'normal', icone: 'doc', rotulo: 'Prova', dica: tituloCurto(p) },
+    ...(p.questoes?.length && p.temAdaptada !== false ? [{ op: 'adaptada', icone: 'inclusao', rotulo: 'Prova adaptada', dica: 'Letra maior, frases curtas e dicas' }] : []),
+    { op: 'gabarito', icone: 'certo', rotulo: 'Gabarito', dica: 'Só para você' },
+  ]), (g) => g.addEventListener('click', async (e) => {
+    const op = e.target.closest('[data-op]')?.dataset.op; if (!op) return;
+    fecharGaveta();
+    try { const nome = await baixarWord(p, getConfig().escola, op); aviso(`“${nome}” baixado.`); }
+    catch (err) { console.error(err); aviso('Não foi possível gerar o arquivo do Word.'); }
+  }));
 }
 
 /* ---------- Boas-vindas (só na primeira vez) ---------- */
@@ -480,7 +523,7 @@ function novoRascunho() {
     passo: 1,
     materia: ultimo.materia || 'Matemática', serie: ultimo.serie || '5º ano', turma: ultimo.turma || '',
     tema: '', dificuldade: ultimo.dificuldade || 'medio', quantidade: ultimo.quantidade || 10,
-    tipos: ultimo.tipos || ['multipla', 'aberta'], adaptada: ultimo.adaptada !== false, figuras: ultimo.figuras !== false,
+    tipos: ultimo.tipos || ['multipla', 'aberta'], adaptada: ultimo.adaptada !== false, figuras: ultimo.figuras === true,
     modo: temIA ? (ultimo.modo && ultimo.modo !== 'banco' ? ultimo.modo : 'misto') : 'banco', observacoes: '',
   };
 }
@@ -526,7 +569,7 @@ const linhaTexto = (id, rotulo, nome, valor, ph) => `<label class="linha-ios" fo
 const linhaEscolha = (tipo, nome, valor, marcado, rotulo, sub = '') => `<label class="linha-ios escolha"><input class="visualmente-oculto" type="${tipo}" name="${nome}" value="${esc(valor)}" ${marcado ? 'checked' : ''}/>
   <span class="li-rotulo">${rotulo}${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="li-check" aria-hidden="true">${ic('certo')}</span></label>`;
 
-function desenharPasso() {
+function desenharPasso(opcoes = {}) {
   const r = rascunho;
   const cfg = getConfig();
   const temIA = iaDisponivel(cfg);
@@ -535,58 +578,100 @@ function desenharPasso() {
   if (r.passo === 1) {
     const recentes = turmasRecentes();
     const igual = (t) => t.materia === r.materia && t.serie === r.serie && (t.turma || '') === (r.turma || '');
+    const algumaRecente = recentes.some(igual);
+    const abrirOutra = r.outraTurma || !recentes.length || !algumaRecente;
     const sugs = SUGESTOES[r.materia] || [];
-    topo = barraModal('<button type="button" class="bm-botao" id="b-voltar">Cancelar</button>', 'Nova prova') + segmentoCriar('uma');
+    const materias = todasMaterias();
+    topo = barraModal('<button type="button" class="bm-botao" id="b-voltar">Cancelar</button>', 'Nova prova', '<span class="bm-passo">1 de 2</span>') + segmentoCriar('uma');
     corpo = `
-      <h2 class="cabeca-grupo">Turma</h2>
-      ${recentes.length ? `<div class="turmas-recentes" role="radiogroup" aria-label="Turmas que você já usou">${recentes.map((t, k) => `
-        <button type="button" role="radio" class="turma-chip" data-turma="${k}" aria-checked="${igual(t)}">
-          <span class="turma-ic" style="color:${corMateria(t.materia)}">${icMateria(t.materia)}</span>
-          <span><strong>${esc(t.turma || t.serie)}</strong><small>${esc(t.materia)}</small></span>
-          <span class="turma-check" aria-hidden="true">${ic('certo')}</span></button>`).join('')}</div>` : ''}
-      <div class="grupo-ios">
-        ${linhaSelect('materia', 'Matéria', 'materia', [...todasMaterias().map((m) => [m, m]), [OUTRA, 'Outra…']], r.materia)}
-        <div class="campo-outra" ${r.materia === OUTRA ? '' : 'hidden'}>${linhaTexto('materia-outra', 'Qual matéria?', 'materiaOutra', r.materiaOutra || '', 'Ex.: Filosofia')}</div>
-        ${linhaSelect('serie', 'Ano', 'serie', SERIES.map((s) => [s, s.replace(' (Ensino Médio)', ' EM')]), r.serie)}
-        ${linhaTexto('turma', 'Turma', 'turma', r.turma, 'Opcional, ex.: 5º A')}
-      </div>
-      <div class="erro-campo" id="outra-erro" hidden>${ic('alerta', 'p')} Escreva o nome da matéria.</div>
+      <section class="pergunta" aria-labelledby="q-turma">
+        <h2 class="pergunta-titulo" id="q-turma">Para qual turma?</h2>
+        ${recentes.length ? `<div class="turmas-cartoes" role="radiogroup" aria-labelledby="q-turma">${recentes.map((t, k) => `
+          <button type="button" role="radio" class="turma-cartao" data-turma="${k}" aria-checked="${!r.outraTurma && igual(t)}" style="--cor:${corMateria(t.materia)}">
+            <span class="tc-ic">${icMateria(t.materia)}</span>
+            <strong>${esc(t.turma || t.serie)}</strong><small>${esc(t.materia)}${t.turma ? ` · ${esc(t.serie.replace(' (Ensino Médio)', ' EM'))}` : ''}</small>
+            <span class="tc-check" aria-hidden="true">${ic('certo')}</span></button>`).join('')}
+          <button type="button" role="radio" class="turma-cartao outra" data-outra aria-checked="${abrirOutra}">
+            <span class="tc-ic">${ic('mais')}</span><strong>Outra turma</strong><small>Escolher matéria e ano</small>
+            <span class="tc-check" aria-hidden="true">${ic('certo')}</span></button>
+        </div>` : ''}
+        <div class="painel-turma" ${abrirOutra ? '' : 'hidden'}>
+          <p class="rotulo-forte" id="rot-materia">Matéria</p>
+          <div class="materias-grade" role="radiogroup" aria-labelledby="rot-materia">
+            ${materias.map((m) => `<label class="materia-peca" style="--cor:${corMateria(m)}"><input class="visualmente-oculto" type="radio" name="materia" value="${esc(m)}" ${r.materia === m ? 'checked' : ''}/>
+              <span class="mp-ic">${icMateria(m)}</span><span class="mp-nome">${esc(m)}</span></label>`).join('')}
+            <label class="materia-peca outra"><input class="visualmente-oculto" type="radio" name="materia" value="${OUTRA}" ${r.materia === OUTRA ? 'checked' : ''}/>
+              <span class="mp-ic">${ic('mais')}</span><span class="mp-nome">Outra</span></label>
+          </div>
+          <div class="campo-outra" ${r.materia === OUTRA ? '' : 'hidden'}>
+            <div class="campo"><label for="materia-outra">Qual matéria?</label><input type="text" id="materia-outra" name="materiaOutra" value="${esc(r.materiaOutra || '')}" placeholder="Ex.: Filosofia" /></div>
+          </div>
+          <div class="erro-campo" id="outra-erro" hidden>${ic('alerta', 'p')} Escreva o nome da matéria.</div>
+          <div class="duas-colunas">
+            <div class="campo"><label for="serie">Ano</label>
+              <select id="serie" name="serie">${SERIES.map((s) => `<option value="${esc(s)}" ${s === r.serie ? 'selected' : ''}>${esc(s.replace(' (Ensino Médio)', ' EM'))}</option>`).join('')}</select></div>
+            <div class="campo"><label for="turma">Turma <span class="opcional">(opcional)</span></label>
+              <input type="text" id="turma" name="turma" value="${esc(r.turma)}" placeholder="Ex.: 5º A" autocomplete="off" /></div>
+          </div>
+        </div>
+      </section>
 
-      <h2 class="cabeca-grupo"><label for="tema">Conteúdo da prova</label></h2>
-      <div class="grupo-ios"><textarea id="tema" name="tema" class="li-texto" aria-describedby="tema-dica tema-erro" placeholder="Ex.: frações: comparar e somar frações com o mesmo denominador">${esc(r.tema)}</textarea></div>
-      <p class="rodape-grupo" id="tema-dica">Escreva como falaria para um colega. Quanto mais específico, melhor.</p>
-      <div class="erro-campo" id="tema-erro" hidden>${ic('alerta', 'p')} Escreva o conteúdo para continuar.</div>
-      ${sugs.length ? `<div class="sugestoes" aria-label="Sugestões de conteúdo">${sugs.map((s) => `<button type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}`;
+      <section class="pergunta" aria-labelledby="q-tema">
+        <h2 class="pergunta-titulo" id="q-tema"><label for="tema">Sobre o que é a prova?</label></h2>
+        <div class="folha-pautada"><textarea id="tema" name="tema" aria-describedby="tema-erro" placeholder="Ex.: frações: comparar e somar frações com o mesmo denominador. Quanto mais específico, melhor.">${esc(r.tema)}</textarea></div>
+        <div class="erro-campo" id="tema-erro" hidden>${ic('alerta', 'p')} Escreva o conteúdo para continuar.</div>
+        ${sugs.length ? `<div class="sugestoes" aria-label="Sugestões de conteúdo">${sugs.map((s) => `<button type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
+      </section>`;
   }
   if (r.passo === 2) {
     const origens = [['misto', 'Banco + questões novas'], ['banco', 'Só do meu banco'], ['ia', 'Só questões novas']];
-    topo = barraModal(`<button type="button" class="bm-botao" id="b-voltar">${ic('voltar', 'p')} Voltar</button>`, 'Formato da prova');
+    const DESENHO_TIPO = {
+      multipla: '<span class="dt-alt">a)</span><span class="dt-alt">b)</span><span class="dt-alt">c)</span>',
+      vf: '<span class="dt-vf">( V )</span><span class="dt-vf">( F )</span>',
+      completar: '<span class="dt-linha-txt">A água ferve a <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u></span>',
+      aberta: '<span class="dt-pauta"></span><span class="dt-pauta"></span><span class="dt-pauta curta"></span>',
+    };
+    topo = barraModal(`<button type="button" class="bm-botao" id="b-voltar">${ic('voltar', 'p')} Voltar</button>`, 'Formato da prova', '<span class="bm-passo">2 de 2</span>');
     corpo = `
-      <button type="button" class="resumo-pedido" data-ir="1"><span class="ponto-materia" style="--cor:${corMateria(r.materia)}"></span>
-        <span>${esc(r.materia)} · ${esc(r.turma || r.serie)} · ${esc(r.tema.split(/[:.\n]/)[0].slice(0, 40))}</span><span class="rp-alterar">Alterar</span></button>
+      <button type="button" class="resumo-linha" data-ir="1" aria-label="Alterar turma e conteúdo">
+        <span class="ponto-materia" style="--cor:${corMateria(r.materia)}"></span>
+        <span class="rl-texto"><strong>${esc(r.tema.split(/\n/)[0].slice(0, 80) || 'Prova')}</strong><small>${esc(r.materia)} · ${esc(r.turma || r.serie)}</small></span>
+        <span class="rl-alterar">Alterar</span>
+      </button>
 
-      <h2 class="cabeca-grupo">Questões</h2>
-      <div class="grupo-ios">
-        <div class="linha-ios"><span class="li-rotulo" id="qtd-rot">Quantidade</span>
-          <span class="li-valor"><output id="qtd" aria-live="polite">${r.quantidade}</output>
-          <span class="stepper" role="group" aria-labelledby="qtd-rot">
-            <button type="button" data-passo="-1" aria-label="Uma questão a menos">${ic('menos')}</button><span class="st-div"></span>
-            <button type="button" data-passo="1" aria-label="Uma questão a mais">${ic('mais')}</button></span></span></div>
-        <div class="linha-ios"><span class="li-rotulo" id="dif-rot">Dificuldade</span>
-          <span class="segmentos segmentos-form" role="radiogroup" aria-labelledby="dif-rot">${Object.entries(DIFICULDADES).map(([v, rot]) => `<label><input type="radio" name="dificuldade" value="${v}" ${r.dificuldade === v ? 'checked' : ''}/><span>${rot}</span></label>`).join('')}</span></div>
-      </div>
+      <section class="pergunta" aria-labelledby="q-qtd">
+        <div class="linha-qtd">
+          <h2 class="pergunta-titulo" id="q-qtd">Questões</h2>
+          <div class="contador" role="group" aria-labelledby="q-qtd">
+            <button type="button" class="cg-botao" data-passo="-1" aria-label="Uma questão a menos">${ic('menos')}</button>
+            <output id="qtd" aria-live="polite">${r.quantidade}</output>
+            <button type="button" class="cg-botao" data-passo="1" aria-label="Uma questão a mais">${ic('mais')}</button>
+          </div>
+        </div>
+        <div class="atalhos-qtd" role="group" aria-label="Quantidades comuns">${[5, 10, 15, 20].map((n) => `<button type="button" data-qtd="${n}" aria-pressed="${r.quantidade === n}">${n}</button>`).join('')}</div>
+      </section>
 
-      <h2 class="cabeca-grupo" id="tipos-rot">Tipos de questão</h2>
-      <div class="grupo-ios" role="group" aria-labelledby="tipos-rot">${Object.entries(TIPOS).map(([v, rot]) => linhaEscolha('checkbox', 'tipos', v, r.tipos.includes(v), rot.split(' (')[0])).join('')}</div>
-      <p class="rodape-grupo">Marque um ou mais.</p>
-      <div class="erro-campo" id="tipos-erro" hidden>${ic('alerta', 'p')} Marque pelo menos um tipo.</div>
+      <section class="pergunta" aria-labelledby="q-tipos">
+        <h2 class="pergunta-titulo" id="q-tipos">Tipos de questão</h2>
+        <div class="tipos-lista" role="group" aria-labelledby="q-tipos">${Object.entries(TIPOS).map(([v, rot]) => `
+          <label class="tipo-linha"><input class="visualmente-oculto" type="checkbox" name="tipos" value="${v}" ${r.tipos.includes(v) ? 'checked' : ''}/>
+            <span class="tp-desenho" aria-hidden="true">${DESENHO_TIPO[v] || ''}</span>
+            <span class="tp-nome">${esc(rot.split(' (')[0])}</span>
+            <span class="tp-check" aria-hidden="true">${ic('certo')}</span></label>`).join('')}</div>
+        <div class="erro-campo" id="tipos-erro" hidden>${ic('alerta', 'p')} Marque pelo menos um tipo.</div>
+      </section>
 
-      <h2 class="cabeca-grupo">Acessibilidade</h2>
-      <div class="grupo-ios">
-        <label class="linha-ios"><span class="li-ic azul">${ic('inclusao')}</span><span class="li-rotulo">Versão adaptada</span>
-          <input type="checkbox" class="switch azul" name="adaptada" ${r.adaptada ? 'checked' : ''} /></label>
-      </div>
-      <p class="rodape-grupo">Para alunos com TDAH, autismo, dislexia ou deficiência intelectual: letra maior, frases curtas, palavras-chave em negrito e dicas. No papel, nada identifica o aluno.</p>
+      <section class="pergunta" aria-labelledby="q-dif">
+        <h2 class="pergunta-titulo" id="q-dif">Dificuldade</h2>
+        <div class="segmento-simples" role="radiogroup" aria-labelledby="q-dif">${Object.entries(DIFICULDADES).map(([v, rot]) => `
+          <label><input class="visualmente-oculto" type="radio" name="dificuldade" value="${v}" ${r.dificuldade === v ? 'checked' : ''}/><span>${esc(rot)}</span></label>`).join('')}</div>
+      </section>
+
+      <label class="linha-adaptada">
+        <span class="la-ic">${ic('inclusao')}</span>
+        <span class="la-texto"><strong>Versão adaptada</strong><small>Letra maior, frases curtas e dicas</small></span>
+        <input type="checkbox" class="switch azul" name="adaptada" ${r.adaptada ? 'checked' : ''} aria-label="Criar também a versão adaptada" />
+      </label>
 
       <details class="grupo-ios mais-opcoes">
         <summary class="linha-ios"><span class="li-rotulo">Mais opções</span><span class="chevron">${ic('seta')}</span></summary>
@@ -601,7 +686,8 @@ function desenharPasso() {
   main.innerHTML = `${topo}
     <form id="form-passo" novalidate>${corpo}</form>
     <div class="barra-acoes">
-      <button type="button" class="botao principal grande" id="b-seguir">${r.passo === TOTAL_PASSOS ? 'Criar prova' : 'Continuar'}</button>
+      ${r.passo === TOTAL_PASSOS ? '<span class="barra-resumo" id="barra-resumo" aria-hidden="true"></span>' : ''}
+      <button type="button" class="botao principal grande" id="b-seguir">${r.passo === TOTAL_PASSOS ? `${ic('brilho', 'p')} Criar prova` : `Continuar ${ic('seta', 'p')}`}</button>
     </div>`;
 
   const form = main.querySelector('#form-passo');
@@ -614,12 +700,25 @@ function desenharPasso() {
   form.querySelectorAll('[data-turma]').forEach((b) => (b.onclick = () => {
     lerPasso(form);
     Object.assign(r, turmasRecentes()[Number(b.dataset.turma)]);
-    desenharPasso();
+    r.outraTurma = false; vibrar(6);
+    desenharPasso({ manterRolagem: true });
   }));
-  form.querySelectorAll('[data-passo]').forEach((b) => (b.onclick = () => {
-    r.quantidade = Math.min(20, Math.max(1, r.quantidade + Number(b.dataset.passo)));
+  form.querySelector('[data-outra]')?.addEventListener('click', () => {
+    r.outraTurma = true;
+    form.querySelectorAll('[data-turma]').forEach((x) => x.setAttribute('aria-checked', 'false'));
+    form.querySelector('[data-outra]').setAttribute('aria-checked', 'true');
+    form.querySelector('.painel-turma').hidden = false;
+    form.querySelector('.painel-turma input[name=materia]:checked, .painel-turma input[name=materia]')?.focus();
+  });
+  const mudarQtd = (n) => {
+    r.quantidade = Math.min(20, Math.max(1, n));
     form.querySelector('#qtd').textContent = r.quantidade;
-  }));
+    form.querySelectorAll('[data-qtd]').forEach((x) => x.setAttribute('aria-pressed', String(Number(x.dataset.qtd) === r.quantidade)));
+    atualizarResumo(); vibrar(4);
+  };
+  form.querySelectorAll('[data-passo]').forEach((b) => (b.onclick = () => mudarQtd(r.quantidade + Number(b.dataset.passo))));
+  form.querySelectorAll('[data-qtd]').forEach((b) => (b.onclick = () => mudarQtd(Number(b.dataset.qtd))));
+  atualizarResumo();
   form.querySelectorAll('[data-ir]').forEach((b) => (b.onclick = () => { lerPasso(form); r.passo = Number(b.dataset.ir); transicao(desenharPasso, 'tras'); }));
   main.querySelector('#b-voltar').onclick = () => {
     if (r.passo === 1) { rascunho = null; location.hash = '#/'; return; }
@@ -632,15 +731,24 @@ function desenharPasso() {
     if (rascunho.materia !== OUTRA) Object.assign(lote.linhas[0], { materia: rascunho.materia, serie: rascunho.serie, turma: rascunho.turma, tema: rascunho.tema });
     location.hash = '#/lote';
   });
-  if (!usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
-  window.scrollTo(0, 0);
+  if (!usaTransicao() && !opcoes.manterRolagem) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
+  if (!opcoes.manterRolagem) window.scrollTo(0, 0);
+}
+
+/** Passo 2: o resumo da capa e da barra mudam enquanto a professora escolhe. */
+function atualizarResumo() {
+  const r = rascunho;
+  if (!r || r.passo !== 2) return;
+  const barra = document.getElementById('barra-resumo');
+  if (barra) barra.innerHTML = `<strong>${plural(r.quantidade, 'questão', 'questões')}</strong>${r.adaptada ? 'Prova + adaptada + gabarito' : 'Prova + gabarito'}`;
 }
 
 function lerPasso(form) {
   const r = rascunho;
   const fd = new FormData(form);
   if (r.passo === 1) {
-    r.materia = fd.get('materia'); r.serie = fd.get('serie'); r.turma = (fd.get('turma') || '').trim();
+    const antes = r.materia;
+    r.materia = fd.get('materia') || r.materia; r.serie = fd.get('serie') || r.serie; r.turma = (fd.get('turma') || '').trim();
     r.materiaOutra = (fd.get('materiaOutra') || '').trim();
     r.tema = (fd.get('tema') || '').trim();
     const caixa = form.querySelector('.campo-outra');
@@ -651,15 +759,27 @@ function lerPasso(form) {
     const recentes = turmasRecentes();
     form.querySelectorAll('[data-turma]').forEach((b) => {
       const t = recentes[Number(b.dataset.turma)];
-      b.setAttribute('aria-checked', String(t.materia === r.materia && t.serie === r.serie && (t.turma || '') === (r.turma || '')));
+      b.setAttribute('aria-checked', String(!r.outraTurma && t.materia === r.materia && t.serie === r.serie && (t.turma || '') === (r.turma || '')));
     });
     if (r.tema) form.querySelector('#tema-erro').hidden = true;
+    // As sugestões de conteúdo acompanham a matéria
+    if (antes !== r.materia) {
+      const sugs = SUGESTOES[r.materia] || [];
+      let caixa = form.querySelector('.sugestoes');
+      if (!caixa && sugs.length) { caixa = document.createElement('div'); caixa.className = 'sugestoes'; caixa.setAttribute('aria-label', 'Sugestões de conteúdo'); form.querySelector('#tema-erro').after(caixa); }
+      if (caixa) {
+        caixa.innerHTML = sugs.map((x) => `<button type="button" data-sug="${esc(x)}">${esc(x)}</button>`).join('');
+        caixa.hidden = !sugs.length;
+        caixa.querySelectorAll('[data-sug]').forEach((b) => (b.onclick = () => { form.tema.value = b.dataset.sug; lerPasso(form); form.tema.focus(); }));
+      }
+    }
   }
   if (r.passo === 2) {
     r.dificuldade = fd.get('dificuldade') || r.dificuldade; r.tipos = fd.getAll('tipos'); r.figuras = fd.get('figuras') === 'on';
     r.adaptada = fd.get('adaptada') === 'on'; r.modo = fd.get('modo') || r.modo; r.materialId = fd.get('materialId') || '';
     r.observacoes = (fd.get('observacoes') || '').trim();
     if (r.tipos.length) form.querySelector('#tipos-erro').hidden = true;
+    atualizarResumo();
   }
 }
 
@@ -852,15 +972,15 @@ function telaLote() {
     <p class="rodape-grupo" style="margin-top:0">Uma prova por cartão. O formato, embaixo, vale para todas.</p>
     <form id="form-lote" novalidate>
       <ol class="lote-lista">${L.linhas.map((l, k) => `<li class="lote-item" data-k="${k}">
-        <div class="lote-topo"><h2 class="cabeca-grupo">Prova ${k + 1}</h2>
+        <div class="lote-topo"><h2 class="lote-titulo">Prova ${k + 1}</h2>
           ${L.linhas.length > 1 ? `<button type="button" class="lote-remover" data-remover="${k}" aria-label="Remover prova ${k + 1}">Remover</button>` : ''}</div>
-        <div class="grupo-ios">
-          <label class="linha-ios" for="l-mat-${k}"><span class="li-rotulo">Matéria</span><span class="li-valor"><select id="l-mat-${k}" data-campo="materia">${opcoesSel(todasMaterias(), l.materia)}<option value="${OUTRA}" ${l.materia === OUTRA ? 'selected' : ''}>Outra…</option></select>${ic('updown', 'li-seta')}</span></label>
-          ${l.materia === OUTRA ? `<label class="linha-ios" for="l-outra-${k}"><span class="li-rotulo">Qual matéria?</span><input class="li-campo" type="text" id="l-outra-${k}" data-campo="materiaOutra" value="${esc(l.materiaOutra || '')}" placeholder="Ex.: Filosofia" autocomplete="off" /></label>` : ''}
-          <label class="linha-ios" for="l-ser-${k}"><span class="li-rotulo">Ano</span><span class="li-valor"><select id="l-ser-${k}" data-campo="serie">${opcoesSel(SERIES, l.serie)}</select>${ic('updown', 'li-seta')}</span></label>
-          <label class="linha-ios" for="l-turma-${k}"><span class="li-rotulo">Turma</span><input class="li-campo" type="text" id="l-turma-${k}" data-campo="turma" value="${esc(l.turma)}" placeholder="Opcional, ex.: 5º A" autocomplete="off" /></label>
-          <label class="linha-ios" for="l-tema-${k}"><span class="li-rotulo">Conteúdo</span><input class="li-campo" type="text" id="l-tema-${k}" data-campo="tema" value="${esc(l.tema)}" placeholder="Ex.: frações" autocomplete="off" /></label>
+        <div class="duas-colunas">
+          <div class="campo"><label for="l-mat-${k}">Matéria</label><select id="l-mat-${k}" data-campo="materia">${opcoesSel(todasMaterias(), l.materia)}<option value="${OUTRA}" ${l.materia === OUTRA ? 'selected' : ''}>Outra…</option></select></div>
+          <div class="campo"><label for="l-ser-${k}">Ano</label><select id="l-ser-${k}" data-campo="serie">${opcoesSel(SERIES, l.serie)}</select></div>
         </div>
+        ${l.materia === OUTRA ? `<div class="campo"><label for="l-outra-${k}">Qual matéria?</label><input type="text" id="l-outra-${k}" data-campo="materiaOutra" value="${esc(l.materiaOutra || '')}" placeholder="Ex.: Filosofia" autocomplete="off" /></div>` : ''}
+        <div class="campo"><label for="l-tema-${k}">Conteúdo</label><textarea id="l-tema-${k}" data-campo="tema" rows="2" placeholder="Ex.: frações">${esc(l.tema)}</textarea></div>
+        <div class="campo"><label for="l-turma-${k}">Turma <span class="opcional">(opcional)</span></label><input type="text" id="l-turma-${k}" data-campo="turma" value="${esc(l.turma)}" placeholder="Ex.: 5º A" autocomplete="off" /></div>
         <div class="erro-campo erro-outra" hidden>${ic('alerta', 'p')} Escreva o nome da matéria.</div>
         <div class="erro-campo erro-tema" hidden>${ic('alerta', 'p')} Escreva o conteúdo desta prova.</div>
       </li>`).join('')}</ol>
@@ -1156,6 +1276,7 @@ function telaProva(id) {
     return;
   }
   estado = { prova, aba: estado.prova?.id === id ? estado.aba : 'normal' };
+  if (prova.temAdaptada === false && estado.aba === 'adaptada') estado.aba = 'normal';
   titulo(prova.titulo);
   main.innerHTML = `
     <div class="editor-topo nao-imprimir">
@@ -1165,7 +1286,7 @@ function telaProva(id) {
     </div>
     <div class="segmentos nao-imprimir" role="tablist" aria-label="Versões da prova">
       <button role="tab" data-aba="normal">Prova</button>
-      <button role="tab" data-aba="adaptada">Adaptada</button>
+      ${prova.temAdaptada === false ? '' : `<button role="tab" data-aba="adaptada">${ic('inclusao', 'p')} Adaptada</button>`}
       <button role="tab" data-aba="gabarito">Gabarito</button>
     </div>
     <div class="linha-estado nao-imprimir">
@@ -1263,6 +1384,9 @@ function menuProva() {
     { op: 'instrucoes', icone: 'tipo', rotulo: 'Editar instruções', dica: 'Tempo de prova, caneta, consulta…' },
     { op: 'embaralhar', icone: 'embaralhar', rotulo: 'Embaralhar alternativas', dica: 'O gabarito é atualizado sozinho' },
     { op: 'copia', icone: 'copiar', rotulo: 'Fazer uma cópia', dica: 'Útil para outra turma' },
+    p.temAdaptada === false
+      ? { op: 'com-adaptada', icone: 'inclusao', rotulo: 'Criar a versão adaptada', dica: 'Feita a partir desta prova, sem custo' }
+      : { op: 'sem-adaptada', icone: 'inclusao', rotulo: 'Tirar a versão adaptada', dica: 'A aba some e ela não sai no gabarito' },
     '-',
     { op: 'apagar', icone: 'lixo', rotulo: 'Apagar esta prova', perigo: true },
   ]), (c) => c.addEventListener('click', (e) => {
@@ -1295,6 +1419,12 @@ function menuProva() {
           salvarDepois(); fecharGaveta(); desenharFolha(); aviso('Instruções atualizadas.');
         };
       });
+    }
+    if (op === 'com-adaptada' || op === 'sem-adaptada') {
+      p.temAdaptada = op === 'com-adaptada';
+      if (p.temAdaptada) p.questoes.forEach((q) => { if (!q.adaptada?.enunciado) q.adaptada = adaptarSemIA(q); });
+      salvarDepois(); fecharGaveta(); telaProva(p.id);
+      aviso(p.temAdaptada ? 'Versão adaptada criada. Confira na aba Adaptada.' : 'Versão adaptada retirada.');
     }
     if (op === 'embaralhar') { p.questoes.forEach(embaralharAlternativas); salvarDepois(); desenharFolha(); fecharGaveta(); aviso('Alternativas embaralhadas. Gabarito atualizado.'); }
     if (op === 'copia') {
@@ -1639,6 +1769,7 @@ function desenharFolha() {
   if (!folha) return;
   document.querySelectorAll('.segmentos button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.aba === estado.aba)));
   folha.classList.toggle('adaptada', estado.aba === 'adaptada');
+  folha.dataset.versao = estado.aba;
   document.getElementById('b-add').hidden = estado.aba === 'gabarito';
   // A versão adaptada é um "modo": faixa com cor, para quem é, e o que ligar/desligar
   const ca = cfgAdaptada(p);
@@ -1818,10 +1949,9 @@ function telaBanco() {
     ${porMateria.length > 1 ? `<div class="filtro-materias" role="group" aria-label="Matérias">
       <button type="button" data-m="" aria-pressed="${!filtroBanco.materia}">Todas</button>
       ${porMateria.map(([m, n]) => `<button type="button" data-m="${esc(m)}" aria-pressed="${filtroBanco.materia === m}" style="--cor:${corMateria(m)}"><span class="ponto-materia"></span>${esc(m)} <small>${n}</small></button>`).join('')}</div>` : ''}
-    <button class="atalho-ia" id="b-buscar-web" ${temIA ? '' : 'disabled'}>
-      <span class="atalho-ic">${ic('brilho')}</span>
-      <span class="texto-linha"><strong>Buscar questões com IA</strong><small>${temIA ? 'Na internet (Saeb, OBMEP…) ou nos seus livros em PDF' : 'Ligue a criação automática em Ajustes'}</small></span>
-      <span class="chevron">${ic('seta')}</span></button>
+    <button class="linha-busca-ia" id="b-buscar-web" ${temIA ? '' : 'disabled'}>
+      <span class="lbi-ic">${ic('brilho', 'p')}</span>
+      <span class="lbi-texto"><strong>Buscar questões com IA</strong><small>${temIA ? 'Na internet ou nos seus livros em PDF' : 'Ligue a criação automática em Ajustes'}</small></span>${ic('seta', 'p')}</button>
     <div class="filtros-ativos" id="filtros-ativos"></div>
     <div id="contador-banco" role="status" class="contador-lista"></div>
     <ul class="lista-cartoes" id="lista-banco"></ul>
@@ -1839,16 +1969,22 @@ function telaBanco() {
     const ativos = [['materia', filtroBanco.materia], ['serie', filtroBanco.serie], ['origem', nomeOrigem[filtroBanco.origem]]].filter(([, v]) => v);
     main.querySelector('#filtros-ativos').innerHTML = ativos.map(([k, v]) => `<button data-limpa="${k}" aria-label="Remover filtro ${esc(v)}">${esc(v)} ${ic('fechar', 'p')}</button>`).join('');
     main.querySelector('#contador-banco').textContent = plural(filtradas.length, 'questão', 'questões');
-    main.querySelector('#lista-banco').innerHTML = filtradas.length ? filtradas.slice(0, filtroBanco.limite).map((q) => `<li class="questao-banco">
-      <div class="meta" style="--cor:${corMateria(q.materia)}"><span class="meta-texto"><span class="ponto-materia"></span> ${esc(q.materia)} · ${esc(q.serie)} · ${esc(q.tema)}</span>${seloOrigem(q)}</div>
-      <p class="enun">${md(q.enunciado)}</p>
+    main.querySelector('#lista-banco').innerHTML = filtradas.length ? filtradas.slice(0, filtroBanco.limite).map((q) => {
+      const confiavel = q.origem === 'minha' || q.origem === 'revisada';
+      return `<li class="ficha-q" style="--cor:${corMateria(q.materia)}">
+      <p class="fq-enun">${md(q.enunciado)}</p>
       ${figuraHTML(q)}
-      <details class="ver-resposta"><summary>Ver resposta ${ic('seta')}</summary>
+      <div class="fq-meta"><span class="ponto-materia"></span><span class="fq-onde">${esc(q.materia)} · ${esc(q.serie.replace(' (Ensino Médio)', ' EM'))}${q.tema ? ` · ${esc(q.tema)}` : ''}</span></div>
+      <div class="fq-rodape">
+        ${confiavel ? `<span class="fq-ok">${ic('certo', 'p')} Conferida</span>` : `<button class="fq-conferir" data-conferir="${q.id}">${ic('certo', 'p')} Conferir</button>`}
+        <details class="fq-resposta"><summary>Resposta</summary><div class="fq-resp-corpo">
         ${q.tipo === 'multipla' || q.tipo === 'vf' ? `<ol>${q.alternativas.map((a, j) => `<li class="${j === q.correta ? 'certa' : ''}">${q.tipo === 'multipla' ? letra(j) + ') ' : '• '}${md(a)}${j === q.correta ? ' ✓' : ''}</li>`).join('')}</ol>` : ''}
         <p class="dica" style="margin:0 0 4px"><strong>Gabarito:</strong> ${esc(textoGabarito(q))}${q.justificativa ? ` — ${esc(q.justificativa)}` : ''}</p>
-      </details>
-      ${q.origem !== 'minha' && q.origem !== 'revisada' ? `<div class="rodape-q"><button class="botao conferir-q" data-conferir="${q.id}">${ic('certo', 'p')} Conferi, está certa</button></div>` : ''}
-      <button class="botao fantasma icone q-mais" data-menu-q="${q.id}" aria-label="Editar ou apagar a questão">${ic('pontos')}</button></li>`).join('')
+        ${!confiavel && seloOrigem(q).includes('href') ? `<p class="dica" style="margin:0">${seloOrigem(q)}</p>` : ''}</div>
+        </details>
+        <button class="fq-mais" data-menu-q="${q.id}" aria-label="Editar ou apagar a questão">${ic('pontos')}</button>
+      </div></li>`;
+    }).join('')
       : `<li class="vazio">${ic('busca')}<strong>Nenhuma questão aqui</strong>Tire algum filtro ou escreva uma questão nova.</li>`;
     main.querySelector('#b-mais').hidden = filtradas.length <= filtroBanco.limite;
   };
@@ -2266,46 +2402,50 @@ function formQuestao(depois, existente = null) {
 }
 
 /* =================== AJUSTES (escola + IA) =================== */
+let sairDosAjustes = null;
 function telaAjustes(ancora) {
   titulo('Ajustes');
   const cfg = getConfig();
   const e = cfg.escola;
   const pronta = iaDisponivel(cfg);
   main.innerHTML = `<h1>Ajustes</h1>
-
-    <section id="escola" aria-labelledby="t-escola">
-      <h2 class="cabeca-grupo" id="t-escola">Minha escola</h2>
-      <form id="form-escola">
-        <div class="grupo-ios">
-          <label class="linha-ios" for="e-nome"><span class="li-rotulo">Escola</span><input class="li-campo" type="text" id="e-nome" name="nome" value="${esc(e.nome)}" autocomplete="organization" placeholder="Nome da escola" /></label>
-          <label class="linha-ios" for="e-prof"><span class="li-rotulo">Seu nome</span><input class="li-campo" type="text" id="e-prof" name="professora" value="${esc(e.professora)}" autocomplete="name" placeholder="Ex.: Maria Souza" /></label>
-          <label class="linha-ios" for="e-cidade"><span class="li-rotulo">Cidade</span><input class="li-campo" type="text" id="e-cidade" name="cidade" value="${esc(e.cidade)}" placeholder="Opcional" /></label>
-          <div class="linha-ios"><span class="li-rotulo">Logotipo</span>
-            <button type="button" class="bm-botao" id="b-tirar-logo" style="color:var(--vermelho);margin-right:8px" ${e.logo ? '' : 'hidden'}>Remover</button>
-            <label class="bm-botao" for="e-logo">${e.logo ? 'Trocar' : 'Escolher'}</label>
-            <input type="file" id="e-logo" accept="image/png,image/jpeg" class="sr" /></div>
-        </div>
-        <div class="cabeca-grupo cabeca-com-acao">Topo da prova
-          <button type="button" class="bm-botao" id="b-campos-padrao" ${e.campos?.length ? '' : 'hidden'}>Voltar ao padrão</button></div>
-        <div class="previa-cabecalho" id="previa"></div>
-        <p class="dica modelo-nome" id="modelo-nome" hidden></p>
-        <div class="importar-cab">
-          <label class="botao cheio" for="e-word">${ic('doc', 'p')} Importar cabeçalho de um Word</label>
-          <input type="file" id="e-word" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr" />
-          <p class="dica" id="importar-resultado" role="status">Tem uma prova antiga da escola? O app copia o cabeçalho dela.</p>
-        </div>
-        <h2 class="cabeca-grupo">Instruções padrão</h2>
-        <div class="cartao-form">
-          <div class="campo" style="margin:0"><label for="e-instr" class="visualmente-oculto">Instruções padrão</label>
-            <textarea id="e-instr" name="instrucoes" style="min-height:110px" placeholder="Ex.: Você tem 50 minutos para fazer a prova.">${esc(e.instrucoes || '')}</textarea>
-            <span class="dica" style="margin:8px 0 0">Saem abaixo do cabeçalho em todas as provas novas. Uma por linha.</span></div>
-        </div>
-        <button class="botao principal grande cheio" style="margin-top:16px">Salvar</button>
-      </form>
+    <form id="form-escola" novalidate>
+    <section id="escola" class="cartao-ajuste" aria-labelledby="t-escola">
+      <header class="ca-cabeca"><div><h2 id="t-escola"><span class="aj-ic">${ic('escola')}</span>Minha escola</h2><p>Aparece no topo de todas as provas.</p></div></header>
+      <div class="campo"><label for="e-nome">Nome da escola</label><input type="text" id="e-nome" name="nome" value="${esc(e.nome)}" autocomplete="organization" placeholder="Ex.: Escola Municipal Monteiro Lobato" /></div>
+      <div class="campo"><label for="e-prof">Seu nome</label><input type="text" id="e-prof" name="professora" value="${esc(e.professora)}" autocomplete="name" placeholder="Ex.: Maria Souza" /></div>
+      <div class="campo"><label for="e-cidade">Cidade <span class="opcional">(opcional)</span></label><input type="text" id="e-cidade" name="cidade" value="${esc(e.cidade)}" placeholder="Ex.: Fortaleza" /></div>
+      <div class="campo"><span class="rotulo">Logotipo da escola <span class="opcional">(opcional)</span></span>
+        <div class="logo-linha"><span class="logo-amostra" id="logo-amostra"></span>
+          <label class="botao" for="e-logo" id="rot-logo">${ic('imagem', 'p')} ${e.logo ? 'Trocar' : 'Escolher imagem'}</label>
+          <button type="button" class="botao perigo" id="b-tirar-logo" ${e.logo ? '' : 'hidden'}>Remover</button>
+          <input type="file" id="e-logo" accept="image/png,image/jpeg" class="sr" /></div></div>
     </section>
 
-    <section id="ia" aria-labelledby="t-ia" style="margin-top:32px">
-      <h2 class="cabeca-grupo" id="t-ia">Criação automática de questões</h2>
+    <section id="topo-prova" class="cartao-ajuste" aria-labelledby="t-topo">
+      <header class="ca-cabeca"><div><h2 id="t-topo"><span class="aj-ic">${ic('doc')}</span>Topo da prova</h2><p>É assim que o cabeçalho sai no papel.</p></div></header>
+      <div class="previa-cabecalho" id="previa"></div>
+      <p class="dica modelo-nome" id="modelo-nome" hidden></p>
+      <div class="importar-cab">
+        <label class="botao cheio" for="e-word">${ic('enviar', 'p')} Copiar o topo de uma prova antiga (Word)</label>
+        <input type="file" id="e-word" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr" />
+        <p class="dica" id="importar-resultado" role="status">O app copia o cabeçalho do arquivo do jeito que ele está.</p>
+        <button type="button" class="botao fantasma cheio" id="b-campos-padrao" ${e.campos?.length || e.modelo ? '' : 'hidden'}>Voltar ao topo padrão do app</button>
+      </div>
+    </section>
+
+    <section id="instrucoes" class="cartao-ajuste" aria-labelledby="t-instr">
+      <header class="ca-cabeca"><div><h2 id="t-instr"><span class="aj-ic">${ic('tipo')}</span>Instruções padrão</h2><p>Saem abaixo do topo em toda prova nova.</p></div></header>
+      <div class="campo"><label for="e-instr" class="visualmente-oculto">Instruções padrão</label>
+        <textarea id="e-instr" name="instrucoes" style="min-height:110px" placeholder="Ex.: Você tem 50 minutos para fazer a prova.">${esc(e.instrucoes || '')}</textarea>
+        <span class="dica" style="margin:8px 0 0">Uma instrução por linha.</span></div>
+    </section>
+
+    <div class="selo-salvo" id="selo-salvo" role="status" aria-live="polite"></div>
+    </form>
+
+    <section id="ia" class="cartao-ajuste" aria-labelledby="t-ia">
+      <header class="ca-cabeca"><div><h2 id="t-ia"><span class="aj-ic">${ic('brilho')}</span>Criação automática</h2></div></header>
       ${pronta ? `<div class="aviso-bloco sucesso">${ic('certo')}<div><strong>Ligada</strong>Cria e confere questões novas quando há internet. Não precisa configurar nada.</div></div>`
         : `<div class="aviso-bloco alerta">${ic('alerta')}<div><strong>Desligada</strong>O app funciona normalmente com o seu banco de questões. Peça para quem instalou o app ligar.</div></div>`}
       <form id="form-ia">
@@ -2313,7 +2453,7 @@ function telaAjustes(ancora) {
           <span><strong>Conferir questões novas automaticamente</strong><small>Recomendado. Uma segunda verificação resolve cada questão sem ver o gabarito e avisa quando discorda.</small></span></label>
         <details class="revelar"><summary>Sobre o Apta<span class="chevron">${ic('seta')}</span></summary>
           <div class="conteudo"><p style="margin:0 0 8px"><img src="/apta-marca.svg" alt="Apta" width="88" height="48" class="marca-clara" /><img src="/apta-marca-escuro.svg" alt="Apta" width="88" height="48" class="marca-escura" /></p>
-            <p style="margin:0 0 8px">Prova, versão adaptada e gabarito prontos para imprimir, com questões conferidas. Evolução do MVP Prova Izi.</p>
+            <p style="margin:0 0 8px">Prova, versão adaptada e gabarito prontos para imprimir, com questões conferidas.</p>
             <p style="margin:0;color:var(--texto-3);font-size:.88rem">Interface desenhada seguindo as Human Interface Guidelines da Apple: barra de abas flutuante, sheets, listas agrupadas, controle segmentado e tipografia do sistema (SF Pro e SF Pro Rounded).</p></div></details>
         <details class="revelar"><summary>Como o Apta evita erros<span class="chevron">${ic('seta')}</span></summary>
           <div class="conteudo"><ul style="margin:0;padding-left:20px">
@@ -2335,9 +2475,9 @@ function telaAjustes(ancora) {
       </form>
     </section>
 
-    <section aria-labelledby="t-tema" style="margin-top:32px">
-      <h2 class="cabeca-grupo" id="t-tema">Aparência</h2>
-      <div class="cartao-form">
+    <section class="cartao-ajuste" aria-labelledby="t-tema">
+      <header class="ca-cabeca"><div><h2 id="t-tema"><span class="aj-ic">${ic('aparencia')}</span>Aparência</h2></div></header>
+      <div>
         <fieldset style="border:0;padding:0;margin:0"><legend class="rotulo">Tema do app</legend>
           <span class="dica">Recomendado: Claro. A tela fica parecida com a folha que os alunos recebem.</span>
           ${fichas('tema', TEMAS, temaAtual())}</fieldset>
@@ -2357,16 +2497,38 @@ function telaAjustes(ancora) {
       { nome: fd.get('nome'), cidade: fd.get('cidade'), professora: fd.get('professora'), logo, campos, modelo }, false)
       + (instr ? `<div class="instrucoes" style="margin-top:10px"><strong>Instruções:</strong><div>${md(instr)}</div></div>` : '');
     main.querySelector('#b-tirar-logo').hidden = !logo;
+    main.querySelector('#logo-amostra').innerHTML = logo ? `<img src="${logo}" alt="Logotipo atual" />` : ic('imagem');
+    main.querySelector('#rot-logo').lastChild.textContent = logo ? ' Trocar' : ' Escolher imagem';
     main.querySelector('#b-campos-padrao').hidden = !campos.length && !modelo;
     main.querySelector('#modelo-nome').hidden = !modelo;
     main.querySelector('#modelo-nome').innerHTML = modelo ? `${ic('doc', 'p')} Cabeçalho do arquivo “${esc(modelo.nome)}”, do jeito que está no Word.` : '';
   };
+  // Salva sozinho, como os Ajustes do iPhone: não existe botão para a professora esquecer.
+  // Cada mudança é gravada logo depois de parar de digitar, e um selo "Salvo" confirma.
+  const selo = main.querySelector('#selo-salvo');
+  let alterado = false;
+  let timerEscola;
+  let timerSelo;
+  const salvarEscola = () => {
+    const fd = new FormData(form);
+    try {
+      salvarConfig({ ...getConfig(), escola: { nome: fd.get('nome').trim(), cidade: fd.get('cidade').trim(), professora: fd.get('professora').trim(), instrucoes: fd.get('instrucoes').replace(/\r/g, '').trim(), logo, campos, modelo } });
+      alterado = false;
+      selo.innerHTML = `${ic('certo', 'p')} Salvo`;
+      selo.classList.add('visivel');
+      clearTimeout(timerSelo); timerSelo = setTimeout(() => selo.classList.remove('visivel'), 1400);
+      return true;
+    } catch (err) { aviso(err.message); return false; }
+  };
+  const marcar = () => { alterado = true; clearTimeout(timerEscola); timerEscola = setTimeout(salvarEscola, 600); };
+  // Saiu da tela antes de o salvamento rodar? Salva na hora.
+  sairDosAjustes = () => { clearTimeout(timerEscola); if (alterado) salvarEscola(); };
   previa();
-  form.oninput = previa;
-  main.querySelector('#e-logo').onchange = async (ev) => { const arq = ev.target.files[0]; if (arq) { logo = await reduzirImagem(arq, 240); previa(); } };
-  main.querySelector('#b-tirar-logo').onclick = () => { logo = ''; previa(); };
+  form.oninput = () => { previa(); marcar(); };
+  main.querySelector('#e-logo').onchange = async (ev) => { const arq = ev.target.files[0]; if (arq) { logo = await reduzirImagem(arq, 240); previa(); marcar(); } };
+  main.querySelector('#b-tirar-logo').onclick = () => { logo = ''; previa(); marcar(); };
   main.querySelector('#b-campos-padrao').onclick = () => {
-    const antes = { campos, modelo }; campos = []; modelo = null; previa();
+    const antes = { campos, modelo }; campos = []; modelo = null; previa(); marcar();
     aviso('O cabeçalho voltou ao padrão do app. Salve para confirmar.', { rotulo: 'Desfazer', fn: () => { ({ campos, modelo } = antes); previa(); } });
   };
   main.querySelector('#e-word').onchange = async (ev) => {
@@ -2391,7 +2553,7 @@ function telaAjustes(ancora) {
       if (r.instrucoes) form.instrucoes.value = r.instrucoes;
       if (r.logo) logo = await reduzirImagem(r.logo, 240);
       if (!r.modelo && r.campos.length) campos = r.campos;
-      previa();
+      previa(); marcar();
       res.innerHTML = r.modelo ? `<strong>${ic('certo', 'p')} Cabeçalho importado como está no Word.</strong> Confira a prévia e salve.`
         : `<strong>${ic('certo', 'p')} Importei os dados do cabeçalho.</strong> Confira a prévia e salve.`;
       main.querySelector('#previa').scrollIntoView({ behavior: menosMovimento() ? 'auto' : 'smooth', block: 'center' });
@@ -2401,14 +2563,7 @@ function telaAjustes(ancora) {
       } });
     } catch (err) { console.error(err); res.textContent = err.message || 'Não consegui ler esse arquivo.'; }
   };
-  form.onsubmit = (ev) => {
-    ev.preventDefault();
-    const fd = new FormData(form);
-    try {
-      salvarConfig({ ...getConfig(), escola: { nome: fd.get('nome').trim(), cidade: fd.get('cidade').trim(), professora: fd.get('professora').trim(), instrucoes: fd.get('instrucoes').replace(/\r/g, '').trim(), logo, campos, modelo } });
-      aviso('Dados da escola salvos.');
-    } catch (err) { aviso(err.message); }
-  };
+  form.onsubmit = (ev) => { ev.preventDefault(); salvarEscola(); };
 
   const formIA = main.querySelector('#form-ia');
   const lerIA = () => {

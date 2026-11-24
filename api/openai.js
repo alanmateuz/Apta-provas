@@ -9,11 +9,15 @@
 // - imagens: 1 por pedido, tamanho e qualidade travados;
 // - limita o tamanho do pedido.
 // =========================================================
-const MODELO_TEXTO = process.env.OPENAI_MODEL || 'gpt-6.1-sol';
+// Modelo por papel: criar (equilibrado) e conferir (barato). Ver apta/docs/15.
+const MODELO_TEXTO = process.env.OPENAI_MODEL || 'gpt-6.1-terra';
+const MODELO_REVISAO = process.env.OPENAI_MODEL_REVISAO || 'gpt-6-luna';
+const modeloDo = (c) => (c.papel === 'conferir' ? MODELO_REVISAO : MODELO_TEXTO);
+const semPapel = ({ papel, ...c }) => c; // eslint-disable-line no-unused-vars
 const MODELO_IMAGEM = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
 const CAMINHOS = {
-  'v1/chat/completions': (c) => ({ ...c, model: MODELO_TEXTO }),
-  'v1/responses': (c) => ({ ...c, model: MODELO_TEXTO }),
+  'v1/chat/completions': (c) => ({ ...semPapel(c), model: modeloDo(c) }),
+  'v1/responses': (c) => ({ ...semPapel(c), model: modeloDo(c) }),
   'v1/images/generations': (c) => ({
     model: MODELO_IMAGEM,
     prompt: String(c.prompt || '').slice(0, 4000),

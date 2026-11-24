@@ -133,7 +133,7 @@ export async function baixarWord(prova, escola, versao) {
   filhos.push(new Paragraph({ children: [new TextRun({ text: titulo, bold: true, size: tam + 4 })], alignment: AlignmentType.CENTER, spacing: { before: 240, after: 120 } }));
 
   if (versao === 'gabarito') {
-    for (const v of ['normal', 'adaptada']) {
+    for (const v of prova.temAdaptada === false ? ['normal'] : ['normal', 'adaptada']) {
       filhos.push(new Paragraph({ children: [new TextRun({ text: v === 'normal' ? 'Prova' : 'Prova adaptada', bold: true, size: 26 })], spacing: { before: 240, after: 80 } }));
       filhos.push(new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },

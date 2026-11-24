@@ -1,13 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024"><defs><clipPath id="sq"><rect width="1024" height="1024" rx="230"/></clipPath>
-      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD452"/><stop offset="1" stop-color="#FFBE1A"/></linearGradient></defs>
-    <g clip-path="url(#sq)">
-      <rect width="1024" height="1024" fill="url(#g)"/>
-      <g transform="rotate(-7 512 540)">
-        <rect x="262" y="214" width="500" height="640" rx="56" fill="#000" opacity=".10" transform="translate(10 22)"/>
-        <path d="M318 214h300l144 144v440a56 56 0 0 1-56 56H318a56 56 0 0 1-56-56V270a56 56 0 0 1 56-56z" fill="#FFFFFF"/>
-        <path d="M618 214v88a56 56 0 0 0 56 56h88z" fill="#E9E4D8"/>
-        <rect x="336" y="330" width="210" height="34" rx="17" fill="#D9D3C6"/>
-        <rect x="336" y="404" width="300" height="34" rx="17" fill="#D9D3C6"/>
-        <path d="M352 612l104 104 222-238" fill="none" stroke="#1D1D1F" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-    </g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs><clipPath id="sq"><rect width="1024" height="1024" rx="230"/></clipPath></defs>
+  <g clip-path="url(#sq)">
+    <rect width="1024" height="1024" fill="#1F56D1"/>
+    <rect x="252" y="190" width="540" height="650" rx="34" fill="#C9D8F6" transform="rotate(10 512 520)"/>
+    <g transform="rotate(-7 512 520)">
+      <rect x="242" y="214" width="560" height="660" rx="34" fill="#0B2A6E" opacity=".22"/>
+      <rect x="232" y="190" width="560" height="660" rx="34" fill="#FFFFFF"/>
+      <path d="M232 310H792M232 402H792M232 494H792M232 586H792M232 678H792M232 770H792" stroke="#BCD0F7" stroke-width="10"/>
+      <path d="M324 190V850" stroke="#E5534B" stroke-width="12"/>
+      <g fill="none" stroke="#1D1D1F" stroke-width="72" stroke-linecap="round"><circle cx="400" cy="620" r="115"/><path d="M515 505V735"/></g>
+      <path d="M600 420L670 490L800 330" fill="none" stroke="#D4372C" stroke-width="72" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
