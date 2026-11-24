@@ -2485,7 +2485,13 @@ function telaAjustesEscola(ancora) {
       </div>
     </section></div></div>`;
 
-  if (ancora === 'ia' || ancora === 'escola') document.getElementById(ancora)?.scrollIntoView();
+  // Cada linha de Ajustes abre só a sua parte: Minha escola (dados e instruções) ou Criação automática.
+  // O topo da prova fica em Modelo da prova; a aparência fica na própria lista de Ajustes.
+  const so = (sel, mostrar) => main.querySelectorAll(sel).forEach((el) => { el.hidden = !mostrar; });
+  so('#topo-prova, [aria-labelledby="t-tema"]', false);
+  so('#escola, #instrucoes, #selo-salvo', ancora !== 'ia');
+  so('#ia', ancora === 'ia');
+  if (ancora === 'ia') main.querySelectorAll('#ia details.revelar').forEach((d) => { if (!/Avançado/.test(d.querySelector('summary')?.textContent || '')) d.hidden = true; });
 
   const form = main.querySelector('#form-escola');
   let logo = e.logo;
