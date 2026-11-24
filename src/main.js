@@ -309,7 +309,7 @@ function rotear() {
     corDaBarra();
     main.classList.toggle('largo', rota === 'prova');
     main.onclick = null;
-    if (!direcao || !usaTransicao()) { main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); }
+    main.classList.remove('entrar'); void main.offsetWidth; main.classList.add('entrar'); // cartões entram em cascata em toda troca de tela
     const telas = { '': telaInicio, nova: telaNova, lote: telaLote, prova: () => telaProva(id), banco: telaBanco, ajustes: () => telaAjustes(['escola', 'ia'].includes(rotaBruta) ? rotaBruta : id), semana: telaSemana, livro: telaLivro };
     document.body.classList.remove('boas-vindas');
     if (rota === '' && precisaBoasVindas()) { telaBoasVindas(); window.scrollTo(0, 0); return; }
@@ -1943,10 +1943,11 @@ function telaBanco() {
         ${porMateria.map(([m]) => `<button type="button" class="chip-apta" data-m="${esc(m)}" aria-pressed="${filtroBanco.materia === m}">${icMateria(m)} ${esc(m)}</button>`).join('')}</div>
     </div>
     <button type="button" class="banner-ia" id="b-buscar-web" ${temIA ? '' : 'disabled'}>${ic('brilho')}<span class="txt"><strong>Buscar questões com IA</strong><small>${temIA ? 'Na internet e nos livros que você enviou' : 'Ligue a criação automática em Ajustes'}</small></span>${ic('seta', 'p')}</button>
-    <div class="filtros-ativos" id="filtros-ativos" style="margin:10px 16px 0"></div>
+    <div class="banco-folha">
+    <div class="filtros-ativos" id="filtros-ativos" style="margin:0 16px"></div>
     <div id="contador-banco" role="status" class="contagem-banco"></div>
     <ul class="questoes-apta" id="lista-banco"></ul>
-    <div class="acoes" style="justify-content:center"><button type="button" class="btn-apta claro pequeno" id="b-mais" hidden>Mostrar mais</button></div>
+    <div class="acoes" style="justify-content:center"><button type="button" class="btn-apta claro pequeno" id="b-mais" hidden>Mostrar mais</button></div></div>
     <input type="file" id="importar" accept=".json,application/json" hidden /></div>`;
 
   const nomeOrigem = Object.fromEntries(ORIGENS);

@@ -505,3 +505,74 @@ body.figma:has(main > .inicio), body.figma:has(main > .ajustes-apta) { backgroun
 body.figma .prova-apta .q-ferramentas { flex-wrap: nowrap; gap: 6px; }
 body.figma .prova-apta .q-ferramentas .q-nivel { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.figma .prova-apta .q-ferramentas .certa { flex: none; font-size: .82rem; }
+
+/* ---------- Revisão 3: etapas legíveis, margem de 16 px e mais movimento ---------- */
+/* Etapas futuras legíveis: bolinha branca opaca com número azul e rótulo em branco */
+.etapas-apta li { color: rgba(255,255,255,.92); }
+.etapas-apta .bola { background: #c9d7f7; color: var(--ceu); }
+.etapas-apta li::before { background: rgba(255,255,255,.7); }
+.etapas-apta li.feita .bola { background: #fff; color: var(--ceu); }
+.etapas-apta li.agora .bola { box-shadow: 0 0 0 4px rgba(255,255,255,.3); }
+.etapas-apta { margin: 18px 0 0; }
+
+/* Tudo dentro da margem de 16 px: o caderno e as folhas de trás não passam da borda */
+.caderno-apta { margin-left: 20px; margin-right: 20px; }
+.caderno-apta::before { transform: rotate(2deg) translate(2px, 6px); }
+.caderno-apta::after { transform: rotate(-1.4deg) translate(-2px, 3px); }
+.caderno-folha { transform: rotate(-.8deg); }
+.caderno-visto { right: 6px; top: -18px; width: 60px; height: 50px; }
+.ajustes-apta .pilha-cartao::before { inset: 8px -2px -8px 2px; transform: rotate(1deg); }
+.ajustes-apta .ceu, .inicio .ceu { padding-left: 16px; padding-right: 16px; }
+.ajustes-apta .ceu-grande .visto { margin-right: 4px; }
+.semana-cartao, .provas-lista, .vazio-apta, .questoes-apta { margin-left: 16px; margin-right: 16px; }
+.secao-linha { margin-left: 16px; margin-right: 16px; }
+
+/* Movimento: toque afunda, cartões entram em cascata, trocas suaves */
+@media (prefers-reduced-motion: no-preference) {
+  .btn-apta, .chip-apta, .turma-op, .item-apta, .item-semana, .prova-cartao, .semana-cartao, .banner-conf, .banner-ia,
+  .moldura-op, .atalhos-apta button, .seg-apta button, .campo-criar button, .ceu-botao, .ceu-mais, .baixar-redondo,
+  .q-chip, .q-icone, .btn-usar, .link-apta, .texto-btn, body.figma .nav a {
+    transition: transform .16s var(--mola), background-color .2s, box-shadow .2s, color .2s, opacity .2s;
+  }
+  .btn-apta:active, .campo-criar button:active, .ceu-mais:active, .btn-usar:active { transform: scale(.96); }
+  .chip-apta:active, .atalhos-apta button:active, .moldura-op:active, .q-chip:active { transform: scale(.94); }
+  .turma-op:active, .prova-cartao:active, .semana-cartao:active, .banner-conf:active, .banner-ia:active, .item-semana:active { transform: scale(.98); }
+  .item-apta:active, .opcao-linha:active { background: var(--azul-suave); }
+  .ceu-botao:active, .q-icone:active, .baixar-redondo:active { transform: scale(.88); opacity: .75; }
+  body.figma .nav a:active { transform: scale(.92); }
+  .seg-apta button[aria-selected='true'] { animation: pulo .28s var(--mola); }
+  .chip-apta[aria-checked='true'], .chip-apta[aria-pressed='true'], .turma-op[aria-checked='true'] .marca-circ, input:checked + .marca-circ { animation: pulo .3s var(--mola); }
+  .switch-apta::after { transition: transform .26s cubic-bezier(.3,1.5,.5,1); }
+  .switch-apta:active::after { width: 32px; }
+  .switch-apta:checked:active::after { transform: translateX(15px); }
+  @keyframes pulo { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+  @keyframes subir-suave { from { opacity: 0; transform: translateY(14px); } }
+  main.entrar .caderno-apta, main.entrar .semana-cartao, main.entrar .provas-lista > *, main.entrar .lista-apta, main.entrar .pilha-cartao,
+  main.entrar .turma-op, main.entrar .versao-cartao, main.entrar .questao-apta, main.entrar .busca-cartao, main.entrar .banner-ia, main.entrar .cabeca-folha {
+    animation: subir-suave .45s var(--mola) both;
+  }
+  main.entrar .semana-cartao { animation-delay: .06s; }
+  main.entrar .provas-lista > :nth-child(1), main.entrar .pilha-cartao:nth-of-type(2), main.entrar .turma-op:nth-child(2) { animation-delay: .1s; }
+  main.entrar .provas-lista > :nth-child(2), main.entrar .pilha-cartao:nth-of-type(3), main.entrar .turma-op:nth-child(3) { animation-delay: .14s; }
+  main.entrar .provas-lista > :nth-child(n+3) { animation-delay: .18s; }
+  .caderno-visto { animation: visto .6s .25s var(--mola) both; transform-origin: 20% 80%; }
+  @keyframes visto { from { opacity: 0; transform: scale(.4) rotate(-14deg); } }
+  .criando-pilha li.feita .bolinha { animation: pulo .35s var(--mola); }
+  .barra-progresso i { animation: crescer .7s var(--mola) both; transform-origin: left; }
+  @keyframes crescer { from { transform: scaleX(0); } }
+}
+
+/* Banco como no Figma: o azul desce até o meio do banner da IA; dali para baixo, folha branca de cantos redondos */
+.banco-apta { background: var(--ceu); }
+.banco-apta .ceu { padding-bottom: 116px; }
+.banco-apta .banner-ia { position: relative; z-index: 2; margin-top: 16px; box-shadow: 0 0 0 1px rgba(255,255,255,.28), 0 10px 24px rgba(10,30,90,.25); }
+.banco-folha { position: relative; margin-top: -36px; padding: 50px 0 24px; min-height: 60vh; background: var(--folha-fundo); border-radius: 28px 28px 0 0; }
+.banco-folha .contagem-banco { margin-top: 0; }
+
+/* Caderno da Início com as medidas do Figma (393 de largura): folha da frente a 20 px da esquerda e 30 px da direita;
+   as folhas de trás chegam a 21 px da borda. Tudo dentro da tela. */
+.caderno-apta { margin: -132px 30px 0 20px; }
+.caderno-apta::before { transform: rotate(3deg) translate(6px, 8px); }
+.caderno-apta::after { transform: rotate(-1.6deg) translate(-2px, 4px); }
+.caderno-folha { transform: rotate(-1.2deg); padding: 24px 16px 18px 34px; }
+.caderno-visto { right: -6px; top: -26px; width: 68px; height: 58px; }
